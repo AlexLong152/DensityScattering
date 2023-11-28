@@ -55,4 +55,4 @@ results*/
 
 #Exclude "working directory"
 workinprogress/
-
+/git-token
