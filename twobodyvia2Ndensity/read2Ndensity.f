@@ -106,15 +106,56 @@ c     following are definitions for possible cross checks below
       integer twoMz,twoMzp  ! magnetic quantum numbers of in/out target nucleus, times 2. 
       integer alpha2N,alpha2Np    
       real*8 :: ffpairs,ffnn,ffnp,ffpp
+
+      character*64 hashtag
+      character*3 rownumber
+      character*500 uniquefilename
       
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       write(*,*) "*********************** 2N DENSITY MATRIX PARAMETERS ***************************"
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     if densityFileName contains hashtag of 64 characters (marked by "hash="), then isolate it
       
+      if (index(densityFileName,'hash=').ne.0.) then
+         hashtag = densityFileName(INDEX(densityFileName,'hash=')+5:INDEX(densityFileName,'hash=')+68)
+      else
+         hashtag = "X"
+         write(*,*) "   Density filename does not contain hashtag. => Cannot provide uniquefilename."
+      end if
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     if densityFileName contains row of 3 characters (marked by "row="), then isolate it
+      if (index(densityFileName,'row=').ne.0.) then
+         rownumber = densityFileName(INDEX(densityFileName,'row=')+4:INDEX(densityFileName,'row=')+6)
+      else
+         rownumber = "X"
+         write(*,*) "   Density filename does not contain row number."
+      end if
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     print hashtag and wornumber information to stdout, if it exists
+      if (rownumber.ne."X") write(*,*) "Density file has row number:   ",rownumber
+      if (hashtag.ne."X") then
+         write(*,*) "Density file has hashtag:      ",hashtag
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     find the unique filename from the hashtag via the python script and write to stdout
+         CALL EXECUTE_COMMAND_LINE("python3.8 ../common-densities/unique-filename-from-hashtag-short.py "//
+     &        hashtag//" > "//hashtag, WAIT=.True.,EXITSTAT=test)
+
+         OPEN(unit=99,file=hashtag)
+         READ(99,*) 
+         READ(99,*) 
+         READ(99,*) 
+         READ(99,*) uniquefilename
+         CLOSE(99)
+         write(*,*) "Density hashtag translates into unique filename: "
+         write(*,*) "    ",uniquefilename
+         CALL EXECUTE_COMMAND_LINE("rm -rf "//hashtag, WAIT=.True.,EXITSTAT=test)
+      end if
+      
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     prepare MPI and distributions of processors; parameters are in parallel.dat
       CALL initparallel
 
-c     cannot call fiollowing because defs of parameters in precision.mod clashes with our defs
+c     cannot call following because defs of parameters in precision.mod clashes with our defs
 c      if (verbosity.ge.1) CALL print_eps ! prints information to STDOUT
 
 c printout statistics on the processors used; info on parallel module   
