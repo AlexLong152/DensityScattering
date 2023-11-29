@@ -15,7 +15,7 @@ from nucdens import access
 
 
 # open database using the mirror on datapub  
-densdb=access.database(workdir=os.environ["HOME"]+"/EFFNUCLEON/COMPTON/FEW-NUCLEON/DENSITIES/",webbase="https://datapub.fz-juelich.de/anogga/files/densindx/")
+densdb=access.database(workdir="./",webbase="https://datapub.fz-juelich.de/anogga/files/densindx/")
 
 # print all entries but restrict tto limited number of columns
 
