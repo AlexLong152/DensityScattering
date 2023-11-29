@@ -107,15 +107,23 @@ c     INPUT VARIABLES:
       integer,intent(in) :: verbosity
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     LOCAL VARIABLES:
-      
-      real*8 qpx,qpy,qpz,qppx,qppy,qppz,qx,qy,qz
-      real*8 q12x,q12y,q12z,qp12x,qp12y,qp12z,qpp12x,qpp12y,qpp12z
+      real*8 tmpVec(3), tmpVec2(3)
+      real*8 p(3), pp(3)
+      real*8 qpx,qpy,qpz, qp(3)
+      real*8 qppx,qppy,qppz, qpp(3)
+      real*8 qx,qy,qz, q(3)
+      real*8 q12x,q12y,q12z, q12(3)
+      real*8 qp12x,qp12y,qp12z, qp12(3)
+      real*8 qpp12x,qpp12y,qpp12z, qpp12(3)
       real*8 qsq,qpsq,qppsq,q12sq,qp12sq,qpp12sq
-      real*8 qpppx,qpppy,qpppz,qppp12x,qppp12y,qppp12z
+      real*8 qpppx,qpppy,qpppz, qppp(3)
+      real*8 qppp12x,qppp12y,qppp12z, qppp12(3)
       real*8 qpppsq,qppp12sq
       real*8 dl12by2
       real*8 factorA,factorB
+      real*8 factorAvec,factorBvec
       real*8 factorAasy,factorBasy
+      real*8 kVec(3)
 c     
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     
@@ -150,6 +158,27 @@ c
      &     qsq,qpsq,qppsq,qpppsq,q12sq,qp12sq,qpp12sq,qppp12sq,px,py,pz,
      &     ppx,ppy,ppz,
      &     k,thetacm,verbosity)
+
+c     p=(/px,py,pz/)
+c     pp=(/ppx,ppy,ppz/)
+c     q=(/qx,qy,qz/)
+c     qp=(/qpx, qpy, qpz/)
+c     qpp=(/qppx, qppy, qppz/)
+c     q12=(/q12x, q12y, q12z/)
+c     qp12=(/qp12x,qp12y,qp12z/)
+
+       p=(/px,py,pz/)
+       pp=(/ppx,ppy,ppz/)
+       q=(/qx,qy,qz/)
+       qp=(/qpx,qpy,qpz/)
+       qpp=(/qppx,qppy,qppz/)
+       q12=(/q12x,q12y,q12z/)
+       qp12=(/qp12x,qp12y,qp12z/)
+       qpp12=(/qpp12x,qpp12y,qpp12z/)
+       qppp=(/qpppx,qpppy,qpppz/)
+       qppp12=(/qppp12x,qppp12y,qppp12z/)
+       kVec=(/0.d0,0.d0,real(k,8)/)
+
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Odelta0 2N contributions: NONE
@@ -159,10 +188,20 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Odelta2 2N contributions
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c      
-      factorA=  -(-1)**(t12)*(1.d0/((px-ppx)**2+(py-ppy)**2+(pz-ppz+k/2)**2))*(2*Pi)**3/HC
-      factorB=+2*(-1)**(t12)*(1.d0/((px-ppx)**2+(py-ppy)**2+(pz-ppz+k/2)**2))*
-     &     (1.d0/((px-ppx)**2+(py-ppy)**2+(pz-ppz-k/2)**2+mpi2))*(2*Pi)**3/HC
+c     
+c     factorA=  -(-1)**(t12)*(1.d0/((px-ppx)**2+(py-ppy)**2+(pz-ppz+k/2)**2))*(2*Pi)**3/HC
+c     factorB=+2*(-1)**(t12)*(1.d0/((px-ppx)**2+(py-ppy)**2+(pz-ppz+k/2)**2))*
+c    &     (1.d0/((px-ppx)**2+(py-ppy)**2+(pz-ppz-k/2)**2+mpi2))*(2*Pi)**3/HC
+
+      tmpVec=p-pp+(kVec/2)
+      tmpVec2=p-pp-(kVec/2)
+
+      factorA=-(-1)**(t12)*(1.d0/(DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
+      factorB=+2*(-1)**(t12)*(1.d0/
+     &            DOT_PRODUCT(tmpVec,tmpVec))*
+     &            (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
+     &         *(2*Pi)**3/HC
+
 c     antisymmetric part: turns out to be the same, only the vaue of t12 will be different
       factorAasy=factorA
       factorBasy=factorB
