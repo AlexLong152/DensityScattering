@@ -110,6 +110,7 @@ c     following are definitions for possible cross checks below
       character*64 hashtag
       character*3 rownumber
       character*500 uniquefilename
+      character*500 dummy
       
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       write(*,*) "*********************** 2N DENSITY MATRIX PARAMETERS ***************************"
@@ -141,10 +142,18 @@ c     find the unique filename from the hashtag via the python script and write 
      &        hashtag//" > "//hashtag, WAIT=.True.,EXITSTAT=test)
 
          OPEN(unit=99,file=hashtag)
-         READ(99,*) 
-         READ(99,*) 
-         READ(99,*) 
-         READ(99,*) uniquefilename
+         DO
+            READ(99,*,IOSTAT=test) dummy
+            IF (test.EQ.0) THEN
+               uniquefilename = dummy
+            ELSE
+               EXIT
+            END IF
+         END DO
+c         READ(99,*) 
+c         READ(99,*) 
+c         READ(99,*) 
+c         READ(99,*) uniquefilename
          CLOSE(99)
          write(*,*) "Density hashtag translates into unique filename: "
          write(*,*) "    ",uniquefilename
