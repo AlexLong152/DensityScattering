@@ -91,6 +91,7 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     
+
       subroutine CalcKernel2BBsym(Kernel2B,
      &     factor,
      &     Ax,Ay,Az,Bx,By,Bz, ! A.σ, B.ε
@@ -145,4 +146,57 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       
       if (verbosity.eq.1000) continue
       return
+      end
+
+      subroutine CalcKernel2BBsymVec(Kernel2B,
+     &     factor, A,! A.σ
+     &     B, !B.ε
+     &     Sp,S,extQnumlimit,verbosity)
+c     
+c********************************************************************
+c     
+c     Calculates diagram B
+c     
+c********************************************************************
+c     
+      implicit none
+c     
+c********************************************************************
+c     
+      include '../common-densities/constants.def'
+c     
+c********************************************************************
+c     INPUT/OUTPUT VARIABLE:
+c     
+      complex*16, intent(inout) :: Kernel2B(1:extQnumlimit,0:1,-1:1,0:1,-1:1)
+c      complex*16 Kernel2Bpx(0:1,-1:1,0:1,-1:1),Kernel2Bpy(0:1,-1:1,0:1,-1:1)
+c     
+c********************************************************************
+c     INPUT VARIABLES:
+c     
+      real*8,intent(in)  :: factor
+c     real*8,intent(in)  :: Ax,Ay,Az,Bx,By,Bz
+      real*8,intent(in)  :: A(3), B(3)
+      integer,intent(in) :: Sp,S
+      integer,intent(in) :: extQnumlimit
+      integer,intent(in) :: verbosity
+c
+c********************************************************************
+c     LOCAL VARIABLES:
+c      
+      complex*16 hold(0:1,-1:1,0:1,-1:1)
+      integer Msp,Ms
+c     
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+      call singlesigmasym(hold,A(1),A(2),A(3),Sp,S,verbosity)
+      do Msp=-Sp,Sp
+         do Ms=-S,S
+c     εx:
+            Kernel2B(1,Sp,Msp,S,Ms) = Kernel2B(1,Sp,Msp,S,Ms) + factor*hold(Sp,Msp,S,Ms)*B(1)
+c     εy:
+            Kernel2B(2,Sp,Msp,S,Ms) = Kernel2B(2,Sp,Msp,S,Ms) + factor*hold(Sp,Msp,S,Ms)*B(2)
+c     εz:
+            Kernel2B(3,Sp,Msp,S,Ms) = Kernel2B(3,Sp,Msp,S,Ms) + factor*hold(Sp,Msp,S,Ms)*B(3)
+         end do
+      end do  
       end
