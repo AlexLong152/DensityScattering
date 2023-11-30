@@ -84,7 +84,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     OUTPUT VARIABLES:
       
       complex*16,intent(out) :: Kernel2B(1:extQnumlimit,0:1,-1:1,0:1,-1:1) ! was Comp2Bxx/xy/yx/yy
-      complex*16 Kernel2BVec(1:extQnumlimit,0:1,-1:1,0:1,-1:1) ! was Comp2Bxx/xy/yx/yy
+c     complex*16 Kernel2BVec(1:extQnumlimit,0:1,-1:1,0:1,-1:1) ! was Comp2Bxx/xy/yx/yy
 c      complex*16,intent(out) :: Comp2Bx(0:1,-1:1,0:1,-1:1) ! for STUMP, see below
 c      complex*16,intent(out) :: Comp2By(0:1,-1:1,0:1,-1:1) ! for STUMP, see below
 c      complex*16,intent(out) :: Comp2Bpx(0:1,-1:1,0:1,-1:1) ! for STUMP, see below
@@ -213,37 +213,19 @@ c     antisymmetric part: turns out to be the same, only the vaue of t12 will be
             call CalcKernel2BAsym(Kernel2B,
      &           factorA,
      &           s12p,s12,extQnumlimit,verbosity)
-            call CalcKernel2BBsym(Kernel2B,
-     &           factorB,
-     &           px-ppx,py-ppy,pz-ppz-k/2, ! preceding is vector dotted with σ
-     &           px-ppx,py-ppy,pz-ppz, ! preceding is vector dotted with ε
-     &           s12p,s12,extQnumlimit,verbosity)
-c     
-
-            call CalcKernel2BAsym(Kernel2BVec,
-     &           factorA,
-     &           s12p,s12,extQnumlimit,verbosity)
-            call CalcKernel2BBsymVec(Kernel2BVec,
+            call CalcKernel2BBsymVec(Kernel2B,
      &           factorB,
      &           p-pp-(kVec/2), ! preceding is vector dotted with σ
      &           p-pp, ! preceding is vector dotted with ε
      &           s12p,s12,extQnumlimit,verbosity)
          else                   ! s12 question: s12-s12p=±1 => l12-l12p is odd; spin anti-symmetric part only
 c     
+
+
             call CalcKernel2BAasy(Kernel2B,
      &           factorAasy,
      &           s12p,s12,extQnumlimit,verbosity)
-            call CalcKernel2BBasy(Kernel2B,
-     &           factorBasy,
-     &           px-ppx,py-ppy,pz-ppz-k/2, ! preceding is vector dotted with σ
-     &           px-ppx,py-ppy,pz-ppz, ! preceding is vector dotted with ε
-     &           s12p,s12,extQnumlimit,verbosity)
-
-
-            call CalcKernel2BAasy(Kernel2BVec,
-     &           factorAasy,
-     &           s12p,s12,extQnumlimit,verbosity)
-            call CalcKernel2BBasyVec(Kernel2BVec,
+            call CalcKernel2BBasyVec(Kernel2B,
      &           factorBasy,
      &           p-pp-(kVec/2), ! preceding is vector dotted with σ
      &           p-pp, ! preceding is vector dotted with ε
@@ -251,9 +233,6 @@ c
 
 
          end if                 ! s12 question
-         if (all(Kernel2BVec.ne.Kernel2B)) then
-             write(*,*) "Beep boop"
-         end if
       else                      ! t12!=t12p
          continue
 c     diagrams (A/B) have no components with t12!=t12p. 
