@@ -50,9 +50,9 @@ c
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     output as human readable number to stdout            
       if (verbosity.ge.0) then
+      do extQnum=1,extQnumlimit
          do twoMzp=twoSnucl,-twoSnucl,-2
             do twoMz=twoSnucl,-twoSnucl,-2
-               do extQnum=1,extQnumlimit
                   write (*,'(A,I4,A,I4,A,I4,A,F24.19,SP,F24.19," i")') !E30.19 for exponential form 0.123.....E-56
      &                 "Result(exQnum=",extQnum,",twoMzp=",twoMzp,", twoMz=",twoMz,"): ",Result(extQnum,twoMzp,twoMz)
                end do           ! extQnum
