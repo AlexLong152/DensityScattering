@@ -1,29 +1,35 @@
  cm omega =    131.85700000000000      thetacm =    60.000000000000000     
-   (4.99734296868915920E-002,8.76501650952683734E-009)
-  (4.49760014909709107E-008,-8.36086494887059578E-003)
-        (-11.448991361012920,3.49194089676930221E-010)
+   (4.42935806348992642E-002,2.67754528422683191E-009)
+        (-14.122793124577381,7.89320388464352204E-008)
+       (-14.119631639557202,-7.88807602092835834E-008)
+  (-5.04559052721385431E-002,2.67371514680894136E-009)
+  (1.70325068361171976E-009,-7.38904393914314225E-003)
+        (-8.43512805535788148E-008,14.065530932761998)
+       (-8.43300433340979833E-008,-14.062965344172584)
+ (-1.65126757283209060E-009,-1.40332134891112924E-002)
+        (-12.674754749825420,4.92395140015625894E-010)
+  (2.33347429182354758E-002,-1.17060125923967471E-009)
+   (2.27996175270221979E-002,1.23227900650600661E-009)
+         (12.669930960813559,5.76680239519899877E-010)
                (0.0000000000000000,0.0000000000000000)
-       (-13.158075344496575,-4.36955648087556372E-008)
-         (4.03835856957694491E-008,13.098939949655358)
-  (1.89438037379087536E-002,-4.56983174815466629E-008)
                (0.0000000000000000,0.0000000000000000)
-        (-13.157058663003843,4.36763060729594659E-008)
-        (4.04134269899548177E-008,-13.097537105289515)
-   (1.89220362232379730E-002,4.57236251738654529E-008)
                (0.0000000000000000,0.0000000000000000)
-  (-5.29583062227334533E-002,8.78047493052949839E-009)
- (-4.49914774867001408E-008,-1.10230586645239121E-002)
-         (11.447397062052111,3.91416887032494133E-010)
                (0.0000000000000000,0.0000000000000000)
 
  ================================================================================
- Twobody Contributions to Few-Nucleon Compton Scattering Calculated Via 2N-Density Matrix
+ Twobody Contributions to Few-Nucleon Processes Calculated Via 2N-Density Matrix
  ================================================================================
-    Version 1.0
-       D. Phillips/A. Nogga/hgrie starting August 2020   
-       based on 3He codes: D. Phillips/A. Nogga/hgrie starting May 2018
-                           D. Phillips/B. Strasberg/hgrie starting June 2014
-                           with A. Margaryan 2016-17, modifying codes by D. Shukla 2007/8
+    Mantle Code Version 1.0
+       Alexander Long/hgrie starting November 2023   
+       based on Compton density code: D. Phillips/A. Nogga/hgrie starting August 2020
+       based on 3He Compton codes: D. Phillips/A. Nogga/hgrie starting May 2018
+                                   D. Phillips/B. Strasberg/hgrie starting June 2014
+                                   with A. Margaryan 2016-17, modifying codes by D. Shukla 2007/8
+ --------------------------------------------------------------------------------
+ Kernel: Twobody Pion Photoproduction at Threshold
+ --------------------------------------------------------------------------------
+    Kernel Code Version 1.0
+       Alexander Long/hgrie starting November 2023   
 
     Lowest beam energy           =    131.85700000000000      MeV
     Highest beam energy          =    131.85700000000000      MeV
@@ -32,16 +38,14 @@
     Highest theta                =    60.000000000000000      deg
     Theta step from low to high  =    30.000000000000000      deg
  First take on output filename (placeholders to be replaced below): 
-       test-twobody-NUCLEUS.XXXMeV-YYYdeg.dens-DENSITY.ORDER.DATE.dat
+       'TESTING-twobody-NUCLEUS.XXXMeV-YYYdeg.dens-DENSITY.ORDER.DATE.dat'
  First take on density filename (placeholders to be replaced below): 
-       /home/hgrie/EFFNUCLEON/COMPTON/FEW-NUCLEON/DENSITIES//densities-3He/2Ndensities/twobody-compton-dens-3He-chsfr-nnlo-cut=2.0-tnf=n2lo-tnfcut=0.0-c1=0.0-c3=0.0-c4=0.0-cd=0.0-ce=0.0--etc--om=132-th=060-hash=4dc5aaae23f81daea252bd01a7ad1b53de75e0e173eef9ecdc651b8284a4d8ee-row=unknown.h5
+       /home/alex/OneDrive/densities-3He/2Ndensities/twobody-dens-3He-chsfr-nnlo-lambda=2.0-tnf=n2lo-srgnn=0.0-0.0-srg3n=0.0-0.0-np12a=40-np12b=16-p12a=1.0-p12b=3.0-p12c=8.0-nx=20-om=131.857-th=59.98-hash=4dc5aaae23f81daea252bd01a7ad1b53de75e0e173eef9ecdc651b8284a4d8ee-row=106.h5
    Target Nucleus: 3He, Anucl =  3, spin Snucl =  1/2 , mass Mnucl =  2808.400    MeV
  Input and output in centre-of-mass frame.
  Number of external quantum numbers set to extQnumlimit =    4
- Calculate all  16 amplitudes independently, not using Usesymmetry() of process.
-Calculate amplitudes amplitudes using Usesymmetry() of process, variant number   0
-  === Usesymmetry() NOT YET IMPLEMENTED. ===
- O(e²delta⁴)=O(Q⁴) MECs identical [no Δ(1232)]. (12) subsystem is (pn) since only charged MECs.
+ Calculate all  16 amplitudes independently, not using symmetry() of process.
+ O(e delta⁴)=O(Q⁴) MECs identical [no Δ(1232)]. (12) subsystem is (pn) since only charged MECs.
  Integration parameters of (12) subsystem:
  Total angular momentum in (12) subsystem set to j12max =    2
  Radial Integration in (12) subsystem:
@@ -53,28 +57,21 @@ Calculate amplitudes amplitudes using Usesymmetry() of process, variant number  
    NP12p == ( NP12A+NP12B =    6) cannot be dialled.
  Angular Integration in (12) subsystem
     by Lebedev-Laikov for theta & phi combined:
-    ==> preliminary size of solid angle grid Nanggrid12(set to Nordth12) =   14 points.
+    ==> preliminary size of solid angle grid Nanggrid12(set to Nordth12) =    2 points.
     Nthbins12, Nordphi12, Nphibins12 have no meaning.
- ADDITIONAL COMMENTS:_v2.0
- Write output to file: test-twobody-3He.132MeV-060deg.dens-nlo-cut=2.0-tnf=n2lo-tnfcut=0.0-c1=0.0-c3=0.0-c4=0.0-cd=0.0-ce=0.0--etc--.Odelta4-extQnumlimit=04-symmetry=0-j12max=2-.v2.0.date=20231122-082405.542.dat
+ ADDITIONAL COMMENTS:_PionPhotoProdThresh.v2.0
+ Write output to file: 'TESTING-twobody-3He.132MeV-060deg.dens-nlo-lambda=2.0-tnf=n2lo-srgnn=0.0-0.0-srg3n=0.0-0.0-np12a=40-np12b=16-p12a=1.0-p12b=3.0-p12c=8.0-nx=20-.Odelta4-extQnumlimit=04-symmetry=0-j12max=2-.PionPhotoProdThresh.v2.0.date=20231130-103812.658.dat'
  LebedevLaikov:
-     Solid angle grid size:           14
+   No solid angle grid size              2  available --
+      Next larger one chosen:            6
            #   theta [deg], phi [deg], angular weight (sums to 4\pi)
-           1   90.000000000000000        0.0000000000000000       0.83775810796250738     
-           2   90.000000000000000        180.00000000000000       0.83775810796250738     
-           3   90.000000000000000        90.000000000000000       0.83775810796250738     
-           4   90.000000000000000       -90.000000000000000       0.83775810796250738     
-           5   0.0000000000000000        90.000000000000000       0.83775810796250738     
-           6   180.00000000000000        90.000000000000000       0.83775810796250738     
-           7   54.735607938045632        45.000000000000000       0.94247785975447584     
-           8   125.26438181667089        45.000000000000000       0.94247785975447584     
-           9   54.735607938045632       -45.000000000000000       0.94247785975447584     
-          10   125.26438181667089       -45.000000000000000       0.94247785975447584     
-          11   54.735607938045632        134.99999658490552       0.94247785975447584     
-          12   125.26438181667089        134.99999658490552       0.94247785975447584     
-          13   54.735607938045632       -134.99999658490552       0.94247785975447584     
-          14   125.26438181667089       -134.99999658490552       0.94247785975447584     
- Sum of all angular weights (expect 4Pi) =    1.0000000447034836      *4Pi
+           1   90.000000000000000        0.0000000000000000        2.0943951606750488     
+           2   90.000000000000000        90.000000000000000        2.0943951606750488     
+           3   90.000000000000000        180.00000000000000        2.0943951606750488     
+           4   90.000000000000000        270.00000000000000        2.0943951606750488     
+           5   0.0000000000000000        0.0000000000000000        2.0943951606750488     
+           6   180.00000000000000        0.0000000000000000        2.0943951606750488     
+ Sum of all angular weights (expect 4Pi) =    1.0000000000000000      *4Pi
  ***************************** END OF INITIALISATION *****************************
  cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
  cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -85,7 +82,7 @@ Calculate amplitudes amplitudes using Usesymmetry() of process, variant number  
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  Calculating amps: theta =   60.000000000000000      deg: angle #           1
     Now looking for density file...
-    Density file name generated from energy & angle: /home/hgrie/EFFNUCLEON/COMPTON/FEW-NUCLEON/DENSITIES//densities-3He/2Ndensities/twobody-compton-dens-3He-chsfr-nnlo-cut=2.0-tnf=n2lo-tnfcut=0.0-c1=0.0-c3=0.0-c4=0.0-cd=0.0-ce=0.0--etc--om=132-th=060-hash=4dc5aaae23f81daea252bd01a7ad1b53de75e0e173eef9ecdc651b8284a4d8ee-row=unknown.h5
+    Density file name generated from energy & angle: /home/alex/OneDrive/densities-3He/2Ndensities/twobody-dens-3He-chsfr-nnlo-lambda=2.0-tnf=n2lo-srgnn=0.0-0.0-srg3n=0.0-0.0-np12a=40-np12b=16-p12a=1.0-p12b=3.0-p12c=8.0-nx=20-om=131.857-th=59.98-hash=4dc5aaae23f81daea252bd01a7ad1b53de75e0e173eef9ecdc651b8284a4d8ee-row=106.h5
        Density file exists, good.
  *********************** 2N DENSITY MATRIX PARAMETERS ***************************
  hdf tools version: 
@@ -720,41 +717,41 @@ Calculation of rho for ...
       j12max2N   =    5
     2Ndensity file covers requested j12max. Proceeding with j12max =    2
  *********Now convoluting 2N helicity amplitudes with 2N density matrix.*********
-Result(exQnum=   1,twoMzp=   1, twoMz=   1):    0.0499734296868915920  +0.0000000087650165095 i
-Result(exQnum=   2,twoMzp=   1, twoMz=   1):    0.0000000449760014910  -0.0083608649488705958 i
-Result(exQnum=   3,twoMzp=   1, twoMz=   1):  -11.4489913610129203647  +0.0000000003491940897 i
+Result(exQnum=   1,twoMzp=   1, twoMz=   1):    0.0442935806348992642  +0.0000000026775452842 i
+Result(exQnum=   1,twoMzp=   1, twoMz=  -1):  -14.1227931245773810076  +0.0000000789320388464 i
+Result(exQnum=   1,twoMzp=  -1, twoMz=   1):  -14.1196316395572019076  -0.0000000788807602093 i
+Result(exQnum=   1,twoMzp=  -1, twoMz=  -1):   -0.0504559052721385431  +0.0000000026737151468 i
+Result(exQnum=   2,twoMzp=   1, twoMz=   1):    0.0000000017032506836  -0.0073890439391431422 i
+Result(exQnum=   2,twoMzp=   1, twoMz=  -1):   -0.0000000843512805536 +14.0655309327619981730 i
+Result(exQnum=   2,twoMzp=  -1, twoMz=   1):   -0.0000000843300433341 -14.0629653441725839258 i
+Result(exQnum=   2,twoMzp=  -1, twoMz=  -1):   -0.0000000016512675728  -0.0140332134891112924 i
+Result(exQnum=   3,twoMzp=   1, twoMz=   1):  -12.6747547498254196086  +0.0000000004923951400 i
+Result(exQnum=   3,twoMzp=   1, twoMz=  -1):    0.0233347429182354758  -0.0000000011706012592 i
+Result(exQnum=   3,twoMzp=  -1, twoMz=   1):    0.0227996175270221979  +0.0000000012322790065 i
+Result(exQnum=   3,twoMzp=  -1, twoMz=  -1):   12.6699309608135592953  +0.0000000005766802395 i
 Result(exQnum=   4,twoMzp=   1, twoMz=   1):    0.0000000000000000000  +0.0000000000000000000 i
-Result(exQnum=   1,twoMzp=   1, twoMz=  -1):  -13.1580753444965754539  -0.0000000436955648088 i
-Result(exQnum=   2,twoMzp=   1, twoMz=  -1):    0.0000000403835856958 +13.0989399496553584612 i
-Result(exQnum=   3,twoMzp=   1, twoMz=  -1):    0.0189438037379087536  -0.0000000456983174815 i
 Result(exQnum=   4,twoMzp=   1, twoMz=  -1):    0.0000000000000000000  +0.0000000000000000000 i
-Result(exQnum=   1,twoMzp=  -1, twoMz=   1):  -13.1570586630038430798  +0.0000000436763060730 i
-Result(exQnum=   2,twoMzp=  -1, twoMz=   1):    0.0000000404134269900 -13.0975371052895148694 i
-Result(exQnum=   3,twoMzp=  -1, twoMz=   1):    0.0189220362232379730  +0.0000000457236251739 i
 Result(exQnum=   4,twoMzp=  -1, twoMz=   1):    0.0000000000000000000  +0.0000000000000000000 i
-Result(exQnum=   1,twoMzp=  -1, twoMz=  -1):   -0.0529583062227334533  +0.0000000087804749305 i
-Result(exQnum=   2,twoMzp=  -1, twoMz=  -1):   -0.0000000449914774867  -0.0110230586645239121 i
-Result(exQnum=   3,twoMzp=  -1, twoMz=  -1):   11.4473970620521114938  +0.0000000003914168870 i
 Result(exQnum=   4,twoMzp=  -1, twoMz=  -1):    0.0000000000000000000  +0.0000000000000000000 i
 Mathematica-friendly output: all  4* 4 =   16 amplitudes (some related by symmetries):
     [Sequence counting down from max values: extqnum∈[1;extQnumlimit], Mzp∈[S;-S], Mz∈[S;-S]
-         {+.499734296868915920*10^(-01)+.876501650952683734*10^(-08)*I,+.449760014909709107*10^(-07)-.836086494887059578*10^(-02)*I,-.114489913610129204*10^(+02)+.349194089676930221*10^(-09)*I,+.000000000000000000*10^(+00)+.000000000000000000*10^(+00)*I,-.131580753444965755*10^(+02)-.436955648087556372*10^(-07)*I,+.403835856957694491*10^(-07)+.130989399496553585*10^(+02)*I,+.189438037379087536*10^(-01)-.456983174815466629*10^(-07)*I,+.000000000000000000*10^(+00)+.000000000000000000*10^(+00)*I,-.131570586630038431*10^(+02)+.436763060729594659*10^(-07)*I,+.404134269899548177*10^(-07)-.130975371052895149*10^(+02)*I,+.189220362232379730*10^(-01)+.457236251738654529*10^(-07)*I,+.000000000000000000*10^(+00)+.000000000000000000*10^(+00)*I,-.529583062227334533*10^(-01)+.878047493052949839*10^(-08)*I,-.449914774867001408*10^(-07)-.110230586645239121*10^(-01)*I,+.114473970620521115*10^(+02)+.391416887032494133*10^(-09)*I,+.000000000000000000*10^(+00)+.000000000000000000*10^(+00)*I}
+         {+.442935806348992642*10^(-01)+.267754528422683191*10^(-08)*I,+.170325068361171976*10^(-08)-.738904393914314225*10^(-02)*I,-.126747547498254196*10^(+02)+.492395140015625894*10^(-09)*I,+.000000000000000000*10^(+00)+.000000000000000000*10^(+00)*I,-.141227931245773810*10^(+02)+.789320388464352204*10^(-07)*I,-.843512805535788148*10^(-07)+.140655309327619982*10^(+02)*I,+.233347429182354758*10^(-01)-.117060125923967471*10^(-08)*I,+.000000000000000000*10^(+00)+.000000000000000000*10^(+00)*I,-.141196316395572019*10^(+02)-.788807602092835834*10^(-07)*I,-.843300433340979833*10^(-07)-.140629653441725839*10^(+02)*I,+.227996175270221979*10^(-01)+.123227900650600661*10^(-08)*I,+.000000000000000000*10^(+00)+.000000000000000000*10^(+00)*I,-.504559052721385431*10^(-01)+.267371514680894136*10^(-08)*I,-.165126757283209060*10^(-08)-.140332134891112924*10^(-01)*I,+.126699309608135593*10^(+02)+.576680239519899877*10^(-09)*I,+.000000000000000000*10^(+00)+.000000000000000000*10^(+00)*I}
  cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
  cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
- *** Wrote output to file: test-twobody-3He.132MeV-060deg.dens-nlo-cut=2.0-tnf=n2lo-tnfcut=0.0-c1=0.0-c3=0.0-c4=0.0-cd=0.0-ce=0.0--etc--.Odelta4-extQnumlimit=04-symmetry=0-j12max=2-.v2.0.date=20231122-082405.542.dat
-Production date: 2023-11-22 08:24:05-05:00
-Real Time used: 21 seconds on host lucia
+ *** Wrote output to file: 'TESTING-twobody-3He.132MeV-060deg.dens-nlo-lambda=2.0-tnf=n2lo-srgnn=0.0-0.0-srg3n=0.0-0.0-np12a=40-np12b=16-p12a=1.0-p12b=3.0-p12c=8.0-nx=20-.Odelta4-extQnumlimit=04-symmetry=0-j12max=2-.PionPhotoProdThresh.v2.0.date=20231130-103812.658.dat'
+Production date: 2023-11-30 10:38:12-05:00
+Real Time used: 6 seconds on host along-desktop
 **************************************************
 *********            INPUT FILE          *********
 **************************************************
 131.857 131.857 15                           omegaLow, omegaHigh, omegaStep
 060 060 30                             thetaLow, thetaHigh, thetaStep
-test-twobody-NUCLEUS.XXXMeV-YYYdeg.dens-DENSITY.ORDER.DATE.dat
-'/home/hgrie/EFFNUCLEON/COMPTON/FEW-NUCLEON/DENSITIES//densities-3He/2Ndensities/twobody-compton-dens-3He-chsfr-nnlo-cut=2.0-tnf=n2lo-tnfcut=0.0-c1=0.0-c3=0.0-c4=0.0-cd=0.0-ce=0.0--etc--om=132-th=060-hash=4dc5aaae23f81daea252bd01a7ad1b53de75e0e173eef9ecdc651b8284a4d8ee-row=unknown.h5'
-cm_cartesian_nosymmetry_verbos_extQnumlimit=4                     frame, symmetry, verbosity of STDOUT
+'TESTING-twobody-NUCLEUS.XXXMeV-YYYdeg.dens-DENSITY.ORDER.DATE.dat'
+'/home/alex/OneDrive/densities-3He/2Ndensities/twobody-dens-3He-chsfr-nnlo-lambda=2.0-tnf=n2lo-srgnn=0.0-0.0-srg3n=0.0-0.0-np12a=40-np12b=16-p12a=1.0-p12b=3.0-p12c=8.0-nx=20-om=131.857-th=59.98-hash=4dc5aaae23f81daea252bd01a7ad1b53de75e0e173eef9ecdc651b8284a4d8ee-row=106.h5'
+nosymmetry_verbos_extQnumlimit=4                     frame, symmetry, verbosity of STDOUT
 Odelta4_j12max=2 		    Calctype, maximal total ang mom in (12) subsystem
 4 2 		    		    NP12A, NP12B
 1.0 5.0 15.0 			    P12A, P12B, P12C
-2 14     			    AngularType12,(Nordth12 OR Nanggrid12),Nthbins12,Nordphi12,Nphibins12
-COMMENTS:_v2.0
+2 2     			    AngularType12,(Nordth12 OR Nanggrid12),Nthbins12,Nordphi12,Nphibins12
+COMMENTS:_PionPhotoProdThresh.v2.0
 # in density filename, code replaces XXX and YYY automatically by energy and angle.

@@ -91,9 +91,10 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     
-      subroutine CalcKernel2BBasy(Kernel2B,
+
+      subroutine CalcKernel2BBasyVec(Kernel2B,
      &     factor,
-     &     Ax,Ay,Az,Bx,By,Bz, ! A.σ, B.ε
+     &     A,B, ! A.σ, B.ε
      &     Sp,S,extQnumlimit,verbosity)    
 c     
 c********************************************************************
@@ -118,7 +119,7 @@ c********************************************************************
 c     INPUT VARIABLES:
 c     
       real*8,intent(in)  :: factor
-      real*8,intent(in)  :: Ax,Ay,Az,Bx,By,Bz
+      real*8,intent(in)  :: A(3), B(3)
       integer,intent(in) :: Sp,S
       integer,intent(in) :: extQnumlimit
       integer,intent(in) :: verbosity
@@ -130,15 +131,15 @@ c
       integer Msp,Ms
 c     
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-      call singlesigmaasy(hold,Ax,Ay,Az,Sp,S,verbosity)
+      call singlesigmaasy(hold,A(1),A(2),A(3),Sp,S,verbosity)
       do Msp=-Sp,Sp
          do Ms=-S,S
 c     εx:
-            Kernel2B(1,Sp,Msp,S,Ms) = Kernel2B(1,Sp,Msp,S,Ms) + factor*hold(Sp,Msp,S,Ms)*Bx
+            Kernel2B(1,Sp,Msp,S,Ms) = Kernel2B(1,Sp,Msp,S,Ms) + factor*hold(Sp,Msp,S,Ms)*B(1)
 c     εy:
-            Kernel2B(2,Sp,Msp,S,Ms) = Kernel2B(2,Sp,Msp,S,Ms) + factor*hold(Sp,Msp,S,Ms)*By
+            Kernel2B(2,Sp,Msp,S,Ms) = Kernel2B(2,Sp,Msp,S,Ms) + factor*hold(Sp,Msp,S,Ms)*B(2)
 c     εz:
-            Kernel2B(3,Sp,Msp,S,Ms) = Kernel2B(3,Sp,Msp,S,Ms) + factor*hold(Sp,Msp,S,Ms)*Bz
+            Kernel2B(3,Sp,Msp,S,Ms) = Kernel2B(3,Sp,Msp,S,Ms) + factor*hold(Sp,Msp,S,Ms)*B(3)
          end do
       end do  
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc 
