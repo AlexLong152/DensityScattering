@@ -7,20 +7,16 @@ UNAME := $(shell uname -s)
 
 # define the compilers and standard libraries for the current computer 
 
-ifeq ($(UNAME), Linux)
-     #############################################
-     # ubuntu 16.04
      LIBSTD1 = -llapack
+ifeq ($(USER),hgrie)
      LIBSTD2 = -L /usr/lib/x86_64-linux-gnu/hdf5/openmpi/ 
+else ifeq ($(USER),alex) # your username
+     LIBSTD2 =	 #whatever your path is
+else ifeq ($(USER),along) # your username
+     LIBSTD2 =   #whatever your path is
+endif	
      LIBSTD3 = -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5
      LIBSTD4 = -llapack -lgomp -ldl -lz -lsz
-else
-     # macbook pro
-     LIBSTD1 = -L  /opt/local/lib -llapack 
-     LIBSTD2 = -lhdf5_hl -lhdf5hl_fortran -lhdf5 -lhdf5_fortran -lz
-     LIBSTD3 = -L /opt/local/lib -lscalapack -lgomp
-     LIBSTD4 = 
-endif
 
 LIBSTD5 = 
 LIBSTD6 = 
@@ -37,15 +33,18 @@ COMPILE_OPT1= -fopenmp -cpp -fcheck=all  -g -O5
 # -fno-automatic
 COMPILE_OPT2= -ffixed-line-length-0
 
-ifeq ($(UNAME), Linux)
-     #############################################
-     # ubuntu 16.04
-     COMPILE_OPT3= -I /usr/include/hdf5/openmpi/
-else
-     # macbook pro
-     COMPILE_OPT3= -I /opt/local/include/
-endif
+COMPILE_OPT1= -fPIC  -cpp  -g -O3 -ffpe-summary=none  -finit-integer=-1000 -finit-real=inf -fcheck=all    
+COMPILE_OPT2= -ffixed-line-length-0 -fopenmp
 
+ifeq ($(USER),hgrie)
+	COMPILE_OPT3= -I /usr/include/hdf5/openmpi/	
+else ifeq ($(USER),alex) # your username
+	COMPILE_OPT3= -I /usr/include/ -fallow-argument-mismatch #whatever your path is
+else ifeq ($(USER),along) # your username
+	COMPILE_OPT3= -I /usr/include/ -fallow-argument-mismatch #whatever your path is
+endif	
+
+COMPILE_OPT4= 
 COMPILE_OPT4= 
 COMPILE_OPT5= 
 COMPILE_OPT6= 
