@@ -54,6 +54,9 @@ c     intrinsic variables
       character*10          :: timed
       character*24          :: datereplacement
       character*500         :: densityreplacement
+      character*500         :: dummy
+      character*4           :: rowstring
+      integer               :: rownumber
       
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc      
       
@@ -83,6 +86,24 @@ c     add descriptors to output filename
 c     replace DENSITY in  _original_ filename by name of potential in density filename
       do
          dummyint = INDEX(outfile,densitytext(:LEN_TRIM(densitytext))) ; if (dummyint == 0) EXIT
+         
+c     if densityFileName contains rownumber (marked by "row="), then isolate it: rownumber is interpreted as everything before ".h5"
+         if (index(densityFileName,'row=').ne.0.) then
+            dummy = densityFileName(INDEX(densityFileName,'row=')+4:)
+            rowstring = dummy(:INDEX(dummy,'.h5')-1)
+            if (VERIFY(rowstring," 1234567890").ne.0) then
+               write(*,*) "ERROR: Presumed rownumber ",rowstring," not a number. --  Proceeding without it."
+               rownumber = 0
+               stop
+            else
+               read(rowstring,*) rownumber
+               write(rowstring,'(I0.4)') rownumber
+            end if
+         else
+            rownumber = 0
+            write(*,*) "   Density filename does not contain row number."
+         end if
+c     
          if ( index(densityFileName,"-om=").ne.0 ) then
             densityreplacement =
      &           densityFileName(index(densityFileName,"-dens")+14+LEN_TRIM(nucleus):index(densityFileName,"-om=")) //
@@ -97,6 +118,10 @@ c     replace DENSITY in  _original_ filename by name of potential in density fi
             write(*,*) "      ...so replacement will be: ", densityreplacement
          end if   
 c         write(*,*) densityreplacement
+         
+         if (rownumber.ne.0) then
+            densityreplacement =  densityreplacement(:LEN_TRIM(densityreplacement)) // "row=" // rowstring
+         end if
          outfile =outfile(:dummyint-1) // densityreplacement(:LEN_TRIM(densityreplacement))
      &        // outfile(dummyint+LEN_TRIM(densitytext):)
       end do

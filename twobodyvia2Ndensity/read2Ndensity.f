@@ -107,10 +107,13 @@ c     following are definitions for possible cross checks below
       integer alpha2N,alpha2Np    
       real*8 :: ffpairs,ffnn,ffnp,ffpp
 
-      character*64 hashtag
-      character*3 rownumber
+      character*64  hashtag
+      character*4   rowstring
+      integer       rownumber
       character*500 uniquefilename
       character*500 dummy
+
+      integer fileSize
       
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       write(*,*) "*********************** 2N DENSITY MATRIX PARAMETERS ***************************"
@@ -118,46 +121,81 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     if densityFileName contains hashtag of 64 characters (marked by "hash="), then isolate it
       
       if (index(densityFileName,'hash=').ne.0.) then
-         hashtag = densityFileName(INDEX(densityFileName,'hash=')+5:INDEX(densityFileName,'hash=')+68)
+         dummy = densityFileName(INDEX(densityFileName,'hash=')+5:)
+         hashtag = dummy(:INDEX(dummy,'-'))
+         if (len(hashtag).ne.64) then
+            write(*,*) "ERROR: Presumed hash ",hashtag," is NOT 64 characters long. -- Exiting."
+            stop
+         end if
+         if (VERIFY(hashtag,"12345677890abcdef").ne.0) then
+            write(*,*) "ERROR: Presumed hash ",hashtag," has characters which are not compatible with a hexadecimal. -- Exiting."
+            stop
+         end if
       else
          hashtag = "X"
          write(*,*) "   Density filename does not contain hashtag. => Cannot provide uniquefilename."
       end if
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     if densityFileName contains row of 3 characters (marked by "row="), then isolate it
-      if (index(densityFileName,'row=').ne.0.) then
-         rownumber = densityFileName(INDEX(densityFileName,'row=')+4:INDEX(densityFileName,'row=')+6)
-      else
-         rownumber = "X"
-         write(*,*) "   Density filename does not contain row number."
-      end if
+c     if densityFileName contains rownumber (marked by "row="), then isolate it: rownumber is interpreted as everything before ".h5"
+         if (index(densityFileName,'row=').ne.0.) then
+            dummy = densityFileName(INDEX(densityFileName,'row=')+4:)
+            rowstring = dummy(:INDEX(dummy,'.h5')-1)
+            if (VERIFY(rowstring," 1234567890").ne.0) then
+               write(*,*) "ERROR: Presumed rownumber ",rowstring," not a number. --  Proceeding without it."
+               rownumber = 0
+               stop
+            else
+               read(rowstring,*) rownumber
+               write(rowstring,'(I0.4)') rownumber
+            end if
+         else
+            rownumber = 0
+            write(*,*) "   Density filename does not contain row number."
+         end if
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     print hashtag and wornumber information to stdout, if it exists
-      if (rownumber.ne."X") write(*,*) "Density file has row number:   ",rownumber
+c     print hashtag and rownumber information to stdout, if it exists
+      if (rownumber.ne.0) write(*,*) "Density file has row number:   ",rownumber
       if (hashtag.ne."X") then
          write(*,*) "Density file has hashtag:      ",hashtag
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     find the unique filename from the hashtag via the python script and write to stdout
-         CALL EXECUTE_COMMAND_LINE("python3.8 ../common-densities/unique-filename-from-hashtag-short.py "//
+c     wait for up to 15 seconds for a reply from the script. If no reply, proceed without
+         call EXECUTE_COMMAND_LINE("python ../common-densities/find_uniquefilename_from_hashtag.py "//
      &        hashtag//" > "//hashtag, WAIT=.True.,EXITSTAT=test)
+c     The following doulc be used to implement a timeout after 15 seconds -- you will need to set WATI=.False. above.
+c     However, the python process continues in the background and would have to be killed separately, even after fortran has ended.
+c     Is something like this is needed, it may be better to implement it via a timeout in the python script,
+c     see second answer in https://stackoverflow.com/questions/492519/timeout-on-a-function-call
+c         do jump=1,15           ! wait for up to 15 seconds
+c            call sleep(1)
+            inquire(file=hashtag,size=fileSize)
+c            if (fileSize.gt.0) exit
+c         end do
 
-         OPEN(unit=99,file=hashtag)
-         DO
-            READ(99,*,IOSTAT=test) dummy
-            IF (test.EQ.0) THEN
-               uniquefilename = dummy
-            ELSE
-               EXIT
-            END IF
-         END DO
-c         READ(99,*) 
-c         READ(99,*) 
-c         READ(99,*) 
-c         READ(99,*) uniquefilename
-         CLOSE(99)
-         write(*,*) "Density hashtag translates into unique filename: "
-         write(*,*) "    ",uniquefilename
-         CALL EXECUTE_COMMAND_LINE("rm -rf "//hashtag, WAIT=.True.,EXITSTAT=test)
+c     if file size is big enough, then assume we deal with a legitimate python output
+            if (fileSize.gt.200) then
+c           identify last line of file as the uniquefilename    
+               open(unit=99,file=hashtag)
+               do
+                  read(99,*,IOSTAT=jump) dummy
+                  if (jump.eq.0) then
+                     uniquefilename = dummy
+                  else
+                     exit
+                  end if
+               end do
+               close(99)
+c     if what is extracted as "uniquefilename" has maore than 200 characters, it's very likely the actual unique filename
+            if (len(uniquefilename).ge.200) then
+               write(*,*) "Density hashtag translates into unique filename: "
+               write(*,*) "    ",uniquefilename
+               call EXECUTE_COMMAND_LINE("rm -rf "//hashtag, WAIT=.True.,EXITSTAT=test)
+            else
+               write(*,*) "   Python script did not return uniquefilename. -- Proceeding without uniquefilename."
+            end if
+c         else
+c            write(*,*) "   Python script did not return uniquefilename within 15 seconds. -- Proceeding without uniquefilename."
+         end if
       end if
       
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc

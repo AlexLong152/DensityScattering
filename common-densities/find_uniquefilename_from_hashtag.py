@@ -1,3 +1,15 @@
+# hgrie Nov 2023:, based on files by Alexander Long and Andreas Nogga
+# get the uniquefilename from a specific hashtag
+# needs the indiex file densities_table.h5 of densities
+# or an internet connection to download it into directory common-densities/
+#
+# This construcion should *NOT* need any fiddling with individual directory structures.
+#
+# run via >> python3.8 find_uniquefilename_from_hashtag.py <hashtag>
+#
+# Is also called inside fortran density code by read2Ndensity()
+# to provide the unique filename to stdout if hashtag provided as part of density filename.
+#
 import sys
 import os 
 import pandas as pd
@@ -15,9 +27,9 @@ from nucdens import access
 
 
 # open database using the mirror on datapub  
-densdb=access.database(workdir="./",webbase="https://datapub.fz-juelich.de/anogga/files/densindx/")
+densdb=access.database(workdir="./",webbase="https://datapub.fz-juelich.de/anogga/files/densindx/") # original by Andreas
 
-# print all entries but restrict tto limited number of columns
+# print all entries but restrict to limited number of columns
 
 colsel=["kind","Z","N","MODENN","orderNN","LambdaNN","tnforder","c1","c3","c4","cd","ce","cE1","cE3","lambdaSRGNN","srgwf","relcalc","omega","theta","qmom","uniquefilename"]
 
