@@ -106,15 +106,103 @@ c     following are definitions for possible cross checks below
       integer twoMz,twoMzp  ! magnetic quantum numbers of in/out target nucleus, times 2. 
       integer alpha2N,alpha2Np    
       real*8 :: ffpairs,ffnn,ffnp,ffpp
+
+      character*64  hashtag
+      character*4   rowstring
+      integer       rownumber
+      character*500 uniquefilename
+      character*500 dummy
+
+      integer fileSize
       
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       write(*,*) "*********************** 2N DENSITY MATRIX PARAMETERS ***************************"
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     if densityFileName contains hashtag of 64 characters (marked by "hash="), then isolate it
       
+      if (index(densityFileName,'hash=').ne.0.) then
+         dummy = densityFileName(INDEX(densityFileName,'hash=')+5:)
+         hashtag = dummy(:INDEX(dummy,'-'))
+         if (len(hashtag).ne.64) then
+            write(*,*) "ERROR: Presumed hash ",hashtag," is NOT 64 characters long. -- Exiting."
+            stop
+         end if
+         if (VERIFY(hashtag,"12345677890abcdef").ne.0) then
+            write(*,*) "ERROR: Presumed hash ",hashtag," has characters which are not compatible with a hexadecimal. -- Exiting."
+            stop
+         end if
+      else
+         hashtag = "X"
+         write(*,*) "   Density filename does not contain hashtag. => Cannot provide uniquefilename."
+      end if
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     if densityFileName contains rownumber (marked by "row="), then isolate it: rownumber is interpreted as everything before ".h5"
+         if (index(densityFileName,'row=').ne.0.) then
+            dummy = densityFileName(INDEX(densityFileName,'row=')+4:)
+            rowstring = dummy(:INDEX(dummy,'.h5')-1)
+            if (VERIFY(rowstring," 1234567890").ne.0) then
+               write(*,*) "ERROR: Presumed rownumber ",rowstring," not a number. --  Proceeding without it."
+               rownumber = 0
+               stop
+            else
+               read(rowstring,*) rownumber
+               write(rowstring,'(I0.4)') rownumber
+            end if
+         else
+            rownumber = 0
+            write(*,*) "   Density filename does not contain row number."
+         end if
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     print hashtag and rownumber information to stdout, if it exists
+      if (rownumber.ne.0) write(*,*) "Density file has row number:   ",rownumber
+      if (hashtag.ne."X") then
+         write(*,*) "Density file has hashtag:      ",hashtag
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     find the unique filename from the hashtag via the python script and write to stdout
+c     wait for up to 15 seconds for a reply from the script. If no reply, proceed without
+         call EXECUTE_COMMAND_LINE("python ../common-densities/find_uniquefilename_from_hashtag.py "//
+     &        hashtag//" > "//hashtag, WAIT=.True.,EXITSTAT=test)
+c     The following doulc be used to implement a timeout after 15 seconds -- you will need to set WATI=.False. above.
+c     However, the python process continues in the background and would have to be killed separately, even after fortran has ended.
+c     Is something like this is needed, it may be better to implement it via a timeout in the python script,
+c     see second answer in https://stackoverflow.com/questions/492519/timeout-on-a-function-call
+c         do jump=1,15           ! wait for up to 15 seconds
+c            call sleep(1)
+            inquire(file=hashtag,size=fileSize)
+c            if (fileSize.gt.0) exit
+c         end do
+
+c     if file size is big enough, then assume we deal with a legitimate python output
+            if (fileSize.gt.200) then
+c           identify last line of file as the uniquefilename    
+               open(unit=99,file=hashtag)
+               do
+                  read(99,*,IOSTAT=jump) dummy
+                  if (jump.eq.0) then
+                     uniquefilename = dummy
+                  else
+                     exit
+                  end if
+               end do
+               close(99)
+c     if what is extracted as "uniquefilename" has maore than 200 characters, it's very likely the actual unique filename
+            if (len(uniquefilename).ge.200) then
+               write(*,*) "Density hashtag translates into unique filename: "
+               write(*,*) "    ",uniquefilename
+               call EXECUTE_COMMAND_LINE("rm -rf "//hashtag, WAIT=.True.,EXITSTAT=test)
+            else
+               write(*,*) "   Python script did not return uniquefilename. -- Proceeding without uniquefilename."
+            end if
+c         else
+c            write(*,*) "   Python script did not return uniquefilename within 15 seconds. -- Proceeding without uniquefilename."
+         end if
+      end if
+      
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     prepare MPI and distributions of processors; parameters are in parallel.dat
       CALL initparallel
 
-c     cannot call fiollowing because defs of parameters in precision.mod clashes with our defs
+c     cannot call following because defs of parameters in precision.mod clashes with our defs
 c      if (verbosity.ge.1) CALL print_eps ! prints information to STDOUT
 
 c printout statistics on the processors used; info on parallel module   

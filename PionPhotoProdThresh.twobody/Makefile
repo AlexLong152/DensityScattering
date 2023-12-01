@@ -1,5 +1,6 @@
 
 SHELL=/bin/sh
+# hgrie Nov 2023: uses user-specific path to hd5 library
 #	hgrie May 2018: rewritten for hdf5 and parallel processing (mpi)
 # This makefile is used as follows ([option] last):
 # make -f makefile		-> compile with FFLAGS (usually non-optimized)
@@ -119,12 +120,22 @@ CFT=  mpif90
 # hgrie May 2019: included new flag -mcmodel=large to allow for larger arrays
 FFLAGS= -O -fopenmp -g -c -Wall -Wno-tabs -ffixed-line-length-132  \
 	-ffpe-summary=none  -mcmodel=large \
-	-I../common-densities/density-modules -I../common-densities -I /usr/include/hdf5/openmpi/
+	-I../common-densities/density-modules -I../common-densities
+
+UNAME := $(shell echo $USER)
+
+ifeq ($(USER),hgrie)
+	FFLAGS += -I /usr/include/hdf5/openmpi/
+else ifeq ($(USER),alex) # your username
+	FFLAGS += -I /usr/include/ #whatever your path is
+else ifeq ($(USER),along) # your username
+	FFLAGS += -I /usr/include/ #whatever your path is
+endif
 
 # library for density
      LIBSTD1 = -L../common-densities/density-modules -ldensity
      LIBSTD2 = -llapack
-     LIBSTD3 = -L /usr/lib/x86_64-linux-gnu/hdf5/openmpi/ 
+     LIBSTD3 = 
      LIBSTD4 = -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5
      LIBSTD5 = -llapack -lgomp -ldl -lz -lsz
      LIBSTD6 = 
@@ -132,6 +143,15 @@ FFLAGS= -O -fopenmp -g -c -Wall -Wno-tabs -ffixed-line-length-132  \
      LIBSTD8 = 
 
 LDFLAGS= $(LIBSTD1) $(LIBSTD2) $(LIBSTD3) $(LIBSTD4) $(LIBSTD5) $(LIBSTD6) $(LIBSTD7) $(LIBSTD8)
+
+ifeq ($(USER),hgrie)
+	LDFLAGS += -L /usr/lib/x86_64-linux-gnu/hdf5/openmpi/ 
+else ifeq ($(USER),alex) # your username
+	LDFLAGS += -L /usr/lib/  -I /usr/include/ #whatever your path is
+else ifeq ($(USER),along) # your username
+	LDFLAGS += -L /usr/lib/  -I /usr/include/ #whatever your path is
+endif
+
 LIBS=  
 COMMAND= twobodyvia2Ndensity.PionPhotoProdThresh
 
