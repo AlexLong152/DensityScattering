@@ -84,11 +84,6 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     OUTPUT VARIABLES:
       
       complex*16,intent(out) :: Kernel2B(1:extQnumlimit,0:1,-1:1,0:1,-1:1) ! was Comp2Bxx/xy/yx/yy
-c     complex*16 Kernel2BVec(1:extQnumlimit,0:1,-1:1,0:1,-1:1) ! was Comp2Bxx/xy/yx/yy
-c      complex*16,intent(out) :: Comp2Bx(0:1,-1:1,0:1,-1:1) ! for STUMP, see below
-c      complex*16,intent(out) :: Comp2By(0:1,-1:1,0:1,-1:1) ! for STUMP, see below
-c      complex*16,intent(out) :: Comp2Bpx(0:1,-1:1,0:1,-1:1) ! for STUMP, see below
-c      complex*16,intent(out) :: Comp2Bpy(0:1,-1:1,0:1,-1:1) ! for STUMP, see below
 c     
 c     Note that Kernel2B.. computes the amplitude for extQnums
 c     Indices: 1st: extQnum
@@ -124,7 +119,8 @@ c     LOCAL VARIABLES:
       real*8 factorA,factorB
       real*8 factorAvec,factorBvec
       real*8 factorAasy,factorBasy
-      real*8 kVec(3)
+      real*8 kVec(3),q1(3)
+      real*8 mNucl,mPion
 c     
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     
@@ -145,42 +141,20 @@ c
 c     First a little initialization:
 c     
       Kernel2B=c0
-c      Comp2Bx=c0 ! for STUMP, see below
-c      Comp2By=c0 ! for STUMP, see below
-c      Comp2Bpx=c0 ! for STUMP, see below
-c      Comp2Bpy=c0 ! for STUMP, see below
       dl12by2=(l12-l12p)/2.d0   !to check if l12-l12p is  even or odd
 c     
 c     Calculate momenta q,q',q':
 c     
-      call CalculateQs(qx,qy,qz,q12x,q12y,q12z,qpx,qpy,qpz,
-     &     qp12x,qp12y,qp12z,qppx,qppy,qppz,qpp12x,qpp12y,qpp12z,
-     &     qpppx,qpppy,qpppz,qppp12x,qppp12y,qppp12z,
-     &     qsq,qpsq,qppsq,qpppsq,q12sq,qp12sq,qpp12sq,qppp12sq,px,py,pz,
-     &     ppx,ppy,ppz,
-     &     k,thetacm,verbosity)
-
-c     p=(/px,py,pz/)
-c     pp=(/ppx,ppy,ppz/)
-c     q=(/qx,qy,qz/)
-c     qp=(/qpx, qpy, qpz/)
-c     qpp=(/qppx, qppy, qppz/)
-c     q12=(/q12x, q12y, q12z/)
-c     qp12=(/qp12x,qp12y,qp12z/)
 
        p=(/px,py,pz/)
        pp=(/ppx,ppy,ppz/)
-       q=(/qx,qy,qz/)
-       qp=(/qpx,qpy,qpz/)
-       qpp=(/qppx,qppy,qppz/)
-       q12=(/q12x,q12y,q12z/)
-       qp12=(/qp12x,qp12y,qp12z/)
-       qpp12=(/qpp12x,qpp12y,qpp12z/)
-       qppp=(/qpppx,qpppy,qpppz/)
-       qppp12=(/qppp12x,qppp12y,qppp12z/)
        kVec=(/0.d0,0.d0,real(k,8)/)
+       mPion=134.976
+c      mPion=0.d0 ! for testing
+       mNucl=M3He
+       call calculateqsmass(p,pp,q,k,q1,kVec,thetacm,mPion,mNucl,verbosity)
 
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Odelta0 2N contributions: NONE
 c     <if they were nonzero, enter diagrams here>
@@ -190,10 +164,6 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Odelta2 2N contributions
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     
-c     factorA=  -(-1)**(t12)*(1.d0/((px-ppx)**2+(py-ppy)**2+(pz-ppz+k/2)**2))*(2*Pi)**3/HC
-c     factorB=+2*(-1)**(t12)*(1.d0/((px-ppx)**2+(py-ppy)**2+(pz-ppz+k/2)**2))*
-c    &     (1.d0/((px-ppx)**2+(py-ppy)**2+(pz-ppz-k/2)**2+mpi2))*(2*Pi)**3/HC
-
       tmpVec=p-pp+(kVec/2)
       tmpVec2=p-pp-(kVec/2)
 
@@ -220,8 +190,6 @@ c     antisymmetric part: turns out to be the same, only the vaue of t12 will be
      &           s12p,s12,extQnumlimit,verbosity)
          else                   ! s12 question: s12-s12p=±1 => l12-l12p is odd; spin anti-symmetric part only
 c     
-
-
             call CalcKernel2BAasy(Kernel2B,
      &           factorAasy,
      &           s12p,s12,extQnumlimit,verbosity)
