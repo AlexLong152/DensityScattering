@@ -50,9 +50,9 @@ c
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     output as human readable number to stdout            
       if (verbosity.ge.0) then
+      do extQnum=1,extQnumlimit
          do twoMzp=twoSnucl,-twoSnucl,-2
             do twoMz=twoSnucl,-twoSnucl,-2
-               do extQnum=1,extQnumlimit
                   write (*,'(A,I4,A,I4,A,I4,A,F24.19,SP,F24.19," i")') !E30.19 for exponential form 0.123.....E-56
      &                 "Result(exQnum=",extQnum,",twoMzp=",twoMzp,", twoMz=",twoMz,"): ",Result(extQnum,twoMzp,twoMz)
                end do           ! extQnum
@@ -61,13 +61,13 @@ c     output as human readable number to stdout
       end if                    ! verbosity
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc      
 c     output to file
+      do extQnum=1,extQnumlimit
       do twoMzp=twoSnucl,-twoSnucl,-2
          do twoMz=twoSnucl,-twoSnucl,-2
-            do extQnum=1,extQnumlimit
                write (outUnitno,*) Result(extQnum,twoMzp,twoMz)
-            end do              ! extQnum
          end do                 ! twoMz
       end do                    ! twoMzp
+      end do !extQnum
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc 
 c     hgrie Aug 2020: if so wanted, output first independent MEs also to screen in a form that can directly be pasted into mathematica
       if (verbosity.ge.0) call outputtomath(Result,twoSnucl,extQnumlimit,verbosity)
