@@ -249,7 +249,7 @@ c     if you have 1 argument, write it to inputfile, otherwise stop
 c     
 c     
 c**********************************************************************
-c     Report kernel process and version
+c     Report kernel process and version -- KernelGreeting() set in <process-dir>/2BKernel*.f
       call KernelGreeting(verbosity)
       
 c**********************************************************************
@@ -397,6 +397,11 @@ c**********************************************************************
                   end do          !s12
                end do             !j12
             end do                !mt12
+c**********************************************************************
+c     hgrie Dec 2023: print  to stdout description of computed quantity, used symmetry/-ies and mapping of extQnum
+c            KernelFarewell() set in <process-dir>/2BKernel*.f
+      call KernelFarewell(extQnumlimit,symmetry,verbosity)
+      
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     hgrie May 2018: output to file, to stdout(if wanted) and to mathematica friendly format (if wanted)
             call outputroutine(outUnitno,twoSnucl,extQnumlimit,

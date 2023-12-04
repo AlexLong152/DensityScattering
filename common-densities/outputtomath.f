@@ -15,7 +15,10 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     CHANGES:
 c     v1.0 Nov 2023: New, identical to file of same name in common-densities/ of Compton density code v2.0 hgrie Oct 2022
 c           New documentation -- kept only documentation of changes in Compton if relevant/enlightening for this code. 
-c           No back-compatibility 
+c           No back-compatibility
+c     Order of output changed from Conpton code: run first over extQnum=1 starting at Mzp=max and Mz=mad, then Mz=max-1 etc,
+c     then Mzp=max-1 etc, until extQnum=1, Mzp=-max, Mz=-max;
+c     -- then continue with extQnum=2 by same fashion
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     COMMENTS:
 c
@@ -50,18 +53,18 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c output ALL amplitudes when symmetry NOT invoked        
       write(*,'(A,I2,A,I2,A,I4,A)') "Mathematica-friendly output: all ",extQnumlimit,
      &     "*",(twoSnucl+1)**2," = ", extQnumlimit*(twoSnucl+1)**2," amplitudes (some related by symmetries):"
-      write(*,*)    "   [Sequence counting down from max values: extqnum∈[1;extQnumlimit], Mzp∈[S;-S], Mz∈[S;-S]"
+      write(*,*)    "   [Sequence: extQnum∈[1;extQnumlimit] (outmost), Mzp∈[S;-S], Mz∈[S;-S] (innermost)]"
       string = ""               ! initialise
-      do  twoMzp=twoSnucl,-twoSnucl,-2
-         do twoMz=twoSnucl,-twoSnucl,-2
-            do extQnum=1,extQnumlimit
+      do extQnum=1,extQnumlimit
+         do  twoMzp=twoSnucl,-twoSnucl,-2
+            do twoMz=twoSnucl,-twoSnucl,-2
                write(string,'(SP,"(",E24.18,",",E24.18,")")') Result(extQnum,twoMzp,twoMz)
                call ConvertComplexToMath(string)
                longstring = trim(adjustl(longstring)) // string // ","
                call StripSpaces(longstring)
-            end do              ! extQnum
-         end do                 ! twoMz
-      end do                    ! twoMzp
+            end do              ! twoMz
+         end do                 ! twoMzp
+      end do                    ! extQnum
 
       longstring = '{' // trim(adjustl(longstring)) // '}'    
       longstring = longstring(:index(longstring,",}")-1) // "}"

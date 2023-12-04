@@ -62,16 +62,15 @@ c     output as human readable number to stdout
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc      
 c     output to file
       do extQnum=1,extQnumlimit
-      do twoMzp=twoSnucl,-twoSnucl,-2
-         do twoMz=twoSnucl,-twoSnucl,-2
+         do twoMzp=twoSnucl,-twoSnucl,-2
+            do twoMz=twoSnucl,-twoSnucl,-2
                write (outUnitno,*) Result(extQnum,twoMzp,twoMz)
-         end do                 ! twoMz
-      end do                    ! twoMzp
-      end do !extQnum
+            end do              ! twoMz
+         end do                 ! twoMzp
+      end do                    ! extQnum
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc 
 c     hgrie Aug 2020: if so wanted, output first independent MEs also to screen in a form that can directly be pasted into mathematica
       if (verbosity.ge.0) call outputtomath(Result,twoSnucl,extQnumlimit,verbosity)
 
-      
       return
       end                       ! outputroutine
