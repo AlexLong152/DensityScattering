@@ -35,7 +35,7 @@ c
         real*8 Pi
         complex*16 ci,c0
 c
-        real*8 M6Li,M4He,M3He,Md,Mproton,Mneutron,Mnucleon,B
+        real*8 M6Li,M4He,M3He,Md,Mproton,Mneutron,Mnucleon,Binding
 	real*8 mpi,mpi0,HC,fpi,ga,kappap,kappan,ep,en,alphaem
         real*8 muv,mup,mun
         real*8 kappas,kappanu
@@ -71,8 +71,8 @@ c	parameter (ga=sqrt(gpinn*4.d0*Pi)*fpi/M)
 
 c        parameter (gafac2=gpinn/(2.d0*Mnucleon**2))
         parameter (converttomicrobarns=0.38939*1000000000.0d0)
-        parameter (B=2.2246)
-	parameter (Md=2*Mnucleon-B)
+        parameter (Binding=2.2246)
+	parameter (Md=2*Mnucleon-Binding)
 
 c 	better define following via mass of nucleon constituents minus binding energy, or binding energy as difference?  			   
         parameter (M3He=2808.4d0,M4He=3727.4d0)
