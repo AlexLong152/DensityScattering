@@ -192,33 +192,33 @@ c     Determine number of external quantum numbers
 c     first need to work over double-digist, then single-digits -- or else "extQnumlimit=16" is set to 1, not 16.
          if (index(calcstring,'extQnumlimit=11').ne.0) then
             extQnumlimit = 11
-         else  if (index(calcstring,'extQnumlimit=12').ne.0) then
+         else if (index(calcstring,'extQnumlimit=12').ne.0) then
             extQnumlimit = 12
-         else  if (index(calcstring,'extQnumlimit=13').ne.0) then
+         else if (index(calcstring,'extQnumlimit=13').ne.0) then
             extQnumlimit = 13
-         else  if (index(calcstring,'extQnumlimit=14').ne.0) then
+         else if (index(calcstring,'extQnumlimit=14').ne.0) then
             extQnumlimit = 14
-         else  if (index(calcstring,'extQnumlimit=15').ne.0) then
+         else if (index(calcstring,'extQnumlimit=15').ne.0) then
             extQnumlimit = 15
-         else  if (index(calcstring,'extQnumlimit=16').ne.0) then
+         else if (index(calcstring,'extQnumlimit=16').ne.0) then
             extQnumlimit = 16
-         else if (index(calcstring,'extQnumlimit= 1').ne.0) then
+         else if (index(calcstring,'extQnumlimit=1').ne.0) then
             extQnumlimit = 1
-         else  if (index(calcstring,'extQnumlimit=2').ne.0) then
+         else if (index(calcstring,'extQnumlimit=2').ne.0) then
             extQnumlimit = 2
-         else  if (index(calcstring,'extQnumlimit=3').ne.0) then
+         else if (index(calcstring,'extQnumlimit=3').ne.0) then
             extQnumlimit = 3
-         else  if (index(calcstring,'extQnumlimit=4').ne.0) then
+         else if (index(calcstring,'extQnumlimit=4').ne.0) then
             extQnumlimit = 4
-         else  if (index(calcstring,'extQnumlimit=5').ne.0) then
+         else if (index(calcstring,'extQnumlimit=5').ne.0) then
             extQnumlimit = 5
          else  if (index(calcstring,'extQnumlimit=6').ne.0) then
             extQnumlimit = 6
-         else  if (index(calcstring,'extQnumlimit=7').ne.0) then
+         else if (index(calcstring,'extQnumlimit=7').ne.0) then
             extQnumlimit = 7
-         else  if (index(calcstring,'extQnumlimit=8').ne.0) then
+         else if (index(calcstring,'extQnumlimit=8').ne.0) then
             extQnumlimit = 8
-         else  if (index(calcstring,'extQnumlimit=9').ne.0) then
+         else if (index(calcstring,'extQnumlimit=9').ne.0) then
             extQnumlimit = 9
          else
             write(*,*) "*** ERROR: Input attempted to set extQnumlimit to number not natural and between 1 and 16. -- Exiting."
@@ -250,7 +250,7 @@ c
       end if
       
       if (symmetry.ne.0) then
-         write(*,'(A,I3)') "Calculate amplitudes amplitudes using symmetry() of process, variant number ",symmetry
+         write(*,'(A,I3)') "Calculate amplitudes using symmetry() of process, variant number ",symmetry
          write(*,*) " === Usesymmetry() NOT YET IMPLEMENTED. ==="
       else
 c     add here call to a subroutine for specific message what symmetry implemented -- needs to be part of kernel directory!
