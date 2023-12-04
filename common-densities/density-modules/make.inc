@@ -13,7 +13,9 @@ ifeq ($(USER),hgrie)
 else ifeq ($(USER),alex) # your username
      LIBSTD2 =	 #whatever your path is
 else ifeq ($(USER),along) # your username
-     LIBSTD2 =   #whatever your path is
+     LIBSTD2 = -L /usr/lib/x86_64-linux-gnu/hdf5/openmpi/ 
+     LIBSTD3 = -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5
+     LIBSTD4 = -llapack -lgomp -ldl -lz -lsz
 endif	
      LIBSTD3 = -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5
      LIBSTD4 = -llapack -lgomp -ldl -lz -lsz
