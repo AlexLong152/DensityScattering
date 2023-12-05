@@ -20,7 +20,7 @@ c
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-      subroutine Calculate2BIntegralI2(Int2B,
+      subroutine Calculate2BIntegralI2(Int2B,Mnucl,
 c     &     Int2Bx,Int2By,Int2Bpx,Int2Bpy, ! for STUMP, see below
      &     extQnumlimit,
      &     j12p,m12p,l12p,s12p,t12p,mt12p,j12,m12,
@@ -44,7 +44,7 @@ c     INPUT VARIABLES:
       integer,intent(in) :: t12p,t12,mt12p,mt12
       
       real*8,intent(in) :: thetacm,k,th12(Nangmax),phi12(Nangmax)
-      
+      real*8, intent(in) :: Mnucl
       integer,intent(in) :: AngularType12
       real*8,intent(in) :: angweight12(Nangmax,Nangmax)
       integer,intent(in) :: calctype,verbosity
@@ -156,8 +156,7 @@ c     angle integral: φprime of p12p
      &                          th12(jth),phi12(jphi),verbosity)
                            call getsphericalharmonics(Yl12p,l12p,th12(jth),phi12(jphi))
                            Yl12pstar=Real(Yl12p(ml12p))-ci*Imag(Yl12p(ml12p))
-                           call Calc2Bspinisospintrans(Kernel2B,
-c     &                          Compton2Bx,Compton2By,Compton2Bpx,Compton2Bpy, ! for STUMP, see below
+                           call Calc2Bspinisospintrans(Kernel2B,Mnucl,
      &                          extQnumlimit,
      &                          t12,mt12,t12p,mt12p,l12,
      &                          s12,l12p,s12p,thetacm,k,p12x,p12y,p12z,

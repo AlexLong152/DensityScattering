@@ -103,7 +103,6 @@ c     INPUT VARIABLES:
       integer,intent(in) :: verbosity
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     LOCAL VARIABLES:
-
       real*8 tmpVec(3), tmpVec2(3)
       real*8 pVec(3), ppVec(3)
       real*8 qpx,qpy,qpz, qpVec(3)

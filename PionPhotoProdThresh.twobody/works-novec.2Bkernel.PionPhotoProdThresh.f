@@ -103,13 +103,12 @@ c     INPUT VARIABLES:
       integer,intent(in) :: verbosity
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     LOCAL VARIABLES:
-
       real*8 tmpVec(3), tmpVec2(3)
-      real*8 pVec(3), ppVec(3)
-      real*8 qpx,qpy,qpz, qpVec(3)
-      real*8 qppx,qppy,qppz, qppVec(3)
-      real*8 qx,qy,qz, qVec(3)
-      real*8 q12x,q12y,q12z, q12Vec(3)
+      real*8 p(3), pp(3)
+      real*8 qpx,qpy,qpz, qp(3)
+      real*8 qppx,qppy,qppz, qpp(3)
+      real*8 qx,qy,qz, q(3)
+      real*8 q12x,q12y,q12z, q12(3)
       real*8 qp12x,qp12y,qp12z, qp12(3)
       real*8 qpp12x,qpp12y,qpp12z, qpp12(3)
       real*8 qsq,qpsq,qppsq,q12sq,qp12sq,qpp12sq
@@ -120,8 +119,8 @@ c     LOCAL VARIABLES:
       real*8 factorA,factorB
       real*8 factorAvec,factorBvec
       real*8 factorAasy,factorBasy
-      real*8 kVec(3),q1Vec(3)
-      real*8 mPion, Mnucl
+      real*8 kVec(3),q1(3)
+      real*8 mNucl,mPion
 c     
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     
@@ -147,11 +146,13 @@ c
 c     Calculate momenta q,q',q':
 c     
 
-       pVec=(/px,py,pz/)
-       ppVec=(/ppx,ppy,ppz/)
+       p=(/px,py,pz/)
+       pp=(/ppx,ppy,ppz/)
        kVec=(/0.d0,0.d0,real(k,8)/)
        mPion=134.976
-       call calculateqsmass(pVec,ppVec,qVec,k,q1Vec,kVec,thetacm,mPion,Mnucl,verbosity)
+c      mPion=0.d0 ! for testing
+       mNucl=M3He
+       call calculateqsmass(p,pp,q,k,q1,kVec,thetacm,mPion,mNucl,verbosity)
 
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -163,8 +164,8 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Odelta2 2N contributions
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     
-      tmpVec=pVec-ppVec+(kVec/2)
-      tmpVec2=pVec-ppVec-(kVec/2)
+      tmpVec=p-pp+(kVec/2)
+      tmpVec2=p-pp-(kVec/2)
 
       factorA=-(-1)**(t12)*(1.d0/(DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
       factorB=+2*(-1)**(t12)*(1.d0/
@@ -184,8 +185,8 @@ c     antisymmetric part: turns out to be the same, only the vaue of t12 will be
      &           s12p,s12,extQnumlimit,verbosity)
             call CalcKernel2BBsymVec(Kernel2B,
      &           factorB,
-     &           pVec-ppVec-(kVec/2), ! preceding is vector dotted with σ
-     &           pVec-ppVec, ! preceding is vector dotted with ε
+     &           p-pp-(kVec/2), ! preceding is vector dotted with σ
+     &           p-pp, ! preceding is vector dotted with ε
      &           s12p,s12,extQnumlimit,verbosity)
          else                   ! s12 question: s12-s12p=±1 => l12-l12p is odd; spin anti-symmetric part only
 c     
@@ -194,8 +195,8 @@ c
      &           s12p,s12,extQnumlimit,verbosity)
             call CalcKernel2BBasyVec(Kernel2B,
      &           factorBasy,
-     &           pVec-ppVec-(kVec/2), ! preceding is vector dotted with σ
-     &           pVec-ppVec, ! preceding is vector dotted with ε
+     &           p-pp-(kVec/2), ! preceding is vector dotted with σ
+     &           p-pp, ! preceding is vector dotted with ε
      &           s12p,s12,extQnumlimit,verbosity)
 
 

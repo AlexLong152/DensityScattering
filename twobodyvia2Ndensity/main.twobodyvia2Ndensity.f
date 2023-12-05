@@ -384,7 +384,7 @@ c**********************************************************************
                         do m12=-j12,j12             ! spin projection (12)
                            do ip12=1,NP12           ! integration over momentum magnitude (12)
                               call twobodyfinalstatesumsvia2Ndensity(
-     &                             Result,
+     &                             Result,Mnucl,
      &                             Anucl,twoSnucl,extQnumlimit,j12,m12,l12,s12,t12,mt12,
      &                             k,thetacm,
      &                             ip12,P12MAG(ip12),AP12MAG(ip12),     
