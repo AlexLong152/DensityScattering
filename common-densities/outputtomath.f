@@ -52,17 +52,16 @@ c output ALL amplitudes when symmetry NOT invoked
      &     "*",(twoSnucl+1)**2," = ", extQnumlimit*(twoSnucl+1)**2," amplitudes (some related by symmetries):"
       write(*,*)    "   [Sequence counting down from max values: extqnum∈[1;extQnumlimit], Mzp∈[S;-S], Mz∈[S;-S]"
       string = ""               ! initialise
+      do extQnum=1,extQnumlimit
       do  twoMzp=twoSnucl,-twoSnucl,-2
          do twoMz=twoSnucl,-twoSnucl,-2
-            do extQnum=1,extQnumlimit
                write(string,'(SP,"(",E24.18,",",E24.18,")")') Result(extQnum,twoMzp,twoMz)
                call ConvertComplexToMath(string)
                longstring = trim(adjustl(longstring)) // string // ","
                call StripSpaces(longstring)
-            end do              ! extQnum
          end do                 ! twoMz
       end do                    ! twoMzp
-
+      end do              ! extQnum
       longstring = '{' // trim(adjustl(longstring)) // '}'    
       longstring = longstring(:index(longstring,",}")-1) // "}"
       write(*,*) '        ',trim(adjustl(longstring))    
