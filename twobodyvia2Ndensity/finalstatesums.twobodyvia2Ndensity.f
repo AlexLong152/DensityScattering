@@ -29,7 +29,7 @@ c     integration for theta & phi separately, for solid angle integral in (12) s
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       subroutine twobodyfinalstatesumsvia2Ndensity(
-     &     Result,
+     &     Result,Mnucl,
      &     Anucl,twoSnucl,extQnumlimit,j12,m12,l12,s12,t12,mt12,
      &     k,thetacm,
      &     ip12,p12,wp12,
@@ -61,6 +61,7 @@ c     INPUT VARIABLES:
       integer,intent(in) :: AngularType12
       real*8,intent(in)  :: angweight12(Nangmax,Nangmax)
       integer,intent(in) :: calctype,symmetry,verbosity
+      real*8, intent(in) :: Mnucl
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     OUTPUT VARIABLES:
@@ -101,7 +102,7 @@ c     Angular-momentum sums are implemented exactly as in one-body version of th
 c     
                   do ip12p=1,NP12 ! mag of momentum (12) subsystem
 c
-                     call Calculate2BIntegralI2(Int2B,
+                     call Calculate2BIntegralI2(Int2B,Mnucl,
 c     &                    Int2Bx,Int2By,Int2Bpx,Int2Bpy, ! for STUMP, see below
      &                    extQnumlimit,
      &                    j12p,m12p,l12p,s12p,t12p,mt12p,
