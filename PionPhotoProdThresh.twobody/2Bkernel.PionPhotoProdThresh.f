@@ -65,6 +65,7 @@ c         write(*,*) "        Symmetry imposed: ME(extQnum=1) =  ME(extQnum=1) u
       end if
       write(*,*)
       
+      if (extQnumlimit.eq.1000) continue
       if (verbosity.eq.1000) continue
       end
 c     
