@@ -5,6 +5,8 @@ c               Based on Compton density code v2.0: D. Phillips/A. Nogga/hgrie s
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     CONTAINS SUBROUTINES:
 c              KernelGreeting         : output to stdout with message which process computed and its version number
+c              KernelFarewell         : output to stdout with message which described computed quantity,
+c                                       symmetry/-ies used and mapping of extQnum
 c              Calc2Bspinisospintrans : compute total kernel by calling all diagrams up to given order
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     TO DO:
@@ -37,6 +39,33 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       write(*,*) "      Alexander Long/hgrie starting November 2023   "
       write(*,*)
       
+      if (verbosity.eq.1000) continue
+      end
+c     
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     hgrie Nov 2023: show kernel process and version
+c     included here since will change when kernel changes
+      subroutine KernelFarewell(extQnumlimit,symmetry,verbosity)
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+      implicit none
+      integer,intent(in) :: extQnumlimit,symmetry
+      integer,intent(in) :: verbosity         ! verbosity index for stdout
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     show what is outputted, and its units
+      write(*,*) "Output: F_{L/T} ε.S^Mprime_M = < Mprime | kernel | M > Lenkewitz Eur. Phys. J. A (2013) 49:20 eq (10)"
+      write(*,*) "        with ε: incoming-photon polarisation, S: nucleus spin; [F_{L/T}]=[fm]¯¹"
+      write(*,*) "        Mapping of extQnum: 1 = ε_x, 2 = ε_y (both transversal); 3 = ε_z (longitudinal)"
+c     characterise symmetry/-ies, if any used.
+      If (symmetry.eq.0) then
+         write(*,*) "        No symmetries used."
+c     following is a STUMP/SKETCH what symmetry outoput could be
+c     else if (symmetry.eq.1) then
+c         write(*,*) "        Symmetry imposed: ME(extQnum=1) =  ME(extQnum=1) up to sign." ! better specify signs!!
+      end if
+      write(*,*)
+      
+      if (extQnumlimit.eq.1000) continue
       if (verbosity.eq.1000) continue
       end
 c     
