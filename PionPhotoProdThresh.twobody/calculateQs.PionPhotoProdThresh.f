@@ -92,7 +92,7 @@ c     Kinematics for pion photoproduction
 c     Derivation for the kinematics can be found in pionpionAngle.pdf
 c     OneDrive/thesis/Kinematics/pionpionAngle.pdf
 c     The conversion from lenkewitz to our variables is found in
-c     OneDrive/thesis/NeutralPionDerivation/Alex-TwobodyDiagrams-AandB
+c     DensityScattering/documentation/pionpionangle.pdf
 
       implicit none
 c
