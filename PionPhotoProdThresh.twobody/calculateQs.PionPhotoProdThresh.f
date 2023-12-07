@@ -110,9 +110,6 @@ c     temporary variables
       real*8 Epion, mandalS, ENuc, kpsq, kpAbs, omegaThreshold
       real*8 kp(3), q(3)
       real*8 q1(3), kVec(3)
-      real*8 k1(3), k2(3), k1p(3),k2p(3)
-c     real*8 p12(3), p12p(3)
-c     real*8 qx,qy,qz
 c**********************************************************************      
 c
 c     

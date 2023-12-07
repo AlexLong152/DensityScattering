@@ -5,8 +5,6 @@ c               Based on Compton density code v2.0: D. Phillips/A. Nogga/hgrie s
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     CONTAINS SUBROUTINES:
 c              KernelGreeting         : output to stdout with message which process computed and its version number
-c              KernelFarewell         : output to stdout with message which described computed quantity,
-c                                       symmetry/-ies used and mapping of extQnum
 c              Calc2Bspinisospintrans : compute total kernel by calling all diagrams up to given order
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     TO DO:
@@ -39,33 +37,6 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       write(*,*) "      Alexander Long/hgrie starting November 2023   "
       write(*,*)
       
-      if (verbosity.eq.1000) continue
-      end
-c     
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     hgrie Nov 2023: show kernel process and version
-c     included here since will change when kernel changes
-      subroutine KernelFarewell(extQnumlimit,symmetry,verbosity)
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-      implicit none
-      integer,intent(in) :: extQnumlimit,symmetry
-      integer,intent(in) :: verbosity         ! verbosity index for stdout
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     show what is outputted, and its units
-      write(*,*) "Output: F_{L/T} ε.S^Mprime_M = < Mprime | kernel | M > Lenkewitz Eur. Phys. J. A (2013) 49:20 eq (10)"
-      write(*,*) "        with ε: incoming-photon polarisation, S: nucleus spin; [F_{L/T}]=[fm]¯¹"
-      write(*,*) "        Mapping of extQnum: 1 = ε_x, 2 = ε_y (both transversal); 3 = ε_z (longitudinal)"
-c     characterise symmetry/-ies, if any used.
-      If (symmetry.eq.0) then
-         write(*,*) "        No symmetries used."
-c     following is a STUMP/SKETCH what symmetry outoput could be
-c     else if (symmetry.eq.1) then
-c         write(*,*) "        Symmetry imposed: ME(extQnum=1) =  ME(extQnum=1) up to sign." ! better specify signs!!
-      end if
-      write(*,*)
-      
-      if (extQnumlimit.eq.1000) continue
       if (verbosity.eq.1000) continue
       end
 c     
@@ -135,19 +106,9 @@ c     LOCAL VARIABLES:
 
       real*8 tmpVec(3), tmpVec2(3)
       real*8 pVec(3), ppVec(3)
-      real*8 qpx,qpy,qpz, qpVec(3)
-      real*8 qppx,qppy,qppz, qppVec(3)
-      real*8 qx,qy,qz, qVec(3)
-      real*8 q12x,q12y,q12z, q12Vec(3)
-      real*8 qp12x,qp12y,qp12z, qp12(3)
-      real*8 qpp12x,qpp12y,qpp12z, qpp12(3)
-      real*8 qsq,qpsq,qppsq,q12sq,qp12sq,qpp12sq
-      real*8 qpppx,qpppy,qpppz, qppp(3)
-      real*8 qppp12x,qppp12y,qppp12z, qppp12(3)
-      real*8 qpppsq,qppp12sq
+      real*8 qVec(3)
       real*8 dl12by2
-      real*8 factorA,factorB
-      real*8 factorAvec,factorBvec
+      real*8 factorAsym,factorBsym
       real*8 factorAasy,factorBasy
       real*8 kVec(3),q1Vec(3)
       real*8 mPion, Mnucl
@@ -195,24 +156,24 @@ c
       tmpVec=pVec-ppVec+(kVec/2)
       tmpVec2=pVec-ppVec-(kVec/2)
 
-      factorA=-(-1)**(t12)*(1.d0/(DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
-      factorB=+2*(-1)**(t12)*(1.d0/
+      factorAsym=-(-1)**(t12)*(1.d0/(DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
+      factorBsym=+2*(-1)**(t12)*(1.d0/
      &            DOT_PRODUCT(tmpVec,tmpVec))*
      &            (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
      &         *(2*Pi)**3/HC
 
 c     antisymmetric part: turns out to be the same, only the vaue of t12 will be different
-      factorAasy=factorA
-      factorBasy=factorB
+      factorAasy=factorAsym
+      factorBasy=factorBsym
       
       if ((t12 .eq. t12p) .and. (mt12 .eq. 0) .and.(mt12p .eq. 0)) then
          if (s12p .eq. s12) then ! s12-s12p=0 => l12-l12p is even; spin symmetric part only
 
             call CalcKernel2BAsym(Kernel2B,
-     &           factorA,
+     &           factorAsym,
      &           s12p,s12,extQnumlimit,verbosity)
             call CalcKernel2BBsymVec(Kernel2B,
-     &           factorB,
+     &           factorBsym,
      &           pVec-ppVec-(kVec/2), ! preceding is vector dotted with σ
      &           pVec-ppVec, ! preceding is vector dotted with ε
      &           s12p,s12,extQnumlimit,verbosity)
