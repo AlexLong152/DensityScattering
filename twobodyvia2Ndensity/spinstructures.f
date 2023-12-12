@@ -53,6 +53,41 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c====================================================================
 c
+c     Order of arguments is
+c     hold(Sp,Msp,S,Ms)
+
+      subroutine twosigmas(hold,A,Sp,S,verbosity)
+c     Calculates part of spin structure <Sp,mp|σ1.A σ2.A|S,m>
+      implicit none
+      include '../common-densities/constants.def'
+c     
+c********************************************************************
+c     OUTPUT VARIABLES:
+c     
+      real*16,intent(out) :: hold(0:1,-1:1,0:1,-1:1)
+c     
+c********************************************************************
+c     INPUT VARIABLES:
+      real*8,intent(in)  :: A(3)
+      integer,intent(in) :: verbosity
+      integer,intent(in) :: Sp,S
+c     
+c     Sp,S-final- and initial-state spin
+c     
+c********************************************************************
+c     LOCAL VARIABLES:
+c
+
+      complex*16 holdtmp(0:1,-1:1,0:1,-1:1)
+      real*8 Bx,By,Bz
+      Bx=A(1)
+      By=A(2)
+      Bz=A(3)
+
+      call doublesigmasym(holdtmp,A(1),A(2),A(3),Bx,By,Bz,Sp,S,verbosity)
+      hold=0.5*real(holdtmp)
+      end subroutine
+
       subroutine doublesigmasym(hold,Ax,Ay,Az,Bx,By,Bz,Sp,S,verbosity)
 c     
 c     Calculates symmetric part of spin structure σ1.A σ2.B: σ1.A σ2.B + σ1.B σ2.A

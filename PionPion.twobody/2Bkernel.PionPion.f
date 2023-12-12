@@ -131,7 +131,9 @@ c     INPUT VARIABLES:
       integer,intent(in) :: verbosity
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     LOCAL VARIABLES:
-
+      real*8 identity(3,3)
+      integer i
+      real*8 isospinFactor(0:1,-1:1,0:1,-1:1)
       real*8 tmpVec(3), tmpVec2(3)
       real*8 pVec(3), ppVec(3)
       real*8 qVec(3)
@@ -140,6 +142,7 @@ c     LOCAL VARIABLES:
       real*8 factorAasy,factorBasy
       real*8 kVec(3),q1Vec(3)
       real*8 mPion, Mnucl
+      real*8 isospin(3)
 c     
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     
@@ -159,6 +162,12 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     
 c     First a little initialization:
 c     
+
+      identity=RESHAPE(
+     &(/1.d0,0.d0,0.d0,
+     & 0.d0,1.d0,0.d0,
+     & 0.d0,0.d0,1.d0/), (/3,3/))
+
       Kernel2B=c0
       dl12by2=(l12-l12p)/2.d0   !to check if l12-l12p is  even or odd
 c     
@@ -184,22 +193,30 @@ c
       tmpVec=pVec-ppVec+(kVec/2)
       tmpVec2=pVec-ppVec-(kVec/2)
 
-
-      factorAsym
-      factorBsym
+      factorAsym=1.d0
+      factorBsym=1.d0
 c     antisymmetric part: turns out to be the same, only the vaue of t12 will be different
       factorAasy=factorAsym
       factorBasy=factorBsym
-      
-      if ((t12 .eq. t12p) .and. (mt12 .eq. 0) .and.(mt12p .eq. 0)) then
+c     if ((t12 .eq. t12p) .and. (mt12 .eq. 0) .and.(mt12p .eq. 0)) then
+      if ((t12 .eq. t12p) .and. (mt12 .eq. mt12p)) then
+          do i=1,3
+            call twosigmas(isospinFactor,identity(i,:),t12p,t12,verbosity)
+            write(*,*) isospinFactor(t12p,mt12p,t12,mt12)
+            isospin(i)=Real(((2*t12*(t12+1))-3),8)+isospinFactor(t12p,mt12p,t12,mt12)! index i runs over extQNum
+          end do
+
          if (s12p .eq. s12) then ! s12-s12p=0 => l12-l12p is even; spin symmetric part only
-
+            call CalcKernel2BAsym(Kernel2B,isospin,
+     &           factorAsym,
+     &           s12p,s12,extQnumlimit,verbosity)
          else                   ! s12 question: s12-s12p=±1 => l12-l12p is odd; spin anti-symmetric part only
-
+c           call CalcKernel2BAasy(Kernel2B,isospin,
+c    &           factorAasy,
+c    &           s12p,s12,extQnumlimit,verbosity)
          end if                 ! s12 question
-      else                      ! t12!=t12p
-         continue
-c     diagrams (A/B) have no components with t12!=t12p. 
+c     else                      ! t12!=t12p
+c        continue
       end if                    !t12 question
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     end Odelta2 2N contributions
