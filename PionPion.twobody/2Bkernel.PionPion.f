@@ -131,7 +131,7 @@ c     INPUT VARIABLES:
       integer,intent(in) :: verbosity
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     LOCAL VARIABLES:
-      real*8 identity(3,3)
+      real*8 identity(3,3), tmp(3)
       integer i
       real*8 isospinFactor(0:1,-1:1,0:1,-1:1)
       real*8 tmpVec(3), tmpVec2(3)
@@ -195,15 +195,16 @@ c
 
       factorAsym=1.d0
       factorBsym=1.d0
+      isospin=1.d0
 c     antisymmetric part: turns out to be the same, only the vaue of t12 will be different
       factorAasy=factorAsym
       factorBasy=factorBsym
 c     if ((t12 .eq. t12p) .and. (mt12 .eq. 0) .and.(mt12p .eq. 0)) then
       if ((t12 .eq. t12p) .and. (mt12 .eq. mt12p)) then
           do i=1,3
-            call twosigmas(isospinFactor,identity(i,:),t12p,t12,verbosity)
-            write(*,*) isospinFactor(t12p,mt12p,t12,mt12)
-            isospin(i)=Real(((2*t12*(t12+1))-3),8)+isospinFactor(t12p,mt12p,t12,mt12)! index i runs over extQNum
+            tmp=identity(i,:)
+            call twosigmas(isospinFactor,tmp,t12p,t12,verbosity)
+            isospin(i)=(2*t12*(t12+1))-3+isospinFactor(t12p,mt12p,t12,mt12)
           end do
 
          if (s12p .eq. s12) then ! s12-s12p=0 => l12-l12p is even; spin symmetric part only
