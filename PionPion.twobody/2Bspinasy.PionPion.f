@@ -25,7 +25,7 @@ c     twoSmax/twoMz dependence: none, only on quantum numbers of (12) subsystem
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       
-      subroutine CalcKernel2BAasy(Kernel2B,
+      subroutine CalcKernel2BAasy(Kernel2B,isospin,
      &     factor,
      &     Sp,S,extQnumlimit,verbosity)
 c     
@@ -50,7 +50,7 @@ c
 c********************************************************************
 c     INPUT VARIABLES:
 c     
-      real*8,intent(in)  :: factor
+      real*8,intent(in)  :: factor, isospin(3)
       integer,intent(in) :: Sp,S
       integer,intent(in) :: extQnumlimit
       integer,intent(in) :: verbosity
@@ -60,90 +60,21 @@ c     LOCAL VARIABLES:
 c      
       complex*16 hold(0:1,-1:1,0:1,-1:1)
       integer Msp,Ms
+      integer extQnum
 c     
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     εx:
-      call singlesigmaasy(hold,1.d0,0.d0,0.d0,Sp,S,verbosity)
-      do Msp=-Sp,Sp
-         do Ms=-S,S
-            Kernel2B(1,Sp,Msp,S,Ms) = Kernel2B(1,Sp,Msp,S,Ms) + factor*hold(Sp,Msp,S,Ms)
-         end do
-      end do  
-c     εy: 
-      call singlesigmaasy(hold,0.d0,1.d0,0.d0,Sp,S,verbosity)
-      do Msp=-Sp,Sp
-         do Ms=-S,S
-            Kernel2B(2,Sp,Msp,S,Ms) = Kernel2B(2,Sp,Msp,S,Ms) + factor*hold(Sp,Msp,S,Ms)
-         end do
-      end do  
-c     εz:  
-      call singlesigmaasy(hold,0.d0,0.d0,1.d0,Sp,S,verbosity)
-      do Msp=-Sp,Sp
-         do Ms=-S,S
-            Kernel2B(3,Sp,Msp,S,Ms) = Kernel2B(3,Sp,Msp,S,Ms) + factor*hold(Sp,Msp,S,Ms)
-         end do
-      end do  
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc 
       
+      hold=cmplx(1.d0,0.d0)!TODO: populate with actual spin dependence
+      do extQnum=1,3
+      do Msp=-Sp,Sp
+      do Ms=-S,S
+            Kernel2B(extQnum,Sp,Msp,S,Ms) = Kernel2B(extQnum,Sp,Msp,S,Ms) + factor*hold(Sp,Msp,S,Ms)*isospin(extQnum)
+      end do
+      end do
+      end do 
+c     
       if (verbosity.eq.1000) continue
       return
       end
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     
-
-      subroutine CalcKernel2BBasyVec(Kernel2B,
-     &     factor,
-     &     A,B, ! A.σ, B.ε
-     &     Sp,S,extQnumlimit,verbosity)    
-c     
-c********************************************************************
-c     
-c     Calculates diagram B
-c     
-c********************************************************************
-c     
-      implicit none
-c     
-c********************************************************************
-c     
-      include '../common-densities/constants.def'
-c     
-c********************************************************************
-c     INPUT/OUTPUT VARIABLES:
-c     
-      complex*16,intent(inout) :: Kernel2B(1:extQnumlimit,0:1,-1:1,0:1,-1:1)
-c      complex*16 Kernel2Bpx(0:1,-1:1,0:1,-1:1),Kernel2Bpy(0:1,-1:1,0:1,-1:1)
-      
-c********************************************************************
-c     INPUT VARIABLES:
-c     
-      real*8,intent(in)  :: factor
-      real*8,intent(in)  :: A(3), B(3)
-      integer,intent(in) :: Sp,S
-      integer,intent(in) :: extQnumlimit
-      integer,intent(in) :: verbosity
-c     
-c********************************************************************
-c     LOCAL VARIABLES:
-c      
-      complex*16 hold(0:1,-1:1,0:1,-1:1)
-      integer Msp,Ms
-c     
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-      call singlesigmaasy(hold,A(1),A(2),A(3),Sp,S,verbosity)
-      do Msp=-Sp,Sp
-         do Ms=-S,S
-c     εx:
-            Kernel2B(1,Sp,Msp,S,Ms) = Kernel2B(1,Sp,Msp,S,Ms) + factor*hold(Sp,Msp,S,Ms)*B(1)
-c     εy:
-            Kernel2B(2,Sp,Msp,S,Ms) = Kernel2B(2,Sp,Msp,S,Ms) + factor*hold(Sp,Msp,S,Ms)*B(2)
-c     εz:
-            Kernel2B(3,Sp,Msp,S,Ms) = Kernel2B(3,Sp,Msp,S,Ms) + factor*hold(Sp,Msp,S,Ms)*B(3)
-         end do
-      end do  
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc 
-      
-      if (verbosity.eq.1000) continue
-      return
-      end

@@ -141,6 +141,7 @@ c     LOCAL VARIABLES:
       real*8 factorAasy,factorBasy
       real*8 kVec(3),q1Vec(3)
       real*8 mPion, Mnucl
+      real*8 mu
 c     
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     
@@ -165,7 +166,7 @@ c
 c     
 c     Calculate momenta q,q',q':
 c     
-
+      
        pVec=(/px,py,pz/)
        ppVec=(/ppx,ppy,ppz/)
        kVec=(/0.d0,0.d0,real(k,8)/)
@@ -184,10 +185,10 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     
       tmpVec=pVec-ppVec+(kVec/2)
       tmpVec2=pVec-ppVec-(kVec/2)
-
-      factorAsym=-(-1)**(t12)*(1.d0/(DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
+      mu=1.d0
+      factorAsym=-(-1)**(t12)*(1.d0/(mu+DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
       factorBsym=+2*(-1)**(t12)*(1.d0/
-     &            DOT_PRODUCT(tmpVec,tmpVec))*
+     &            DOT_PRODUCT(tmpVec,tmpVec)+mu)*
      &            (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
      &         *(2*Pi)**3/HC
 

@@ -129,38 +129,60 @@ c     q1:First propogatior for diagram B, q1=q-k
 
       kVec=(/0.d0,0.d0,k/)
       kp=(/0.d0,kpAbs*sin(thetacm), kpAbs*cos(thetacm)/)
-c     p=(/px,py,pz/)
-c     pp=(/ppx,ppy,ppz/)
-
-c     k1=p-(kVec/2)
-c     k2=(-1*p)-(kVec/2)
-c     k1p=pp-(kp/2)
-c     k2p=(-1*pp)-kp/2
-
       q = (p-pp)+((kVec+kp)/2)
-c     q1 = (p-pp)+((kp-kVec)/2)
       q1 = q-k
-c     write(*,*) "#################################################################################"
-c     write(*,*) "In calcmomenta.f: Epion=",Epion 
-c     write(*,*) "In calcmomenta.f: mandalS=",mandalS 
-c     write(*,*) "In calcmomenta.f: kpsq=",kpsq 
-c     write(*,*) "kp=",kp 
-c     write(*,*) "#################################################################################"
-c     write(*,*) "In calcmomenta kpAbs=", kpAbs
-c     write(*,*) "In calcmomenta q=", q
-c     write(*,*) ""
-c     write(*,*) "In common-densities/calcmomenta.f" 
-c     write(*,*) "Check equality of the next few"
-c     write(*,*) "Check from density: k?=omega:  k=", k
-c     write(*,*) ""
-c     write(*,*) "omega check with mandal: omega = k= s-M^2/(2sqrt(s))"
-c     write(*,*) "k?=(mandalS-M*M)/(2*sqrt(s))",k,"?=",(mandalS-mNucl*mNucl)/(2*sqrt(mandalS))
-c     write(*,*) ""
-c     write(*,*) "E_pion check with mandalstam"
-c     write(*,*) "E_pi= sqrt(m^2+k'^2)=(s+m^2-M^2)/(2sqrt(s)) -- Next line"
-c     write(*,*) sqrt(mPion**2+kpsq),"?=",(mandalS+mPion**2-mNucl**2)/(2*sqrt(mandalS))
-c     write(*,*) "#################################################################################"
-c     write(*,*) ""
+      if (verbosity.eq.1000) continue
+      return
+      end 
+
+      subroutine calculateqs2Mass(p,pp,q,k,kVec,kpVec,thetacm,m1,mNucl,verbosity)
+c     Kinematics for pion pion Scattering
+c     Derivation for the kinematics can be found in pionpionAngle.pdf
+c     OneDrive/thesis/Kinematics/pionpionAngle.pdf
+c     The conversion from lenkewitz to our variables is found in
+c     DensityScattering/documentation/pionpionangle.pdf
+
+      implicit none
+c
+c**********************************************************************
+c
+c  Input variables:
+c
+      real*8 p(3), pp(3), k,thetacm, mPion, mNucl
+      integer verbosity 
+c
+c**********************************************************************
+c
+c     temporary variables
+    
+      real*8 Epion, mandalS, ENuc, kpsq, kpAbs
+      real*8 kpVec(3), q(3)
+      real*8 q1(3), kVec(3)
+      real*8 m1
+c**********************************************************************      
+c     current implimentation is for elastic scattering based on the below
+c     https://edu.itp.phys.ethz.ch/hs10/ppp1/PPP1_2.pdf
+c     
+c     s =(p+k)^2=[(E_nuc, 0,0,-omega) + (omega, 0,0,omega)]^2
+c     s = (E_nuc+omega)^2
+c     mpi and mpi0 are pion mass in MeV defined in ../common-densities/constants.def
+c     Internal Variables first     
+
+c     VARIABLE DESCRIPTIONS
+c     -----------------------------------------------
+c     q: propgator for diagram A, note q=q_2, the second propogator for diagram B
+c     q1:First propogatior for diagram B, q1=q-k
+c     omegaThreshold=(mPion*(mPion+2*mNucl))/(2*(m1+mNucl))
+      ENuc=sqrt((mNucl**2) + (k**2))
+      mandalS=(ENuc + k)**2 !lab frame
+c     Epion=(mandalS+(m1**2)-(mNucl**2))/(2*sqrt(mandalS))
+c     kpsq=(((mandalS+mPion**2-mNucl**2)**2)/(4*mandalS))-mPion**2
+      kpAbs=sqrt((1/(4*mandalS))*(mandalS-(m1+mNucl)**2)*(mandalS-(m1-mNucl)**2))
+
+      kVec=(/0.d0,0.d0,k/)
+      kpVec=(/0.d0,kpAbs*sin(thetacm), kpAbs*cos(thetacm)/)
+      q = (p-pp)+((kVec+kpVec)/2)
+c     q1 = q-k
       if (verbosity.eq.1000) continue
       return
       end 

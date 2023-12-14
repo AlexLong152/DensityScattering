@@ -58,11 +58,15 @@ c     LOCAL VARIABLES:
 c      
       complex*16 hold(0:1,-1:1,0:1,-1:1)
       integer Msp,Ms, extQnum
-      hold=cmplx(1.d0,0.d0)!TODO: populate with actual spin dependence
+      real*8 tmp,tmp2, ddelta
+     
+c     hold=cmplx(1.d0,0.d0)!TODO: populate with actual spin dependence
       do extQnum=1,3
       do Msp=-Sp,Sp
       do Ms=-S,S
-            Kernel2B(extQnum,Sp,Msp,S,Ms) = Kernel2B(extQnum,Sp,Msp,S,Ms) + factor*hold(Sp,Msp,S,Ms)*isospin(extQnum)
+            tmp=ddelta(Sp,S)
+            tmp2=ddelta(Msp,Ms)
+            Kernel2B(extQnum,Sp,Msp,S,Ms) = Kernel2B(extQnum,Sp,Msp,S,Ms) + factor*isospin(extQnum)*tmp*tmp2
       end do
       end do
       end do 
@@ -71,3 +75,13 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       if (verbosity.eq.1000) continue
       return
       end
+
+      real*8 function ddelta(a,b)
+      implicit none
+      integer, intent(in) :: a,b
+      if (a.eq.b) then
+          ddelta=1.d0  
+      else
+          ddelta=0.d0
+      end if
+      end function ddelta
