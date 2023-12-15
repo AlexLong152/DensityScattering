@@ -137,7 +137,7 @@ c     LOCAL VARIABLES:
       real*8 pVec(3), ppVec(3)
       real*8 qVec(3)
       real*8 dl12by2
-      real*8 factorAsym,factorBsym
+      real*8 factorAsym,factorBsym,factorB2,factorA2
       real*8 factorAasy,factorBasy
       real*8 kVec(3),q1Vec(3)
       real*8 mPion, Mnucl
@@ -187,11 +187,24 @@ c
       tmpVec2=pVec-ppVec-(kVec/2)
       mu=1.d0
       factorAsym=-(-1)**(t12)*(1.d0/(mu+DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
-      factorBsym=+2*(-1)**(t12)*(1.d0/
-     &            DOT_PRODUCT(tmpVec,tmpVec)+mu)*
+      factorBsym=+2*(-1)**(t12)*(1.d0/(
+     &            DOT_PRODUCT(tmpVec,tmpVec)+mu))*
      &            (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
      &         *(2*Pi)**3/HC
-
+c     mu=10.d0
+c     factorA2=-(-1)**(t12)*(1.d0/(mu+DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
+c     factorB2=+2*(-1)**(t12)*(1.d0/(
+c    &            DOT_PRODUCT(tmpVec,tmpVec)+mu))*
+c    &            (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
+c    &         *(2*Pi)**3/HC
+c     write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: Initial factorAsym=",factorAsym 
+c     write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: factorA2=",factorA2 
+c     write(*,*) "ratio is",factorAsym/factorA2
+c     write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: Initial factorBsym=",factorBsym 
+c     write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: factorB2=",factorB2 
+c     write(*,*) "ratio is",factorBsym/factorB2
+c     write(*,*) "====================================================================="
+c     write(*,*) "====================================================================="
 c     antisymmetric part: turns out to be the same, only the vaue of t12 will be different
       factorAasy=factorAsym
       factorBasy=factorBsym

@@ -180,7 +180,6 @@ c
        ppVec=(/ppx,ppy,ppz/)
        kVec=(/0.d0,0.d0,real(k,8)/)
        mPion=134.976
-c      call calculateqsmass(pVec,ppVec,qVec,k,q1Vec,kVec,thetacm,mPion,Mnucl,verbosity)
        call calculateqs2Mass(pVec,ppVec,qVec,k,kVec,kpVec,thetacm,mPion,mNucl,verbosity)
 
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -199,8 +198,9 @@ c
       Epi=(mPion**2 + DOT_PRODUCT(kpVec,kpVec))
 
 c     fpi=92.42 defined in constants.def
-      factorAsym=((1/2*fpi)**4)*(Epi+q0)**2/(DOT_PRODUCT(qVec,qVec))
+      factorAsym=((1/(2*fpi))**4)*(Epi+q0)**2/(DOT_PRODUCT(qVec,qVec))
       factorAasy=factorAsym
+
 c     if ((t12 .eq. t12p) .and. (mt12 .eq. 0) .and.(mt12p .eq. 0)) then
       if ((t12 .eq. t12p) .and. (mt12 .eq. mt12p)) then
           do i=1,3
@@ -213,12 +213,10 @@ c     if ((t12 .eq. t12p) .and. (mt12 .eq. 0) .and.(mt12p .eq. 0)) then
             call CalcKernel2BAsym(Kernel2B,isospin,
      &           factorAsym,
      &           s12p,s12,extQnumlimit,verbosity)
-c           write(*,*) "Kernel2B="
-c           write(*,*) Kernel2B
          else                   ! s12 question: s12-s12p=±1 => l12-l12p is odd; spin anti-symmetric part only
-c           call CalcKernel2BAasy(Kernel2B,isospin,
-c    &           factorAasy,
-c    &           s12p,s12,extQnumlimit,verbosity)
+            call CalcKernel2BAasy(Kernel2B,isospin,
+     &           factorAasy,
+     &           s12p,s12,extQnumlimit,verbosity)
          end if                 ! s12 question
 c     else                      ! t12!=t12p
 c        continue

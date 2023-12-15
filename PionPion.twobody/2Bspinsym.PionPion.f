@@ -60,7 +60,7 @@ c
       integer Msp,Ms, extQnum
       real*8 tmp,tmp2, ddelta
      
-c     hold=cmplx(1.d0,0.d0)!TODO: populate with actual spin dependence
+c     hold = identity in this case since theres no explicit spin depedence, only isospin
       do extQnum=1,3
       do Msp=-Sp,Sp
       do Ms=-S,S

@@ -36,20 +36,16 @@ c
 c********************************************************************
 c     
       implicit none
-c     
-c********************************************************************
-c     
       include '../common-densities/constants.def'
 c     
 c********************************************************************
-c     INPUT/OUTPUT VARIABLE:
+c     INPUT/OUTPUT VARIABLES:
 c     
       complex*16,intent(inout) :: Kernel2B(1:extQnumlimit,0:1,-1:1,0:1,-1:1)
-c      complex*16 Kernel2Bpx(0:1,-1:1,0:1,-1:1),Kernel2Bpy(0:1,-1:1,0:1,-1:1)
-c     
 c********************************************************************
 c     INPUT VARIABLES:
 c     
+
       real*8,intent(in)  :: factor, isospin(3)
       integer,intent(in) :: Sp,S
       integer,intent(in) :: extQnumlimit
@@ -59,22 +55,21 @@ c********************************************************************
 c     LOCAL VARIABLES:
 c      
       complex*16 hold(0:1,-1:1,0:1,-1:1)
-      integer Msp,Ms
-      integer extQnum
-c     
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-      
-      hold=cmplx(1.d0,0.d0)!TODO: populate with actual spin dependence
+      integer Msp,Ms, extQnum
+      real*8 tmp,tmp2, ddelta
+     
+c     hold = identity in this case since theres no explicit spin depedence, only isospin
       do extQnum=1,3
       do Msp=-Sp,Sp
       do Ms=-S,S
-            Kernel2B(extQnum,Sp,Msp,S,Ms) = Kernel2B(extQnum,Sp,Msp,S,Ms) + factor*hold(Sp,Msp,S,Ms)*isospin(extQnum)
+            tmp=ddelta(Sp,S)!ddelta defined in 2Bspinsym.PionPion
+            tmp2=ddelta(Msp,Ms)
+            Kernel2B(extQnum,Sp,Msp,S,Ms) = Kernel2B(extQnum,Sp,Msp,S,Ms) + factor*isospin(extQnum)*tmp*tmp2
       end do
       end do
       end do 
 c     
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       if (verbosity.eq.1000) continue
       return
       end
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc

@@ -141,21 +141,16 @@ c     Derivation for the kinematics can be found in pionpionAngle.pdf
 c     OneDrive/thesis/Kinematics/pionpionAngle.pdf
 c     The conversion from lenkewitz to our variables is found in
 c     DensityScattering/documentation/pionpionangle.pdf
-
       implicit none
-c
 c**********************************************************************
-c
 c  Input variables:
-c
       real*8 p(3), pp(3), k,thetacm, mPion, mNucl
       integer verbosity 
-c
 c**********************************************************************
 c
 c     temporary variables
     
-      real*8 Epion, mandalS, ENuc, kpsq, kpAbs
+      real*8 Epion, mandalS, ENuc, kpsq, kpAbs, E1
       real*8 kpVec(3), q(3)
       real*8 q1(3), kVec(3)
       real*8 m1
@@ -173,13 +168,14 @@ c     -----------------------------------------------
 c     q: propgator for diagram A, note q=q_2, the second propogator for diagram B
 c     q1:First propogatior for diagram B, q1=q-k
 c     omegaThreshold=(mPion*(mPion+2*mNucl))/(2*(m1+mNucl))
-      ENuc=sqrt((mNucl**2) + (k**2))
-      mandalS=(ENuc + k)**2 !lab frame
-c     Epion=(mandalS+(m1**2)-(mNucl**2))/(2*sqrt(mandalS))
-c     kpsq=(((mandalS+mPion**2-mNucl**2)**2)/(4*mandalS))-mPion**2
-      kpAbs=sqrt((1/(4*mandalS))*(mandalS-(m1+mNucl)**2)*(mandalS-(m1-mNucl)**2))
-
       kVec=(/0.d0,0.d0,k/)
+      ENuc=sqrt((mNucl**2) + (k**2))
+      E1=sqrt(m1**2+DOT_PRODUCT(kVec,kVec))
+      mandalS=(ENuc + E1)**2 !lab frame
+      kpAbs=(1/(4*mandalS))*(mandalS-(m1+mNucl)**2)*(mandalS-(m1-mNucl)**2)
+
+      kpAbs=sqrt(kpAbs)
+c     TODO: fix qVec is NaN
       kpVec=(/0.d0,kpAbs*sin(thetacm), kpAbs*cos(thetacm)/)
       q = (p-pp)+((kVec+kpVec)/2)
 c     q1 = q-k
