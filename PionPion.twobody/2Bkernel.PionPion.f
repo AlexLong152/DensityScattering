@@ -149,23 +149,28 @@ c     LOCAL VARIABLES:
       real*8 q(3), q1(3)
       real*8 kp(3), kp2Mass
       real*8 kpPion(3)
+      real*8 tmpk
 c     
-      write(*,*) "k=",k
+c     TODO: Fix this jank
+      tmpk=k
+      if (tmpk.le.131.89) then
+          tmpk=131.89
+      end if
       mPion=134.976
 c     call calculateqs2Mass(pVec,ppVec,qVec,k,kVec,kpVec,thetacm,mPion,mNucl,verbosity)
       m1=mNucl
       m2=0.d0!photon
       m3=mNucl
       m4=mPion
-      kVec=(/0.d0,0.d0,real(k,8)/)
+      kVec=(/0.d0,0.d0,real(tmpk,8)/)! TODO: Fix tmpk here when fixed the jank above
 
       pVec=(/px,py,pz/)
       ppVec=(/ppx,ppy,ppz/)
       kp2Mass=0.d0
       kpPion=0.d0
       call calculateqs2Mass(pVec,ppVec,kVec,kp2Mass,m1,m2,m3,m4,thetacm,verbosity)
-      call calculateqsmass(pVec,ppVec,q,k,q1,kVec,kpPion,thetacm,mPion,mNucl,verbosity)
-c     write(*,*) "2Mass, kp=",kp2Mass
-c     write(*,*) "qsMass, kp=", kpPion
+      call calculateqsmass(pVec,ppVec,q,tmpk,q1,kVec,kpPion,thetacm,mPion,mNucl,verbosity)!pion photoproduction specific
+      write(*,*) ""
+      write(*,*) ""
       if (verbosity.eq.1000) continue
       end

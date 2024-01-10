@@ -129,6 +129,8 @@ c     q1:First propogatior for diagram B, q1=q-k
 
       kVec=(/0.d0,0.d0,k/)
       kp=(/0.d0,kpAbs*sin(thetacm), kpAbs*cos(thetacm)/)
+      write(*,*) "pion photoproduction"
+      write(*,*) "In calculateQs.PionPion.f: kp=",kp 
       q = (p-pp)+((kVec+kp)/2)
       q1 = q-k
       if (verbosity.eq.1000) continue
@@ -185,20 +187,18 @@ c     Internal variables
       E4=E1+E2-E3
       E4check=(1/(2*sqrt(mandalS)))*(mandalS+m4*m4-m3*m3)
       kpSquare=E4*E4-m4*m4
-      if ((kpSquare.le.0).and.(kpSquare.ge.-4.d0)) then
-          kpSquare=0
-      end if
+      kpAbs=sqrt(kpSquare)
       
 c     write(*,*) "E1?=E1check",E1,E1check
 c     write(*,*) "E2?=E2check",E2,E2check
 c     write(*,*) "E2=",E2
-      write(*,*) "E4?=E4check",E4,E4check
+c     write(*,*) "E4?=E4check",E4,E4check
 c     write(*,*) "Total check", E1+E2,E3+E4
-      write(*,*) "kpSquare=",kpSquare
+c     write(*,*) "kpSquare=",kpSquare
       kp=(/0.d0,kpAbs*sin(thetacm), kpAbs*cos(thetacm)/)!TODO: get this working by finding kpAbs
-c     write(*,*) "thetacm=",thetacm
-c     write(*,*) "kpAbs=",kpAbs
-c     write(*,*) kpAbs*sin(thetacm), kpAbs*cos(thetacm)
+c     write(*,*) "In calculateQs.PionPion.f: kpAbs=",kpAbs 
+      write(*,*) "General calculation"
+      write(*,*) "In calculateQs.PionPion.f: kp=",kp 
       if (verbosity.eq.1000) continue
       return
       end 
