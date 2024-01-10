@@ -145,27 +145,102 @@ c     LOCAL VARIABLES:
       real*8 mPion, Mnucl,Epi,q0!, Fpi
       real*8 isospin(3)
       real*8 mu
-      real*8 m1,m2,m3,m4
-      real*8 q(3), q1(3)
-      real*8 kp(3), kp2Mass
-      real*8 kpPion(3)
 c     
-      write(*,*) "k=",k
-      mPion=134.976
-c     call calculateqs2Mass(pVec,ppVec,qVec,k,kVec,kpVec,thetacm,mPion,mNucl,verbosity)
-      m1=mNucl
-      m2=0.d0!photon
-      m3=mNucl
-      m4=mPion
-      kVec=(/0.d0,0.d0,real(k,8)/)
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     
+c     Definitions of momenta repeated here for convenience
+c     (All quantities in this comment to be read as vectors)
+c
+c     XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+c     
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     
+c     Factors:
+c      
+c     XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX     
+c     
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+*************************************************************************************
+c     
+c     First a little initialization:
+c     
 
-      pVec=(/px,py,pz/)
-      ppVec=(/ppx,ppy,ppz/)
-      kp2Mass=0.d0
-      kpPion=0.d0
-      call calculateqs2Mass(pVec,ppVec,kVec,kp2Mass,m1,m2,m3,m4,thetacm,verbosity)
-      call calculateqsmass(pVec,ppVec,q,k,q1,kVec,kpPion,thetacm,mPion,mNucl,verbosity)
-c     write(*,*) "2Mass, kp=",kp2Mass
-c     write(*,*) "qsMass, kp=", kpPion
+      identity=RESHAPE(
+     &(/1.d0,0.d0,0.d0,
+     & 0.d0,1.d0,0.d0,
+     & 0.d0,0.d0,1.d0/), (/3,3/))
+
+      Kernel2B=c0
+      dl12by2=(l12-l12p)/2.d0   !to check if l12-l12p is  even or odd
+c     
+c     Calculate momenta q,q',q':
+c     
+
+       pVec=(/px,py,pz/)
+       ppVec=(/ppx,ppy,ppz/)
+       kVec=(/0.d0,0.d0,real(k,8)/)
+       mPion=134.976
+       call calculateqs2Mass(pVec,ppVec,qVec,k,kVec,kpVec,thetacm,mPion,mNucl,verbosity)!TODO: check this
+
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     Odelta0 2N contributions: NONE
+c     <if they were nonzero, enter diagrams here>
+      if (calctype.eq.Odelta0) return
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     Odelta2 2N contributions
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     
+      tmpVec=pVec-ppVec+(kVec/2)
+      tmpVec2=pVec-ppVec-(kVec/2)
+      q0=(mPion**2 + DOT_PRODUCT(qVec,qVec))
+      Epi=(mPion**2 + DOT_PRODUCT(kpVec,kpVec))
+
+c     fpi=92.42 defined in constants.def
+      factorAsym=((1/(2*fpi))**4)*(Epi+q0)**2/(DOT_PRODUCT(qVec,qVec))
+      factorAasy=factorAsym
+
+c     if ((t12 .eq. t12p) .and. (mt12 .eq. 0) .and.(mt12p .eq. 0)) then
+      if ((t12 .eq. t12p) .and. (mt12 .eq. mt12p)) then
+          do i=1,3
+            tmp=identity(i,:)
+            call twosigmas(isospinFactor,tmp,t12p,t12,verbosity)
+            isospin(i)=(2*t12*(t12+1))-3+isospinFactor(t12p,mt12p,t12,mt12)
+          end do
+
+         if (s12p .eq. s12) then ! s12-s12p=0 => l12-l12p is even; spin symmetric part only
+            call CalcKernel2BAsym(Kernel2B,isospin,
+     &           factorAsym,
+     &           s12p,s12,extQnumlimit,verbosity)
+         else                   ! s12 question: s12-s12p=±1 => l12-l12p is odd; spin anti-symmetric part only
+            call CalcKernel2BAasy(Kernel2B,isospin,
+     &           factorAasy,
+     &           s12p,s12,extQnumlimit,verbosity)
+         end if                 ! s12 question
+c     else                      ! t12!=t12p
+c        continue
+      end if                    !t12 question
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     end Odelta2 2N contributions
+      if (calctype.eq.Odelta2) return
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     Odelta3 2N contributions: NONE
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     <if they were nonzero, enter diagrams here>
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     end Odelta3 2N contributions
+      if (calctype.eq.Odelta3) return
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     Odelta4 2N contributions: NONE
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     <if they were nonzero, enter diagrams here>
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     end Odelta2 2N contributions
+      if (calctype.eq.Odelta4) return
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c      
       if (verbosity.eq.1000) continue
       end

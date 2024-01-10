@@ -85,7 +85,7 @@ c
       end
 
 
-      subroutine calculateqsmass(p,pp,q,k,q1,kVec,thetacm,mPion,mNucl,verbosity)
+      subroutine calculateqsmass(p,pp,q,k,q1,kVec,kp,thetacm,mPion,mNucl,verbosity)
 c     Kinematics for pion photoproduction
 c     Derivation for the kinematics can be found in pionpionAngle.pdf
 c     OneDrive/thesis/Kinematics/pionpionAngle.pdf
@@ -135,50 +135,70 @@ c     q1:First propogatior for diagram B, q1=q-k
       return
       end 
 
-      subroutine calculateqs2Mass(p,pp,q,k,kVec,kpVec,thetacm,m1,mNucl,verbosity)
-c     Kinematics for pion pion Scattering
+      subroutine triangle(val,a,b,c)
+      implicit none
+      real*8 a,b,c, val
+      val=a*a+b*b+c*c-2*(a*b+a*c+b*c)
+      end subroutine triangle
+
+      subroutine calculateqs2Mass(p,pp,k,kp,m1,m2,m3,m4,thetacm,verbosity)
+c     m1, is nucleous, m2 is incoming particle
+c     m3 is nucleous, m4 is outgoing particle 
+c     TODO: actually impliment kp
+c     current implimentation is for elastic scattering based on the below
+c     https://edu.itp.phys.ethz.ch/hs10/ppp1/PPP1_2.pdf equations 2.9 and 2.10
+c     But its in many places including the PDG
+c     Kinematics are for arbitrary inelastic scattering
+c     p_1=(E_1,\vec{p}) p_2=(E_2,-\vec{p}) p_3=(E_3,\vec{p}') p_4=(E_4,-\vec{p}')
+c     \vec{p}_1+\vec{p}_2=\vec{p}_3+\vec{p}_4=0
 c     Derivation for the kinematics can be found in pionpionAngle.pdf
 c     OneDrive/thesis/Kinematics/pionpionAngle.pdf
 c     The conversion from lenkewitz to our variables is found in
 c     DensityScattering/documentation/pionpionangle.pdf
       implicit none
 c**********************************************************************
-c  Input variables:
-      real*8 p(3), pp(3), k,thetacm, mPion, mNucl
+c     Input variables:
+      real*8 p(3), pp(3),k(3),m1,m2,m3,m4,thetacm
       integer verbosity 
+
 c**********************************************************************
-c
-c     temporary variables
-    
-      real*8 Epion, mandalS, ENuc, kpsq, kpAbs, E1
-      real*8 kpVec(3), q(3)
-      real*8 q1(3), kVec(3)
-      real*8 m1
-c**********************************************************************      
-c     current implimentation is for elastic scattering based on the below
-c     https://edu.itp.phys.ethz.ch/hs10/ppp1/PPP1_2.pdf
-c     
-c     s =(p+k)^2=[(E_nuc, 0,0,-omega) + (omega, 0,0,omega)]^2
-c     s = (E_nuc+omega)^2
-c     mpi and mpi0 are pion mass in MeV defined in ../common-densities/constants.def
-c     Internal Variables first     
+c     Output variables       
+      real*8 kp(3)
 
-c     VARIABLE DESCRIPTIONS
-c     -----------------------------------------------
-c     q: propgator for diagram A, note q=q_2, the second propogator for diagram B
-c     q1:First propogatior for diagram B, q1=q-k
-c     omegaThreshold=(mPion*(mPion+2*mNucl))/(2*(m1+mNucl))
-      kVec=(/0.d0,0.d0,k/)
-      ENuc=sqrt((mNucl**2) + (k**2))
-      E1=sqrt(m1**2+DOT_PRODUCT(kVec,kVec))
-      mandalS=(ENuc + E1)**2 !lab frame
-      kpAbs=(1/(4*mandalS))*(mandalS-(m1+mNucl)**2)*(mandalS-(m1-mNucl)**2)
+c**********************************************************************
+c     Internal variables
 
-      kpAbs=sqrt(kpAbs)
-c     TODO: fix qVec is NaN
-      kpVec=(/0.d0,kpAbs*sin(thetacm), kpAbs*cos(thetacm)/)
-      q = (p-pp)+((kVec+kpVec)/2)
-c     q1 = q-k
+      real*8 val
+      real*8 mandalS, sqrtS
+      real*8 kpAbs,kpSquare, kpNuclAbs
+      real*8 E1,E2,E3,E4
+      real*8 E1check,E2check,E4check
+      E1=sqrt(m1*m1+DOT_PRODUCT(k,k))
+      E2=sqrt(m2*m2+DOT_PRODUCT(k,k))!don't need the negative sign on k bc it cancels out anyways
+      sqrtS=E1+E2
+      mandalS=sqrtS*sqrtS
+
+      E1check=(1/(2*sqrt(mandalS)))*(mandalS+m1*m1-m2*m2)
+      E2check=(1/(2*sqrt(mandalS)))*(mandalS+m2*m2-m1*m1)
+
+      E3=(1/(2*sqrt(mandalS)))*(mandalS+m3*m3-m4*m4)
+      E4=E1+E2-E3
+      E4check=(1/(2*sqrt(mandalS)))*(mandalS+m4*m4-m3*m3)
+      kpSquare=E4*E4-m4*m4
+      if ((kpSquare.le.0).and.(kpSquare.ge.-4.d0)) then
+          kpSquare=0
+      end if
+      
+c     write(*,*) "E1?=E1check",E1,E1check
+c     write(*,*) "E2?=E2check",E2,E2check
+c     write(*,*) "E2=",E2
+      write(*,*) "E4?=E4check",E4,E4check
+c     write(*,*) "Total check", E1+E2,E3+E4
+      write(*,*) "kpSquare=",kpSquare
+      kp=(/0.d0,kpAbs*sin(thetacm), kpAbs*cos(thetacm)/)!TODO: get this working by finding kpAbs
+c     write(*,*) "thetacm=",thetacm
+c     write(*,*) "kpAbs=",kpAbs
+c     write(*,*) kpAbs*sin(thetacm), kpAbs*cos(thetacm)
       if (verbosity.eq.1000) continue
       return
       end 
