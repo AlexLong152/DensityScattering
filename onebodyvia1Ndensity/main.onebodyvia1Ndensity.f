@@ -77,7 +77,7 @@ c     1=lab. frame
 c     2=c.m. frame
 c     outfile-name of output file
 c     
-      integer inUnitno,outUnitno
+      integer inUnitno,outUnitno,lab,cm
 
       real*8 Egamma,kgamma,thetaL,thetacm,Elow,Ehigh,Einterval
       
@@ -214,7 +214,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c**********************************************************************
 c     Reading the input file from command line
 c**********************************************************************
-
+      
 c     get the number of arguments
       narg=command_argument_count()
 
@@ -225,6 +225,8 @@ c     if you have 1 argument, write it to inputfile, otherwise stop
          write(*,*) "*** ERROR: Pass one input file as argument!"
          stop
       end if
+      lab=1
+      cm=2
 c     
 c     
 c**********************************************************************
