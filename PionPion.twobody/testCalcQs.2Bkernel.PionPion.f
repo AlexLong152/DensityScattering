@@ -33,10 +33,10 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       integer,intent(in) :: verbosity         ! verbosity index for stdout
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       write(*,*) "--------------------------------------------------------------------------------"
-      write(*,*) "Kernel: Twobody Pion Photoproduction at Threshold"
+      write(*,*) "Kernel: Twobody Pion Pion Scattering"
       write(*,*) "--------------------------------------------------------------------------------"
       write(*,*) "   Kernel Code Version 1.0"
-      write(*,*) "      Alexander Long/hgrie starting November 2023   "
+      write(*,*) "      Alexander Long/hgrie starting December 2023"
       write(*,*)
       
       if (verbosity.eq.1000) continue
@@ -53,9 +53,9 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       integer,intent(in) :: verbosity         ! verbosity index for stdout
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     show what is outputted, and its units
-      write(*,*) "Output: F_{L/T} ε.S^Mprime_M = < Mprime | kernel | M > Lenkewitz Eur. Phys. J. A (2013) 49:20 eq (10)"
-      write(*,*) "        with ε: incoming-photon polarisation, S: nucleus spin; [F_{L/T}]=[fm]¯¹"
-      write(*,*) "        Mapping of extQnum: 1 = ε_x, 2 = ε_y (both transversal); 3 = ε_z (longitudinal)"
+c     write(*,*) "Output: F_{L/T} ε.S^Mprime_M = < Mprime | kernel | M > Lenkewitz Eur. Phys. J. A (2013) 49:20 eq (10)"
+c     write(*,*) "        with ε: incoming-photon polarisation, S: nucleus spin; [F_{L/T}]=[fm]¯¹"
+c     write(*,*) "        Mapping of extQnum: 1 = ε_x, 2 = ε_y (both transversal); 3 = ε_z (longitudinal)"
 c     characterise symmetry/-ies, if any used.
       If (symmetry.eq.0) then
          write(*,*) "        No symmetries used."
@@ -72,7 +72,6 @@ c
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       subroutine Calc2Bspinisospintrans(Kernel2B,Mnucl,
-c     &     Comp2Bx,Comp2By,Comp2Bpx,Comp2Bpy, ! for STUMP, see below
      &     extQnumlimit,
      &     t12,mt12,t12p,mt12p,l12,s12,
      &     l12p,s12p,thetacm,k,px,py,pz,ppx,ppy,ppz,calctype,verbosity)
@@ -132,116 +131,45 @@ c     INPUT VARIABLES:
       integer,intent(in) :: verbosity
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     LOCAL VARIABLES:
-
+      real*8 identity(3,3), tmp(3)
+      integer i
+      real*8 isospinFactor(0:1,-1:1,0:1,-1:1)
       real*8 tmpVec(3), tmpVec2(3)
       real*8 pVec(3), ppVec(3)
       real*8 qVec(3)
       real*8 dl12by2
-      real*8 factorAsym,factorBsym,factorB2,factorA2
+      real*8 factorAsym,factorBsym
       real*8 factorAasy,factorBasy
       real*8 kVec(3),q1Vec(3)
-      real*8 mPion, Mnucl
+      real*8 kpVec(3)
+      real*8 mPion, Mnucl,Epi,q0!, Fpi
+      real*8 isospin(3)
       real*8 mu
+      real*8 m1,m2,m3,m4
+      real*8 q(3), q1(3)
+      real*8 kp(3), kp2Mass
+      real*8 kpPion(3)
+      real*8 tmpk
 c     
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     
-c     Definitions of momenta repeated here for convenience
-c     (All quantities in this comment to be read as vectors)
-c
-c     XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-c     
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     
-c     Factors:
-c      
-c     XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX     
-c     
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-*************************************************************************************
-c     
-c     First a little initialization:
-c     
-      Kernel2B=c0
-      dl12by2=(l12-l12p)/2.d0   !to check if l12-l12p is  even or odd
-c     
-c     Calculate momenta q,q',q':
-c     
-      
-       pVec=(/px,py,pz/)
-       ppVec=(/ppx,ppy,ppz/)
-       kVec=(/0.d0,0.d0,real(k,8)/)
-       mPion=134.976
-       call calculateqsmass(pVec,ppVec,qVec,k,q1Vec,kVec,thetacm,mPion,Mnucl,verbosity)
+c     TODO: Fix this jank
+      tmpk=k
+      if (tmpk.le.131.89) then
+          tmpk=131.89
+      end if
+      mPion=134.976
+c     call calculateqs2Mass(pVec,ppVec,qVec,k,kVec,kpVec,thetacm,mPion,mNucl,verbosity)
+      m1=mNucl
+      m2=0.d0!photon
+      m3=mNucl
+      m4=mPion
+      kVec=(/0.d0,0.d0,real(tmpk,8)/)! TODO: Fix tmpk here when fixed the jank above
 
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     Odelta0 2N contributions: NONE
-c     <if they were nonzero, enter diagrams here>
-      if (calctype.eq.Odelta0) return
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     Odelta2 2N contributions
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     
-      tmpVec=pVec-ppVec+(kVec/2)
-      tmpVec2=pVec-ppVec-(kVec/2)
-      mu=0.27d0
-      factorAsym=-(-1)**(t12)*(1.d0/(mu+DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
-      factorBsym=+2*(-1)**(t12)*(1.d0/(
-     &            DOT_PRODUCT(tmpVec,tmpVec)+mu))*
-     &            (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
-     &         *(2*Pi)**3/HC
-      factorAasy=factorAsym
-      factorBasy=factorBsym
-      
-      if ((t12 .eq. t12p) .and. (mt12 .eq. 0) .and.(mt12p .eq. 0)) then
-         if (s12p .eq. s12) then ! s12-s12p=0 => l12-l12p is even; spin symmetric part only
-
-            call CalcKernel2BAsym(Kernel2B,
-     &           factorAsym,
-     &           s12p,s12,extQnumlimit,verbosity)
-            call CalcKernel2BBsymVec(Kernel2B,
-     &           factorBsym,
-     &           pVec-ppVec-(kVec/2), ! preceding is vector dotted with σ
-     &           pVec-ppVec, ! preceding is vector dotted with ε
-     &           s12p,s12,extQnumlimit,verbosity)
-         else                   ! s12 question: s12-s12p=±1 => l12-l12p is odd; spin anti-symmetric part only
-c     
-            call CalcKernel2BAasy(Kernel2B,
-     &           factorAasy,
-     &           s12p,s12,extQnumlimit,verbosity)
-            call CalcKernel2BBasyVec(Kernel2B,
-     &           factorBasy,
-     &           pVec-ppVec-(kVec/2), ! preceding is vector dotted with σ
-     &           pVec-ppVec, ! preceding is vector dotted with ε
-     &           s12p,s12,extQnumlimit,verbosity)
-
-
-         end if                 ! s12 question
-      else                      ! t12!=t12p
-         continue
-c     diagrams (A/B) have no components with t12!=t12p. 
-      end if                    !t12 question
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     end Odelta2 2N contributions
-      if (calctype.eq.Odelta2) return
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     Odelta3 2N contributions: NONE
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     <if they were nonzero, enter diagrams here>
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     end Odelta3 2N contributions
-      if (calctype.eq.Odelta3) return
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     Odelta4 2N contributions: NONE
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     <if they were nonzero, enter diagrams here>
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     end Odelta2 2N contributions
-      if (calctype.eq.Odelta4) return
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c      
+      pVec=(/px,py,pz/)
+      ppVec=(/ppx,ppy,ppz/)
+      kp2Mass=0.d0
+      kpPion=0.d0
+      call calculateqs2Mass(pVec,ppVec,kVec,kp2Mass,m1,m2,m3,m4,thetacm,verbosity)
+      write(*,*) ""
+      write(*,*) ""
       if (verbosity.eq.1000) continue
       end

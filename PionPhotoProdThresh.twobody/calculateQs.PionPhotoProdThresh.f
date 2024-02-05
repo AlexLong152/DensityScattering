@@ -131,9 +131,8 @@ c     q1:First propogatior for diagram B, q1=q-k
 
       kVec=(/0.d0,0.d0,k/)
       kp=(/0.d0,kpAbs*sin(thetacm), kpAbs*cos(thetacm)/)
-c     p=(/px,py,pz/)
-c     pp=(/ppx,ppy,ppz/)
-
+c     write(*,*) "p=",p
+c     write(*,*) "pp=",pp
 c     k1=p-(kVec/2)
 c     k2=(-1*p)-(kVec/2)
 c     k1p=pp-(kp/2)

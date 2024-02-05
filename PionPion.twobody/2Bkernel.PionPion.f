@@ -131,46 +131,125 @@ c     INPUT VARIABLES:
       integer,intent(in) :: verbosity
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     LOCAL VARIABLES:
-      real*8 identity(3,3), tmp(3)
-      integer i
-      real*8 isospinFactor(0:1,-1:1,0:1,-1:1)
+c     real*8 identity(3,3), tmp(3)
+c     integer i
+c     real*8 isospinFactor(0:1,-1:1,0:1,-1:1)
       real*8 tmpVec(3), tmpVec2(3)
       real*8 pVec(3), ppVec(3)
       real*8 qVec(3)
       real*8 dl12by2
-      real*8 factorAsym,factorBsym
-      real*8 factorAasy,factorBasy
-      real*8 kVec(3),q1Vec(3)
+      complex*16 factorAsym,factorBsym
+      complex*16 factorAasy,factorBasy
+      real*8 kVec(3)!,q1Vec(3)
       real*8 kpVec(3)
       real*8 mPion, Mnucl,Epi,q0!, Fpi
-      real*8 isospin(3)
-      real*8 mu
+c     real*8 isospin(3)
+c     real*8 mu
       real*8 m1,m2,m3,m4
-      real*8 q(3), q1(3)
-      real*8 kp(3), kp2Mass
-      real*8 kpPion(3)
-      real*8 tmpk
+      real*8 reducedMass
 c     
-c     TODO: Fix this jank
-      tmpk=k
-      if (tmpk.le.131.89) then
-          tmpk=131.89
-      end if
-      mPion=134.976
-c     call calculateqs2Mass(pVec,ppVec,qVec,k,kVec,kpVec,thetacm,mPion,mNucl,verbosity)
-      m1=mNucl
-      m2=0.d0!photon
-      m3=mNucl
-      m4=mPion
-      kVec=(/0.d0,0.d0,real(tmpk,8)/)! TODO: Fix tmpk here when fixed the jank above
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     
+c     Definitions of momenta repeated here for convenience
+c     (All quantities in this comment to be read as vectors)
+c
+c     XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+c     
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     
+c     Factors:
+c      
+c     XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX     
+c     
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+*************************************************************************************
+c     
+c     First a little initialization:
+c     
+
+      Kernel2B=c0
+      dl12by2=(l12-l12p)/2.d0   !to check if l12-l12p is  even or odd
+c     
+c     Calculate momenta q,q',q':
+c     
 
       pVec=(/px,py,pz/)
       ppVec=(/ppx,ppy,ppz/)
-      kp2Mass=0.d0
-      kpPion=0.d0
-      call calculateqs2Mass(pVec,ppVec,kVec,kp2Mass,m1,m2,m3,m4,thetacm,verbosity)
-      call calculateqsmass(pVec,ppVec,q,tmpk,q1,kVec,kpPion,thetacm,mPion,mNucl,verbosity)!pion photoproduction specific
-      write(*,*) ""
-      write(*,*) ""
+      kVec=(/0.d0,0.d0,real(k,8)/)
+      mPion=134.976
+      reducedMass=mPion/mNucleon
+
+      m1=mNucl
+      m2=mPion
+      m3=mNucl
+      m4=mPion
+      call calculateqs2Mass(pVec,ppVec,kVec,kpVec,m1,m2,m3,m4,thetacm,verbosity)
+      qVec=pVec-ppVec+0.5d0*(kVec+kpVec)
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+      if (calctype.eq.Odelta0) return
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     Odelta2 2N contributions
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     
+      tmpVec=pVec-ppVec+(kVec/2)
+      tmpVec2=pVec-ppVec-(kVec/2)
+      q0=(mPion**2 + DOT_PRODUCT(qVec,qVec))
+      Epi=(mPion**2 + DOT_PRODUCT(kpVec,kpVec))
+
+c     fpi=92.42 defined in constants.def
+c     Define from Beane paper
+      factorAsym=(mPion**2/(32*(1+reducedMass/2)*(3.141592*fpi)**4))*(1/(DOT_PRODUCT(qVec,qVec)))
+      factorAasy=factorAsym
+
+c     factorBsym=(ga*ga/(8*(fpi**4)))*((mPion**2))/(((Epion**2)-DOT_PRODUCT(qVec,qVec))-mPion**2)
+      factorBsym=((ga*mPion)**2/((128*(1+reducedMass/2)*(3.141592*fpi)**4)))*(1/((DOT_PRODUCT(qVec,qVec)+mpion**2)**2))
+      factorBasy=factorBsym
+
+      if ((t12 .eq. t12p) .and. (mt12 .eq. mt12p)) then
+
+         if (s12p .eq. s12) then ! spin symmetric part only; s12-s12p=0 => l12-l12p is even
+            call CalcKernel2BAsym(Kernel2B,
+     &           factorAsym,
+     &           s12p,s12,extQnumlimit,verbosity)
+
+            call CalcKernel2BBsym(Kernel2B,qVec,
+     &           factorAsym,
+     &           s12p,s12,extQnumlimit,verbosity)
+         else                   !  spin anti-symmetric part only; s12 question: s12-s12p=±1 => l12-l12p is odd
+            call CalcKernel2BAasy(Kernel2B,
+     &           factorAasy,
+     &           s12p,s12,extQnumlimit,verbosity)
+
+            call CalcKernel2BBasy(Kernel2B,qVec,
+     &           factorAsym,
+     &           s12p,s12,extQnumlimit,verbosity)
+
+         end if                 ! s12 question
+c     else                      ! t12!=t12p
+c        continue
+      end if                    !t12 question
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     end Odelta2 2N contributions
+      if (calctype.eq.Odelta2) return
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     Odelta3 2N contributions: NONE
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     <if they were nonzero, enter diagrams here>
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     end Odelta3 2N contributions
+      if (calctype.eq.Odelta3) return
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     Odelta4 2N contributions: NONE
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     <if they were nonzero, enter diagrams here>
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     end Odelta2 2N contributions
+      if (calctype.eq.Odelta4) return
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c      
       if (verbosity.eq.1000) continue
       end

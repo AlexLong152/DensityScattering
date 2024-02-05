@@ -25,7 +25,7 @@ c     twoSmax/twoMz dependence: none, only on quantum numbers of (12) subsystem
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     
-      subroutine CalcKernel2BAsym(Kernel2B,isospin,
+      subroutine CalcKernel2BAsym(Kernel2B,
      &     factor,
      &     Sp,S,extQnumlimit,verbosity)
 c     
@@ -47,8 +47,7 @@ c
 c********************************************************************
 c     INPUT VARIABLES:
 c     
-
-      real*8,intent(in)  :: factor, isospin(3)
+      complex*16,intent(in) :: factor
       integer,intent(in) :: Sp,S
       integer,intent(in) :: extQnumlimit
       integer,intent(in) :: verbosity
@@ -56,7 +55,7 @@ c
 c********************************************************************
 c     LOCAL VARIABLES:
 c      
-      complex*16 hold(0:1,-1:1,0:1,-1:1)
+c     complex*16 hold(0:1,-1:1,0:1,-1:1)
       integer Msp,Ms, extQnum
       real*8 tmp,tmp2, ddelta
      
@@ -66,7 +65,7 @@ c     hold = identity in this case since theres no explicit spin depedence, only
       do Ms=-S,S
             tmp=ddelta(Sp,S)
             tmp2=ddelta(Msp,Ms)
-            Kernel2B(extQnum,Sp,Msp,S,Ms) = Kernel2B(extQnum,Sp,Msp,S,Ms) + factor*isospin(extQnum)*tmp*tmp2
+            Kernel2B(extQnum,Sp,Msp,S,Ms) = Kernel2B(extQnum,Sp,Msp,S,Ms) + factor*tmp*tmp2
       end do
       end do
       end do 
@@ -76,12 +75,52 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       return
       end
 
-      real*8 function ddelta(a,b)
+      subroutine CalcKernel2BBsym(Kernel2B,q,
+     &     factor,
+     &     Sp,S,extQnumlimit,verbosity)
+c     
+c********************************************************************
+c     
+c     Calculates diagram A
+c     
+c********************************************************************
+c     
       implicit none
-      integer, intent(in) :: a,b
-      if (a.eq.b) then
-          ddelta=1.d0  
-      else
-          ddelta=0.d0
-      end if
-      end function ddelta
+      include '../common-densities/constants.def'
+c     
+c********************************************************************
+c     INPUT/OUTPUT VARIABLES:
+c     
+      complex*16,intent(inout) :: Kernel2B(1:extQnumlimit,0:1,-1:1,0:1,-1:1)
+c      complex*16 Kernel2Bpx(0:1,-1:1,0:1,-1:1),Kernel2Bpy(0:1,-1:1,0:1,-1:1)
+c     
+c********************************************************************
+c     INPUT VARIABLES:
+c     
+      real*8, intent(in) :: q(3)
+      complex*16,intent(in) :: factor
+      integer,intent(in) :: Sp,S
+      integer,intent(in) :: extQnumlimit
+      integer,intent(in) :: verbosity
+c     
+c********************************************************************
+c     LOCAL VARIABLES:
+c      
+      complex*16 hold(0:1,-1:1,0:1,-1:1)
+      integer Msp,Ms, extQnum
+c     real*8 tmp,tmp2, ddelta
+     
+c     hold = identity in this case since theres no explicit spin depedence, only isospin
+      call doublesigmasym(hold,q(1),q(2),q(3),q(1),q(2),q(3),Sp,S,verbosity)
+      do extQnum=1,3
+      do Msp=-Sp,Sp
+      do Ms=-S,S
+            Kernel2B(extQnum,Sp,Msp,S,Ms) = Kernel2B(extQnum,Sp,Msp,S,Ms) + factor*hold(Sp,Msp,S,Ms)
+      end do
+      end do
+      end do 
+c     
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+      if (verbosity.eq.1000) continue
+      return
+      end

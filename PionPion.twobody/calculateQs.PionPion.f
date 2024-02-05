@@ -146,7 +146,6 @@ c     q1:First propogatior for diagram B, q1=q-k
       subroutine calculateqs2Mass(p,pp,k,kp,m1,m2,m3,m4,thetacm,verbosity)
 c     m1, is nucleous, m2 is incoming particle
 c     m3 is nucleous, m4 is outgoing particle 
-c     TODO: actually impliment kp
 c     current implimentation is for elastic scattering based on the below
 c     https://edu.itp.phys.ethz.ch/hs10/ppp1/PPP1_2.pdf equations 2.9 and 2.10
 c     But its in many places including the PDG
@@ -170,9 +169,9 @@ c     Output variables
 c**********************************************************************
 c     Internal variables
 
-      real*8 val
+c     real*8 val
       real*8 mandalS, sqrtS
-      real*8 kpAbs,kpSquare, kpNuclAbs
+      real*8 kpAbs,kpSquare!, kpNuclAbs
       real*8 E1,E2,E3,E4
       real*8 E1check,E2check,E4check
       E1=sqrt(m1*m1+DOT_PRODUCT(k,k))
@@ -195,10 +194,7 @@ c     write(*,*) "E2=",E2
 c     write(*,*) "E4?=E4check",E4,E4check
 c     write(*,*) "Total check", E1+E2,E3+E4
 c     write(*,*) "kpSquare=",kpSquare
-      kp=(/0.d0,kpAbs*sin(thetacm), kpAbs*cos(thetacm)/)!TODO: get this working by finding kpAbs
-c     write(*,*) "In calculateQs.PionPion.f: kpAbs=",kpAbs 
-      write(*,*) "General calculation"
-      write(*,*) "In calculateQs.PionPion.f: kp=",kp 
+      kp=(/0.d0,kpAbs*sin(thetacm), kpAbs*cos(thetacm)/)
       if (verbosity.eq.1000) continue
       return
       end 

@@ -25,7 +25,7 @@ c     twoSmax/twoMz dependence: none, only on quantum numbers of (12) subsystem
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       
-      subroutine CalcKernel2BAasy(Kernel2B,isospin,
+      subroutine CalcKernel2BAasy(Kernel2B,
      &     factor,
      &     Sp,S,extQnumlimit,verbosity)
 c     
@@ -45,8 +45,8 @@ c
 c********************************************************************
 c     INPUT VARIABLES:
 c     
-
-      real*8,intent(in)  :: factor, isospin(3)
+    
+      complex*16,intent(in) :: factor
       integer,intent(in) :: Sp,S
       integer,intent(in) :: extQnumlimit
       integer,intent(in) :: verbosity
@@ -54,7 +54,7 @@ c
 c********************************************************************
 c     LOCAL VARIABLES:
 c      
-      complex*16 hold(0:1,-1:1,0:1,-1:1)
+c     complex*16 hold(0:1,-1:1,0:1,-1:1)
       integer Msp,Ms, extQnum
       real*8 tmp,tmp2, ddelta
      
@@ -62,9 +62,9 @@ c     hold = identity in this case since theres no explicit spin depedence, only
       do extQnum=1,3
       do Msp=-Sp,Sp
       do Ms=-S,S
-            tmp=ddelta(Sp,S)!ddelta defined in 2Bspinsym.PionPion
+            tmp=ddelta(Sp,S)
             tmp2=ddelta(Msp,Ms)
-            Kernel2B(extQnum,Sp,Msp,S,Ms) = Kernel2B(extQnum,Sp,Msp,S,Ms) + factor*isospin(extQnum)*tmp*tmp2
+            Kernel2B(extQnum,Sp,Msp,S,Ms) = Kernel2B(extQnum,Sp,Msp,S,Ms) + factor*tmp*tmp2
       end do
       end do
       end do 
