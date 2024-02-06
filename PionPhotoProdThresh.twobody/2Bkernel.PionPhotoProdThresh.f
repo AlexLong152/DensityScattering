@@ -185,12 +185,20 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     
       tmpVec=pVec-ppVec+(kVec/2)
       tmpVec2=pVec-ppVec-(kVec/2)
-      mu=0.27d0
-      factorAsym=-(-1)**(t12)*(1.d0/(mu+DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
-      factorBsym=+2*(-1)**(t12)*(1.d0/(
+      mu=3.5d0
+      if (abs(DOT_PRODUCT(tmpVec,tmpVec)).le.0.0001d0) then
+          factorAsym=-(-1)**(t12)*(1.d0/(mu+DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
+          factorBsym=+2*(-1)**(t12)*(1.d0/(
      &            DOT_PRODUCT(tmpVec,tmpVec)+mu))*
      &            (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
      &         *(2*Pi)**3/HC
+      else  
+          factorAsym=-(-1)**(t12)*(1.d0/(DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
+          factorBsym=+2*(-1)**(t12)*(1.d0/(
+     &            DOT_PRODUCT(tmpVec,tmpVec)))*
+     &            (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
+     &         *(2*Pi)**3/HC
+      end if
       factorAasy=factorAsym
       factorBasy=factorBsym
       

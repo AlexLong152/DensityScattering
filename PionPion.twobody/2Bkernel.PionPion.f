@@ -146,7 +146,7 @@ c     real*8 isospinFactor(0:1,-1:1,0:1,-1:1)
 c     real*8 isospin(3)
 c     real*8 mu
       real*8 m1,m2,m3,m4
-      real*8 reducedMass
+      real*8 reducedMass, prefactor
 c     
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     
@@ -200,11 +200,11 @@ c
 
 c     fpi=92.42 defined in constants.def
 c     Define from Beane paper
-      factorAsym=(mPion**2/(32*(1+reducedMass/2)*(3.141592*fpi)**4))*(1/(DOT_PRODUCT(qVec,qVec)))
-      factorAasy=factorAsym
+      prefactor=(mPion**2)/(32*(1+reducedMass/2)*(Pi*fpi)**4)
+      factorAsym=-1*prefactor*(1/(DOT_PRODUCT(qVec,qVec)))
+      factorBsym=(prefactor/4.d0)*(1/((DOT_PRODUCT(qVec,qVec)+mpion**2)**2))
 
-c     factorBsym=(ga*ga/(8*(fpi**4)))*((mPion**2))/(((Epion**2)-DOT_PRODUCT(qVec,qVec))-mPion**2)
-      factorBsym=((ga*mPion)**2/((128*(1+reducedMass/2)*(3.141592*fpi)**4)))*(1/((DOT_PRODUCT(qVec,qVec)+mpion**2)**2))
+      factorAasy=factorAsym
       factorBasy=factorBsym
 
       if ((t12 .eq. t12p) .and. (mt12 .eq. mt12p)) then
