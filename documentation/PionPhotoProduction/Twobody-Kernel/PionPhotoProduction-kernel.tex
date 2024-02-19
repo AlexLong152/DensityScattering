@@ -1,0 +1,161 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage[parfill]{parskip}
+\usepackage{bigints}
+\usepackage{titling}
+% \setlength{\droptitle}{-8em}  
+\newcommand{\M}{\mathcal{M}}
+\newcommand{\bv}{\boldsymbol}
+\newcommand{\eps}{\epsilon}
+\newcommand{\tauo}{\tau_{1}}
+\newcommand{\taut}{\tau_{2}}
+\newcommand\ddfrac[2]{\frac{\displaystyle #1}{\displaystyle #2}}
+\newcommand{\e}{\mathrm{e}}
+\author{Alexander P Long}
+\title{Neutral Pion Photoproduction}
+
+\begin{document}
+\maketitle
+\section{Diagram 1}
+I will not be inserting the Feynman diagrams into latex right now, but "Diagram 1" refers to the photon coming in, hitting nucleon one, a virtual pion propagating to nucleon 2, and a real pion coming out.\\~\\
+From an in person discussion, the matrix element is:
+\begin{align}
+    \mathcal{M}_{1\to2}= -\frac{e g_A}{16 f_\pi^3}\frac{1}{8} \; \ddfrac{ \left( \omega+\sqrt{m^2_{\pi} + \vec{k}'^2} \right) }{\omega^2 -q^2 - m_\pi^2 + i \varepsilon}\; \vec{\eps}\cdot\vec{\sigma}_1\; \varepsilon^{a3c} \tau_1^c\;\varepsilon^{abd} \tau_2^d
+\end{align}
+But we also have the contribution from the photon hitting nucleon two and spitting out a pion on nucleon one, so we need to include this symmetry for the full contribution from this diagram
+
+\begin{align}
+    \mathcal{M} &= \mathcal{M}_{1\to2} + \mathcal{M}_{2\to1}\\
+    &= -\frac{e g_A}{16 f_\pi^3}\;\frac{1}{8}  \ddfrac{ \left( \omega+\sqrt{m^2_{\pi} + \vec{k}'^2} \right) }{\omega^2 -q^2 - m_\pi^2 + i \varepsilon}\;\left( \vec{\eps}\cdot\vec{\sigma}_1 \; \varepsilon^{a3c} \tau_1^c\;\varepsilon^{abd} \tau_2^d + \vec{\eps}\cdot\vec{\sigma}_2 \; \varepsilon^{a3c} \tau_2^c\;\varepsilon^{abd} \tau_1^d \right)\\
+               &= -\frac{e g_A}{16 f_\pi^3}\; \frac{1}{8}  \ddfrac{ \left( \omega+\sqrt{m^2_{\pi} + \vec{k}'^2} \right) }{\omega^2 -q^2 - m_\pi^2 + i \varepsilon}\;\vec{\eps}\cdot(\vec{\sigma}_1 + \vec{\sigma}_2)\left[ \varepsilon^{a3c}\tau_1^c\;\varepsilon^{abd} \tau_2^d + \varepsilon^{a3c}\tau_2^c\;\varepsilon^{abd} \tau_1^d \right]\label{mat}
+\end{align}
+Note $\tau_1$ and $\tau_2$ operate in different spaces so $ \left[ \tau_1^a, \tau_2^b \right]=0\; \forall\, a,b$. Now focus on just the $\tau$ matrix structure and recall $\pi_0 \implies b=3$
+\begin{align}
+    \varepsilon^{a3c} \tau_1^c\;\varepsilon^{abd} \tau_2^d &=(\delta^{3b} \delta^{dc} - \delta^{3d} \delta^{cb}) \tau_1^b \tau_2^c\\
+                                                           &= \delta^{3b} \vec{\tau}_1 \cdot \vec{\tau_2} - \tau_1^3 \tau_2^b\\
+                                                           &= \vec{\tau}_1 \cdot \vec{\tau_2} - \tau_1^3 \tau_2^3
+\end{align}
+So now just plug this into (\ref{mat}) 
+\begin{align}
+    \mathcal{M}&= -\frac{e g_A}{64 f_\pi^3}\; \ddfrac{ \left( \omega+\sqrt{m^2_{\pi} + \vec{k}'^2} \right) }{\omega^2 -q^2 - m_\pi^2 + i \varepsilon}\;\vec{\eps}\cdot(\vec{\sigma}_1 + \vec{\sigma}_2)\
+    \left(\vec{\tau}_1 \cdot \vec{\tau}_2 - \tau_2^3 \tau_1^3\right) 
+\end{align}
+At threshold we have:
+\begin{align}
+    &\vec{k}'\to 0\\
+    &\omega \to m_\pi
+\end{align}
+Including $\binom{A}{2}$ this now gives 
+\begin{align}
+    \mathcal{M}_t&= -\frac{e g_A}{64 f_\pi^3}\;\binom{A}{2} \ddfrac{ \left( \omega+\sqrt{m^2_{\pi} + \vec{k}'^2} \right) }{\omega^2 -q^2 - m_\pi^2 + i \varepsilon}\;\vec{\eps}\cdot(\vec{\sigma}_1 + \vec{\sigma}_2) \left(\vec{\tau}_1 \cdot \vec{\tau}_2 - \tau_2^3 \tau_1^3\right) \\
+               &= \frac{e\, m_\pi\, g_A}{32 f_\pi^3}\;\binom{A}{2}
+               \ddfrac{
+                \vec{\eps}\cdot(\vec{\sigma}_1 + \vec{\sigma}_2)
+               \left(\vec{\tau}_1 \cdot \vec{\tau}_2 - \tau_2^3 \tau_1^3\right)
+           }{
+           q^2 +i \varepsilon
+           } 
+\end{align}
+Now lets make the assumption that $q$ can be written in terms of just $k/2$ this gives an additional factor of $1/4$ prefactor becomes
+\begin{equation}
+    \frac{e\, m_\pi\, g_A}{32 f_\pi^3}\;\binom{A}{2} \frac{1}{4} =\frac{e\, m_\pi\, g_A}{128 f_\pi^3}\;\binom{A}{2}
+\end{equation}
+This $128$ now matches the Lenkewitz prefactor.
+Including the factor $K_{2N}$ the Lenkewitz result for this diagram is:
+\begin{align}
+    \M_{1,\text{Lenkewitz}}&=\frac{m_{3N}}{\left( m_{3N} + m_\pi \right)}  \frac{m_\pi e g_A }{128 \pi  \left( 2\pi \right)^3 f_\pi^3  }   \binom{A}{2}
+    \ddfrac{\vec{\epsilon} \cdot (\vec{\sigma}_1 + \vec{\sigma}_2)
+    \left( \vec{\tau}_1 \cdot \vec{\tau}_2 - \tau_1^z \tau_2^z \right)  }
+    {
+        \left[\vec{k}_1 - \vec{k}_2 -  \vec{k}_1' + \vec{k}_2' + \vec{k}_\gamma\right]^2
+    } 
+\end{align}
+Recall $m_{3N}/(m_{3N}+m_\pi)\approx1$ and is a prefactor from other considerations.\\~\\
+I think in the Lenkewitz paper they use a different convention. Their denominator works out to:
+\begin{align}
+    p_{12} - p_{12}' + k_\gamma/2&= \frac{1}{2} \left[ \left( k_1-k_2 \right)  -  \left( k_1' - k_2' \right) + k_\gamma \right]
+\end{align}
+Whereas with our convention $q$ works out to
+\begin{align}
+    q&= \left( p-p' \right) + \frac{1}{2} \left( k'-k \right) +k_\gamma\qquad \text{Conservation at nucleon 1}\\
+     &= \left( p-p'\right) + \frac{3}{2} k' - \frac{1}{2} k\qquad \text{Conservation at nucleon 2}
+\end{align}
+Additionally there is the factor of $1/\pi (2\pi)^3$, which possibly comes from the integration but it is hard to be sure.
+\section{Diagram 2}
+In this diagram the incoming photon strikes a virtual pion propagating between nucleons. $q_1$ is the initial momentum of the propagating pion, and $q_2$ is the momentum after.
+\begin{align}
+    \mathcal{M}_{1\to2}&=\frac{1}{8}  \left[ \frac{g_{A}}{2 f_\pi} \vec{\sigma}_1 \cdot \vec{q}_1 \tau_1^a \right] 
+    i \left[ -\vec{q}_1^{\;2} - m_\pi^2 + i \varepsilon  \right]^{-1}
+    \left[ e \varepsilon^{a3b} \vec{\eps} \cdot (\vec{q}_1 + \vec{q}_2) \right]\nonumber\\
+                &\qquad i \left[ E_\pi^2 - \vec{q}_2^{\;2} - m_\pi^2 + i \varepsilon \right]^{-1}
+                \left[ \frac{1}{8 f_\pi^2} v \cdot \left( q_2 + k' \right) \varepsilon^{bcd} \tau_2^d  \right]\\
+                &\nonumber\\
+                &= -\frac{e g_A} {16 f_\pi^3} \frac{1}{8} 
+                \ddfrac{
+                    \left[\vec{\sigma}_1 \cdot \vec{q}_1 \tau_1^a\right]
+                    \left[ \varepsilon^{a3b}\vec{\eps} \cdot (\vec{q}_1 + \vec{q}_2)\right]
+                    \left[ v \cdot \left(q_2 + k'\right) \varepsilon^{bcd} \tau_2^d  \right]
+                }{
+                    \left[ -\vec{q}_1^{\;2} - m_\pi^2 + i \varepsilon  \right]
+                    \left[E_\pi^2 - \vec{q}_2^{\;2} - m_\pi^2 + i \varepsilon\right]
+                }
+\end{align}
+Now $v \cdot \left( q_2 + k' \right)= (1,0,0,0) \cdot \left( q_2 + k' \right)$.\\
+The matrix structure is
+\begin{align}
+    \tau_1^a \varepsilon^{a3b} \varepsilon^{bcd} \tau_2^d&= \varepsilon^{a3b} \varepsilon^{bcd} \tau_1^a \tau_2^d\\
+                                                         &=- \varepsilon^{b3a} \varepsilon^{bcd} \tau_1^a \tau_2^d\\
+                                                         &= -\vec{\tau}_1 \cdot \vec{\tau_2} + \tau_1^3 \tau_2^3
+\end{align}
+
+\begin{equation}
+    \mathcal{M}_{1\to2}= -\frac{e g_A} {16 f_\pi^3}
+                \ddfrac{
+                    \left[\vec{\sigma}_1 \cdot \vec{q}_1\right]
+                    \left[\vec{\eps} \cdot (\vec{q}_1 + \vec{q}_2)\right]
+                    \left[ v \cdot \left(q_2 + k'\right) \right]
+                }{
+                    \left[ -\vec{q}_1^{\;2} - m_\pi^2 + i \varepsilon  \right]
+                    \left[E_\pi^2 - \vec{q}_2^{\;2} - m_\pi^2 + i \varepsilon\right]
+                } \Big[ -\vec{\tau}_1 \cdot \vec{\tau_2} + \tau_1^3 \tau_2^3 \Big]
+\end{equation}
+This in the pion going from $1\to 2$, we also need $2 \to 1$
+\begin{align}
+    \mathcal{M}&=\mathcal{M}_{2\to1}+\mathcal{M}_{1\to2}\\
+               &= -\frac{e g_A} {16 f_\pi^3} \frac{1}{8} 
+                \ddfrac{
+                (\vec{\sigma}_1+\vec{\sigma}_2) \cdot \vec{q}_1
+                    \left[\vec{\eps} \cdot (\vec{q}_1 + \vec{q}_2)\right]
+                    \left[ E_{q_2} + E_{k'} \right]
+                }{
+                    \left[ -\vec{q}_1^{\;2} - m_\pi^2 + i \varepsilon  \right]
+                    \left[E_\pi^2 - \vec{q}_2^{\;2} - m_\pi^2 + i \varepsilon\right]
+                } \Big[ -\vec{\tau}_1 \cdot \vec{\tau_2} + \tau_1^3 \tau_2^3 \Big]
+\end{align}
+In the threshold limit we have
+\begin{align}
+    &E_\pi \to m_\pi\\
+    &E_{q_2}\to m_\pi\\
+    & E_{k'} \to m_\pi
+\end{align}
+Which gives
+
+\begin{align}
+    \mathcal{M} =\frac{e\, m_\pi g_A} {128 f_\pi^3}\;
+                \ddfrac{
+                    \vec{q}_1 \cdot(\vec{\sigma}_1+\vec{\sigma}_2)
+                    \left[\vec{\eps} \cdot (\vec{q}_1 + \vec{q}_2)\right]
+                }{
+                    \left( \vec{q}_1^{\;2} +m_\pi^2 - i \varepsilon  \right)
+                    \left(\vec{q}_2^{\;2}+ i \varepsilon\right)
+                } \Big[ \vec{\tau}_1 \cdot \vec{\tau_2} - \tau_1^3 \tau_2^3 \Big]
+\end{align}
+This is extremely similar to Lenkewitz, since this term is more complicated I think it is better to wait until we have Diagram 1 figured out until we compare this result directly to the Lenkewitz result.
+\subsection{The factors of $\pi$}
+Lenkewitz has an additional factor of $1/\pi(2\pi)^3$ in his definition of $K_{2N}$. Is there any good way to figure out if this is from the integration ahead of time? I haven't found additional mention of this term in the thesis.\\~\\
+It seems to me likely that it comes from the integration since there are no Feynman rules which contain factors like this (to my knowledge)
+\end{document}
