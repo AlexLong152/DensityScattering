@@ -37,7 +37,8 @@
 \begin{document}
 %Diagrams made and can be edited with https://www.mathcha.io/editor under alexlong@gwmail.gwu.edu email account
 \maketitle
-This follows the conventions from the \href{https://arxiv.org/abs/hep-ph/9501384v1}{BKM (Bernard, Kaiser, Meissner)  review}, including the use of $F_\pi=93.1$=F. The BKM review also goes over this reaction on pg 115 for the two body case.\\~\\
+This follows the conventions from the \href{https://arxiv.org/abs/hep-ph/9501384v1}{BKM (Bernard, Kaiser, Meissner)  review}, including the use of $F_\pi=93.1$, see table 2 on page 23 of the review, however it is not clear if $F$ in the appendix, differs from $F_\pi$, by a factor of $\pi$. If this is the case a lot of things would make more sense.
+The BKM review also goes over this reaction on pg 115 for the two body case.\\
 
 There are a few sources for pion scattering at zero energy:\\
 \href{https://arxiv.org/abs/hep-ph/0206219v1}{S-wave scattering length: Beane 2002}\\~\\
@@ -69,8 +70,12 @@ stated:
 \begin{equation}
     -p= \left( \sqrt{m_p^2 + \vec{p}\sq },-\vec{p} \right)
 \end{equation}
-
-\subsubsection{Definition of spin vector}
+\subsubsection{Prefactor}
+I'm pretty sure that each diagram comes with a prefactor of:
+\begin{equation}
+    \frac{1}{2 \left( 1+\mu \right) }\quad\text{or}\quad \frac{1}{2 \left( 1+\mu \right) \pi^4}
+\end{equation}
+\subsubsection{Definition of the spin vector}
 There is still some confusion on the definition of the zeroth element of $S$.
 
 \href{https://en.wikipedia.org/wiki/Relativistic_angular_momentum#Spin_in_special_relativity}{This source}
@@ -290,6 +295,16 @@ Taking $a=b$ the above reduces to:
 \note{What do we do about this sum?}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{2 Body B}
+Diagram b (at threshold) according to Weinberg is:
+\begin{align}
+    - \frac{g_A^2 \delta_{ab}}{32 \pi^4 F_\pi^4 (1+\mu)} \vec{\tau}_1 \cdot \vec{\tau}_2
+    \ddfrac{\vec{q}\cdot \vec{\sigma}_1 \vec{q} \cdot \vec{\sigma}_2}{\vec{q}^{\,2} + m_\pi^2} 
+\end{align}
+and the Beane paper gives the result for diagram $b$ and $c$ together as:
+\begin{equation}
+    - \frac{g_A^2 m_\pi^2}{128 \pi^4 F_\pi^4 (1+\mu)} 
+    \ddfrac{\vec{q}\cdot \vec{\sigma}_1 \vec{q} \cdot \vec{\sigma}_2}{(\vec{q}^{\,2} + m_\pi^2)^2} 
+\end{equation}
 Using BKM A.16 - check indicies.
 \begin{center}
     \includegraphics[scale=0.9]{2b.pdf}
@@ -327,53 +342,49 @@ Now taking $a=c$:
  \mm_{2,b}&=-i\frac{g_A^2}{8F^4}\frac{1}{q^{\;2}- m_\pi^2 + i \varepsilon} S_1 \cdot \left[ \tau_1^a\tau_2^a (q_1+2q_2+q_3) +3\vec{\tau}_1 \cdot \vec{\tau}_2 (q_1+q_3)\right] S_2 \cdot q_2
 \end{align}
 Note that $q_2$ is the propagator momentum and is therefore off shell.
-Diagram b (at threshold) according to Weinberg is:
+Now taking the limit of the threshold case, $q_1=q_3=(m_\pi, \vec{0})$ and $q_2=(0,\vec{q})$, and the non-relativistic limit of $S=(0,\vec{\sigma})$:
 \begin{align}
-    - \frac{g_A^2 \delta_{ab}}{32 \pi^4 F_\pi^4 (1+\mu)} \vec{\tau}_1 \cdot \vec{\tau}_2
-    \ddfrac{\vec{q}\cdot \vec{\sigma}_1 \vec{q} \cdot \vec{\sigma}_2}{\vec{q}^{\,2} + m_\pi^2} 
+    \mm_{2,b}&=i\frac{g_A^2}{16F^4}\frac{\tau_1^a\tau_2^a}{\vec{q}^{\;2}+ m_\pi^2 - i \varepsilon}\left(\vec{\sigma}_1 \cdot \vec{q} \right)\left(\vec{\sigma}_2 \cdot \vec{q}\right)
 \end{align}
-But the Beane result for diagram $b$ and $c$ together.
-\begin{equation}
-    - \frac{g_A^2 m_\pi^2}{128 \pi^4 F_\pi^4 (1+\mu)} 
-    \ddfrac{\vec{q}\cdot \vec{\sigma}_1 \vec{q} \cdot \vec{\sigma}_2}{(\vec{q}^{\,2} + m_\pi^2)^2} 
-\end{equation}
+Which is really close to the Weinberg result, except for a factor of $\left[2\pi^4 \left( 1+\mu \right)\right]^{-1}]$ and the constant $a$ should be a sum. Note that the factors of $\pi$ are fixed if we use $F \to \pi F_\pi$.
+Also, I wonder if the sum over $a$ comes from allowing any pion to propagate instead of just the neutral pion.
 
-
-\subsubsection{Analysis for $S=(0,\frac{1}{2} \vec{\sigma}) $}
-For the following, note that:
-\begin{equation}
-    S_0 q_0 - \vec{S} \cdot \vec{q} = S \cdot q
-\end{equation}
-In order to compare my result to the Beane and Weinberg result consider the threshold case: $\vec{k}=\vec{k}'=0$, and we don't know if they use $S=(0, \frac{1}{2} \vec{\sigma})$, or $S=(\mathbbm{1}, \frac{1}{2} \vec{\sigma})$, so we start with just the first one.
-Now use $\vec{q}_1=-\vec{k}\quad \vec{q}_2=\vec{q} \quad \vec{q}_3=\vec{k}'$, and drop the energy component on each of the vectors
-\begin{align}
-    \mm_{2,b}&=-i\frac{g_A^2}{8F^4}\frac{1}{q^{\;2}- m_\pi^2 + i \varepsilon} \frac{1}{4} \sigma_1 \cdot \left[ \tau_1^a\tau_2^a (q_1+2q_2+q_3) +3\vec{\tau}_1 \cdot \vec{\tau}_2 (q_1+q_3)\right] \sigma_2 \cdot q\\
-             &=-i\frac{g_A^2}{8F^4}\frac{1}{q^{\;2}- m_\pi^2 + i \varepsilon} \frac{1}{4} \vec{\sigma}_1 \cdot \left[ \tau_1^a\tau_2^a (-\vec{k}+2\vec{q}+\vec{k}') +3\vec{\tau}_1 \cdot \vec{\tau}_2 (-\vec{k}+\vec{k}')\right] \vec{\sigma}_2 \cdot \vec{q}
-\end{align}
-Now taking the threshold case:
-\begin{align}
-    \mm_{2,b} &=-i\frac{g_A^2}{16F^4}\frac{\tau_1^a\tau_2^a}{q^{\;2}- m_\pi^2 + i \varepsilon} \vec \sigma_1 \cdot \vec{q}\;\vec\sigma_2 \cdot \vec{q}\label{base}
-\end{align}
+% \subsubsection{Analysis for $S=(0,\frac{1}{2} \vec{\sigma}) $}
+% This section and the following section can be ignored. The discussion of the definition of $S$ occurs in the first section.\\~\\
+% For the following, note that:
+% \begin{equation}
+%     S_0 q_0 - \vec{S} \cdot \vec{q} = S \cdot q
+% \end{equation}
+% In order to compare my result to the Beane and Weinberg result consider the threshold case: $\vec{k}=\vec{k}'=0$, and we don't know if they use $S=(0, \frac{1}{2} \vec{\sigma})$, or $S=(\mathbbm{1}, \frac{1}{2} \vec{\sigma})$, so we start with just the first one.
+% Now use $\vec{q}_1=-\vec{k}\quad \vec{q}_2=\vec{q} \quad \vec{q}_3=\vec{k}'$, and drop the energy component on each of the vectors
+% \begin{align}
+%     \mm_{2,b}&=-i\frac{g_A^2}{8F^4}\frac{1}{q^{\;2}- m_\pi^2 + i \varepsilon} \frac{1}{4} \sigma_1 \cdot \left[ \tau_1^a\tau_2^a (q_1+2q_2+q_3) +3\vec{\tau}_1 \cdot \vec{\tau}_2 (q_1+q_3)\right] \sigma_2 \cdot q\\
+%              &=-i\frac{g_A^2}{8F^4}\frac{1}{q^{\;2}- m_\pi^2 + i \varepsilon} \frac{1}{4} \vec{\sigma}_1 \cdot \left[ \tau_1^a\tau_2^a (-\vec{k}+2\vec{q}+\vec{k}') +3\vec{\tau}_1 \cdot \vec{\tau}_2 (-\vec{k}+\vec{k}')\right] \vec{\sigma}_2 \cdot \vec{q}
+% \end{align}
+% Now taking the threshold case:
+% \begin{align}
+%     \mm_{2,b} &=-i\frac{g_A^2}{16F^4}\frac{\tau_1^a\tau_2^a}{q^{\;2}- m_\pi^2 + i \varepsilon} \vec \sigma_1 \cdot \vec{q}\;\vec\sigma_2 \cdot \vec{q}\label{base}
+% \end{align}
 
 
 
-\subsubsection{Analysis for $S=(\mathbbm{1},\frac{1}{2} \vec{\sigma}) $}
-\begin{align}
-    \mm_{2,b}&=-i\frac{g_A^2}{8F^4}\frac{1}{q^{\;2}- m_\pi^2 + i \varepsilon} S_1 \cdot \left[ \tau_1^a\tau_2^a (q_1+2q_2+q_3) + \vec{\tau}_1 \cdot \vec{\tau}_2 (q_1+q_3)\right] S_2 \cdot q\\
-\end{align}
-Looking at this by parts, but in the threshold case:
-\begin{align}
-     &S_1 \cdot \left[ \tau_1^a\tau_2^a (q_1+2q_2+q_3) +3\vec{\tau}_1 \cdot \vec{\tau}_2 (q_1+q_3)\right] S_2 \cdot q\\
-     &S_1 \cdot \left[ \tau_1^a\tau_2^a (q_1+2q_2+q_3) +3\vec{\tau}_1 \cdot \vec{\tau}_2 (q_1+q_3)\right] S_2 \cdot q\\
-    =& \tau_1^a \tau_2^b \left(2 m_\pi +2 q_0 - \vec{\sigma}_1 \cdot \vec{q}\right)+6m_\pi\vec{\tau}_1 \cdot \vec{\tau}_2\left( q_0 - \frac{1}{2} \vec{\sigma}_2 \cdot \vec{q}\right)
-\end{align}
-Consider just $S \to (\mathbbm{1}, \vec{0})$
-\begin{align}
-     &S_1 \cdot \left[ \tau_1^a\tau_2^a (q_1+2q_2+q_3) +3\vec{\tau}_1 \cdot \vec{\tau}_2 (q_1+q_3)\right] S_2 \cdot q\\
-     =& \left( \tau_1^a\tau_2^a (m_\pi+2 q_0 +m_\pi) +3\vec{\tau}_1 \cdot \vec{\tau}_2 (m_\pi+m_\pi)\right) q_0\\
-     =& \left( \tau_1^a\tau_2^a (2 m_\pi+2 q_0) +6 m_\pi\vec{\tau}_1 \cdot \vec{\tau}_2 \right) q_0\\
-\end{align}
-This is the "difference" between the two results, so I think we can conclude $S= \left( 0, \frac{1}{2} \vec{\sigma}  \right) $
+% \subsubsection{Analysis for $S=(\mathbbm{1},\frac{1}{2} \vec{\sigma}) $}
+% \begin{align}
+%     \mm_{2,b}&=-i\frac{g_A^2}{8F^4}\frac{1}{q^{\;2}- m_\pi^2 + i \varepsilon} S_1 \cdot \left[ \tau_1^a\tau_2^a (q_1+2q_2+q_3) + \vec{\tau}_1 \cdot \vec{\tau}_2 (q_1+q_3)\right] S_2 \cdot q\\
+% \end{align}
+% Looking at this by parts, but in the threshold case:
+% \begin{align}
+%      &S_1 \cdot \left[ \tau_1^a\tau_2^a (q_1+2q_2+q_3) +3\vec{\tau}_1 \cdot \vec{\tau}_2 (q_1+q_3)\right] S_2 \cdot q\\
+%      &S_1 \cdot \left[ \tau_1^a\tau_2^a (q_1+2q_2+q_3) +3\vec{\tau}_1 \cdot \vec{\tau}_2 (q_1+q_3)\right] S_2 \cdot q\\
+%     =& \tau_1^a \tau_2^b \left(2 m_\pi +2 q_0 - \vec{\sigma}_1 \cdot \vec{q}\right)+6m_\pi\vec{\tau}_1 \cdot \vec{\tau}_2\left( q_0 - \frac{1}{2} \vec{\sigma}_2 \cdot \vec{q}\right)
+% \end{align}
+% Consider just $S \to (\mathbbm{1}, \vec{0})$
+% \begin{align}
+%      &S_1 \cdot \left[ \tau_1^a\tau_2^a (q_1+2q_2+q_3) +3\vec{\tau}_1 \cdot \vec{\tau}_2 (q_1+q_3)\right] S_2 \cdot q\\
+%      =& \left( \tau_1^a\tau_2^a (m_\pi+2 q_0 +m_\pi) +3\vec{\tau}_1 \cdot \vec{\tau}_2 (m_\pi+m_\pi)\right) q_0\\
+%      =& \left( \tau_1^a\tau_2^a (2 m_\pi+2 q_0) +6 m_\pi\vec{\tau}_1 \cdot \vec{\tau}_2 \right) q_0\\
+% \end{align}
+% This is the "difference" between the two results, so I think we can conclude $S= \left( 0, \frac{1}{2} \vec{\sigma}  \right) $
 
 
 \subsubsection{The Propagator}
@@ -455,13 +466,14 @@ From BKM (left hand side), to our labels, (right hand side)
 \end{align}
 I'm sure this is correct, but there is some weird stuff going on with the energy flow.
 In particular $q_1^2 =-\vec{q}_1\sq$, but $q_2^2=E_2^2 - \vec{q}_2\sq$.
-Also note that $O^{abcd}$ has no isospin dependence, so we can commute $\tau$ with them. This gives:
+Also note that $O^{abcd}$ has no isospin dependence, so we can commute $\tau$ with it. This gives:
 \begin{align}
-    \mm_{2,c}&=i \frac{g^2}{F^4} S_1 \cdot q_1\; S_2 \cdot(-q_2) O^{abcd}
+    \mm_{2,c}&=i \frac{g^2}{F^4} S_1 \cdot q_1\; S_2 \cdot(-q_2) 
     \frac{\tau_1^b \tau_2^c}{
         (\vec{q}_1\sq +m_\pi^2 + i \varepsilon)
         (E_2^2-\vec{q}_2\sq-m_\pi^2 + i \varepsilon)
     }
+    O^{abcd}
 \end{align}
 Where $E_2$ is the 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
