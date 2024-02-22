@@ -25,10 +25,10 @@ c     twoSmax/twoMz dependence: none, only on quantum numbers of (12) subsystem
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     
+
       subroutine CalcKernel2BAsym(Kernel2B,
-     &     factor,
-     &     Sp,S,t12,extQnumlimit,verbosity)
-c     
+     &           factor,
+     &           s12p,s12,t12,mt12,extQnumlimit,verbosity)
 c********************************************************************
 c     
 c     Calculates diagram A
@@ -48,7 +48,7 @@ c********************************************************************
 c     INPUT VARIABLES:
 c     
       complex*16,intent(in) :: factor
-      integer,intent(in) :: Sp,S,t12
+      integer,intent(in) :: s12p,s12,t12,mt12
       integer,intent(in) :: extQnumlimit
       integer,intent(in) :: verbosity
 c     
@@ -60,18 +60,15 @@ c     complex*16 hold(0:1,-1:1,0:1,-1:1)
       real*8 tmp,tmp2, ddelta
       real*8 isospin
 
-c     isospin part is 
-c     <t_12p,mt12p|\vec{\tau}_1 \cdot \vec{\tau}_2 - tau_1^a \tau_2^a|t_12, mt_12>
-c     =2*((-1)**(2*t12+1)) \delta_{t12,t12p}, \delta_{mt12,mt12p}
-c     but the isospin deltas are taken care of already.
-
-      isospin=2*((-1)**(2*t12+1))
+      isospin=((-1)**(t12))*ddelta(mt12,0)
       do extQnum=1,3!no dependence on this either
-      do Msp=-Sp,Sp
-      do Ms=-S,S
-            tmp=ddelta(Sp,S)
+      do Msp=-s12p,s12p
+      do Ms=-s12,s12
+            tmp=ddelta(s12p,s12)
             tmp2=ddelta(Msp,Ms)
-            Kernel2B(extQnum,Sp,Msp,S,Ms) = Kernel2B(extQnum,Sp,Msp,S,Ms) + factor*tmp*tmp2*isospin
+            Kernel2B(extQnum,s12p,Msp,s12,Ms) = Kernel2B(extQnum,s12p,Msp,s12,Ms) +
+     &              factor*isospin*tmp*tmp2
+
       end do
       end do
       end do 
@@ -82,13 +79,14 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       if (verbosity.eq.1000) continue
       return
       end
-      subroutine CalcKernel2BBsym(Kernel2B,q,
-     &     factor,
-     &     Sp,S,extQnumlimit,verbosity)
+
+      subroutine CalcKernel2BBsym(Kernel2B,qVec,
+     &           factor,
+     &           s12p,s12,t12,extQnumlimit,verbosity)
 c     
 c********************************************************************
 c     
-c     Calculates diagram A
+c     Calculates diagram B
 c     
 c********************************************************************
 c     
@@ -104,9 +102,9 @@ c
 c********************************************************************
 c     INPUT VARIABLES:
 c     
-      real*8, intent(in) :: q(3)
+      real*8, intent(in) :: qVec(3)
       complex*16,intent(in) :: factor
-      integer,intent(in) :: Sp,S
+      integer,intent(in) :: s12p,s12,t12
       integer,intent(in) :: extQnumlimit
       integer,intent(in) :: verbosity
 c     
@@ -115,14 +113,14 @@ c     LOCAL VARIABLES:
 c      
       complex*16 hold(0:1,-1:1,0:1,-1:1)
       integer Msp,Ms, extQnum
-c     real*8 tmp,tmp2, ddelta
+      real*8 isospin
      
-c     hold = identity in this case since theres no explicit spin depedence, only isospin
-      call doublesigmasym(hold,q(1),q(2),q(3),q(1),q(2),q(3),Sp,S,verbosity)
+      isospin=(2*t12*(t12+1))-3
+      call doublesigmasym(hold,qVec(1),qVec(2),qVec(3),qVec(1),qVec(2),qVec(3),s12p,s12,verbosity)
       do extQnum=1,3
-      do Msp=-Sp,Sp
-      do Ms=-S,S
-            Kernel2B(extQnum,Sp,Msp,S,Ms) = Kernel2B(extQnum,Sp,Msp,S,Ms) + factor*hold(Sp,Msp,S,Ms)
+      do Msp=-s12p,s12
+      do Ms=-s12,s12
+            Kernel2B(extQnum,s12p,Msp,s12,Ms) = Kernel2B(extQnum,s12p,Msp,s12,Ms) + factor*hold(s12p,Msp,s12,Ms)*isospin
       end do
       end do
       end do 
@@ -132,10 +130,9 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       return
       end
 
-      subroutine CalcKernel2BCsym(Kernel2B,q,
-     &     factor,
-     &     Sp,S,t12,extQnumlimit,verbosity)
-c     
+      subroutine CalcKernel2BCsym(Kernel2B,qVec,
+     &           factor,
+     &           s12p,s12,t12,extQnumlimit,verbosity)
 c********************************************************************
 c     
 c     Calculates diagram C
@@ -154,35 +151,75 @@ c
 c********************************************************************
 c     INPUT VARIABLES:
 c     
-      real*8, intent(in) :: q(3)
+      real*8, intent(in) :: qVec(3)
       complex*16,intent(in) :: factor
-      integer,intent(in) :: Sp,S,t12
+      integer,intent(in) :: s12p,s12,t12
       integer,intent(in) :: extQnumlimit
       integer,intent(in) :: verbosity
 c     
 c********************************************************************
 c     LOCAL VARIABLES:
 c      
-      complex*16 hold(0:1,-1:1,0:1,-1:1), hold2(0:1,-1:1,0:1,-1:1)
+      complex*16 hold(0:1,-1:1,0:1,-1:1)
       integer Msp,Ms, extQnum
-      real*8 isospin,tmp,tmp2,ddelta
-c     isospin part is 
-c     <t_12p,mt12p|\vec{\tau}_1 \cdot \vec{\tau}_2 |t_12, mt_12>
-c     =(2 t12(t12+1)-3 )\delta_{t12,t12} \delta_{mt12,mt12p}
+      real*8 isospin
+
       isospin= (2*t12*(t12+1))-3
+      do extQnum=1,3
+      do Msp=-s12p,s12
+      do Ms=-s12,s12
+            call doublesigmasym(hold,qVec(1),qVec(2),qVec(3),qVec(1),qVec(2),qVec(3),s12p,s12,verbosity)
+            Kernel2B(extQnum,s12p,Msp,s12,Ms) = Kernel2B(extQnum,s12p,Msp,s12,Ms) + factor*hold(s12p,Msp,s12,Ms)*isospin
+      end do
+      end do
+      end do 
+c     
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+      if (verbosity.eq.1000) continue
+      return
+      end
+
+
+      subroutine CalcKernel2BDsym(Kernel2B,qVec,
+     &           factor,
+     &           s12p,s12,mt12,extQnumlimit,verbosity)
+c     
+c********************************************************************
+c     
+c     Calculates diagram D
+c     
+c********************************************************************
+c     
+      implicit none
+      include '../common-densities/constants.def'
+c     
+c********************************************************************
+c     INPUT/OUTPUT VARIABLES:
+c     
+      complex*16,intent(inout) :: Kernel2B(1:extQnumlimit,0:1,-1:1,0:1,-1:1)
+c********************************************************************
+c     INPUT VARIABLES:
+c     
+      real*8, intent(in) :: qVec(3)
+      complex*16,intent(in) :: factor
+      integer,intent(in) :: s12p,s12,mt12
+      integer,intent(in) :: extQnumlimit
+      integer,intent(in) :: verbosity
+c     
+c********************************************************************
+c     LOCAL VARIABLES:
+c      
+      complex*16 hold(0:1,-1:1,0:1,-1:1)
+      integer Msp,Ms, extQnum
+      real*8 isospin
+
+      isospin=(-1)**(mt12)
+      call doublesigmasym(hold,qVec(1),qVec(2),qVec(3),qVec(1),qVec(2),qVec(3),s12p,s12,verbosity)
 
       do extQnum=1,3
-      do Msp=-Sp,Sp
-      do Ms=-S,S
-            tmp=ddelta(Sp,S)
-            tmp2=ddelta(Msp,Ms)
-            hold2(Sp,Msp,S,Ms)=tmp*tmp2*isospin
-
-            call doublesigmasym(hold,q(1),q(2),q(3),q(1),q(2),q(3),Sp,S,verbosity)
-            hold=hold*2*mpi*mpi*(-1)**(t12)
-
-            Kernel2B(extQnum,Sp,Msp,S,Ms) = Kernel2B(extQnum,Sp,Msp,S,Ms) +
-     &              factor*(hold(Sp,Msp,S,Ms)+hold2(Sp,Msp,S,Ms))
+      do Msp=-s12p,s12p
+      do Ms=-s12,s12
+            Kernel2B(extQnum,s12p,Msp,s12,Ms) = Kernel2B(extQnum,s12p,Msp,s12,Ms) + factor*hold(s12p,Msp,s12,Ms)*isospin
       end do
       end do
       end do 

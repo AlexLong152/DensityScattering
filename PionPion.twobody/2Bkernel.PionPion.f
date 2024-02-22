@@ -141,8 +141,8 @@ c     real*8 isospinFactor(0:1,-1:1,0:1,-1:1)
       real*8 pVec(3), ppVec(3)
       real*8 qVec(3)
       real*8 dl12by2
-      complex*16 factorAsym,factorBsym,factorCsym
-      complex*16 factorAasy,factorBasy,factorCasy
+      complex*16 factorAsym,factorBsym,factorCsym,factorDsym
+      complex*16 factorAasy,factorBasy,factorCasy,factorDasy
       real*8 kVec(3)!,q1Vec(3)
       real*8 kpVec(3)
       real*8 mPion, Mnucl,Epi,q0!, Fpi
@@ -213,38 +213,53 @@ c     Define from BKM review
       reducedMass=mPion/mNucleon
       prefactor=1/(32*(1+reducedMass)*(Pi*fpi)**4)
 
-      factorAsym=2*mPion*mPion*prefactor*(1/(DOT_PRODUCT(qVec,qVec)))
-      factorBsym=-1*(gA*gA*prefactor)*(1/((DOT_PRODUCT(qVec,qVec)+mpion**2)))
-      factorCsym=(gA*gA*prefactor)*(1/((DOT_PRODUCT(qVec,qVec)+mpion**2)**2))
+      factorAsym=-4*mPion*mPion*prefactor*(1/(DOT_PRODUCT(qVec,qVec)))
+      factorBsym=-1*gA*gA*prefactor/((DOT_PRODUCT(qVec,qVec)+mpion**2))
+      factorCsym=gA*gA*prefactor*(1/((DOT_PRODUCT(qVec,qVec)+mpion**2)**2))
+      factorDsym=-2*gA*gA*prefactor*mPion*mPion*(1/((DOT_PRODUCT(qVec,qVec)+mpion**2)**2))
 
 
       factorAasy=factorAsym
       factorBasy=factorBsym
       factorCasy=factorCsym
+      factorDasy=factorDsym
 
       if ((t12 .eq. t12p) .and. (mt12 .eq. mt12p)) then
 
          if (s12p .eq. s12) then ! spin symmetric part only; s12-s12p=0 => l12-l12p is even
             call CalcKernel2BAsym(Kernel2B,
      &           factorAsym,
-     &           s12p,s12,t12,extQnumlimit,verbosity)
+     &           s12p,s12,t12,mt12,extQnumlimit,verbosity)
 
             call CalcKernel2BBsym(Kernel2B,qVec,
      &           factorBsym,
      &           s12p,s12,t12,extQnumlimit,verbosity)
 
             call CalcKernel2BCsym(Kernel2B,qVec,
+     &           factorCsym,
+     &           s12p,s12,t12,extQnumlimit,verbosity)
+
+            call CalcKernel2BDsym(Kernel2B,qVec,
+     &           factorDsym,
+     &           s12p,s12,mt12,extQnumlimit,verbosity)
+
+         else                   !  spin anti-symmetric part only; s12 question: s12-s12p=±1 => l12-l12p is odd
+
+            call CalcKernel2BAasy(Kernel2B,
+     &           factorAsym,
+     &           s12p,s12,t12,extQnumlimit,verbosity)
+
+            call CalcKernel2BBasy(Kernel2B,qVec,
      &           factorBsym,
-     &           s12p,s12,t12,mt12,extQnumlimit,verbosity)
-c        else                   !  spin anti-symmetric part only; s12 question: s12-s12p=±1 => l12-l12p is odd
-c           call CalcKernel2BAasy(Kernel2B,
-c    &           factorAasy,
-c    &           s12p,s12,extQnumlimit,verbosity)
+     &           s12p,s12,t12,extQnumlimit,verbosity)
 
-c           call CalcKernel2BBasy(Kernel2B,qVec,
-c    &           factorAsym,
-c    &           s12p,s12,extQnumlimit,verbosity)
+            call CalcKernel2BCasy(Kernel2B,qVec,
+     &           factorCsym,
+     &           s12p,s12,t12,extQnumlimit,verbosity)
 
+            call CalcKernel2BDasy(Kernel2B,qVec,
+     &           factorDsym,
+     &           s12p,s12,mt12,extQnumlimit,verbosity)
          end if                 ! s12 question
 c     else                      ! t12!=t12p
 c        continue
