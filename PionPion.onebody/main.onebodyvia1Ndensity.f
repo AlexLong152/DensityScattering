@@ -86,7 +86,7 @@ c
       character*200 descriptors  ! additional descriptors of calculation
 
       character*3 nucleus ! name of nucleus to be considered, for output file name
-      integer Anucl             ! target nucleus mass number
+      integer*8 Anucl, Znucl    
       integer twoSnucl          ! 2 x target nucleus spin
       real*8 Mnucl               ! mass of target nucleus
       
@@ -191,9 +191,9 @@ c     0: do not delete; 1: delete un-gz'd file; 2: delete downloaded and un-gz'd
 
 c     for calculating magnetic-moment insertions on the way: (twoMzp,twoMzp,twomt1N)
 c     real*8,allocatable     :: insertion0(:,:,:),insertionz(:,:,:),insertiony(:,:,:),insertionx(:,:,:)
-      real*8 aproton(3), aneutron(3), prefactor, PionMass(3), output(3)
+      real*8 aproton(3), aneutron(3), prefactor(3), PionMass(3), output(3)
       real*8 aPlus, aMinus
-      integer*8 Znucl, extQuantNum
+      integer*8 extQuantNum
       real*8,parameter ::  munucleon(-1:1) = (/kappan,0.d0,kappap+1.d0/)! indices of entries: (-1,0,+1)!!!!
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -202,14 +202,14 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       write(*,*) 
       write(*,*) "================================================================================"
-      write(*,*) "Onebody Contributions to Few-Nucleon Compton Scattering Calculated Via 1N-Density Matrix"
+      write(*,*) "Onebody Contributions to Few-Nucleon Pion Nucleous scattering length"
       write(*,*) "================================================================================"
       write(*,*) "   Version 1.0"
+      write(*,*) "      Alexander Long 2024 based off of density code"
       write(*,*) "      D. Phillips/A. Nogga/hgrie starting August 2020   "
       write(*,*) "      based on 3He codes: D. Phillips/A. Nogga/hgrie starting May 2018"
       write(*,*) "                          D. Phillips/B. Strasberg/hgrie starting June 2014"
       write(*,*) "                          with A. Margaryan 2016-17, modifying codes by D. Shukla 2007/8"
-      write(*,*)
 c**********************************************************************
 c     Reading the input file from command line
 c**********************************************************************
@@ -219,11 +219,12 @@ c     get the number of arguments
 
 c     if you have 1 argument, write it to inputfile, otherwise stop 
       if (narg.eq.1) then
-         call get_command_argument(1, inputfile)
+         call get_command_argument(1, nucleus)
       else
-         write(*,*) "*** ERROR: Pass one input file as argument!"
+         write(*,*) "*** ERROR: Pass one nucleus as argument!"
          stop
       end if
+c     write(*,*) "In main.onebodyvia1Ndensity.f: nucleus=",nucleus 
       lab=1
       cm=2
 c     
@@ -233,70 +234,130 @@ c     Reading in data from the input file
 c**********************************************************************
       inUnitno=13
       outUnitno=10
-      open(unit=inUnitno, file=inputfile, status= 'OLD',iostat=test)
-      if (test .ne. 0) stop "*** ERROR: Could not open input file!!! Aborting."
 
-      call ReadinputCommon(Elow,Ehigh,Einterval,frame,
-     &     thetaLow,thetaHigh,thetaInterval,
-     &     outfile,descriptors,densityFileName,inUnitno,
-     &     nucleus,Anucl,twoSnucl,Mnucl,
-     &     twoMzplimit,cartesian,verbosity)
+c     call ReadinputCommon(Elow,Ehigh,Einterval,frame,
+c    &     thetaLow,thetaHigh,thetaInterval,
+c    &     outfile,descriptors,densityFileName,inUnitno,
+c    &     nucleus,Anucl,twoSnucl,Mnucl,
+c    &     twoMzplimit,cartesian,verbosity)
+
+c     call ReadinputNucOnly(outfile,inUnitno,nucleus,Anucl,Mnucl,extQnumlimit,
+c    &     verbosity)
       if (nucleus.eq."3He") then
+          Anucl=3
           Znucl=2
+          Mnucl = M3He
       else if(nucleus.eq."3H") then
+          Anucl=3
           Znucl=1
+c         Mnucl = M3H ! need to add this
       else if(nucleus.eq."2H") then
+          Anucl=2
           Znucl=1
+          Mnucl = M2H
       else if(nucleus.eq."4He") then
+          Anucl=4
           Znucl=2
+          Mnucl = M4He
       else if(nucleus.eq."6Li") then
+          Anucl=6
           Znucl=3
+          Mnucl = M6Li
       end if
 
-      call ReadinputOnebody(inUnitno,calctype,variedA,descriptors,
-c---- Variable to control Feynman quadrature settings------------------------
-     &     Nx,
-     &     verbosity)
+c     Many have described the pion scattering length on nucleons, but the original was:
+c     S. Weinberg, Phys. Lett. B295 (1992) 114.
+c     https://arxiv.org/abs/hep-ph/920925
 
-      call ReadinputCommonComments(descriptors,inUnitno,verbosity)
-      
-      close(unit=inUnitno,iostat=test)
-      if (test .ne. 0) stop "*** ERROR: Could not close input file!!! Aborting."
-c
-      aPlus=1.5d0*(10**-3) ! in units of inverse pion mass
-      aMinus=85.2d0*(10**-3)
-      PionMass=(/139.57,134.977,139.57/)
+c     In the V. Bernard, N. Kaiser, Ulf-G. Meißner Chiral Dynamics in Nucleons and Nuclei 
+c     this is described around equation 5.29 and equations 3.75
+c     https://arxiv.org/abs/hep-ph/9501384v1
+
+c     Values of a^+ and a^- taken from:
+c     Martin Hoferichter, Bastian Kubis, Ulf-G. Meißner,
+c     Isospin breaking in the pion–nucleon scattering lengths,
+c     Physics Letters B, Volume 678, Issue 1, 2009,
+c     https://doi.org/10.1016/j.physletb.2009.05.068. | https://www.sciencedirect.com/science/article/pii/S0370269309006583
+c      
+c     It is possible that more up to date values of these constants can be found elsewhere
+
+      aPlus=1.5d0*(10.d0**(-3)) ! in units of inverse pion mass
+      aMinus=85.2d0*(10.d0**(-3))
+      aPlus=aPlus*137   ! convert to units of MeV^-1
+      aMinus=aMinus*137
       aproton=(/aPlus+aMinus, aPlus, aPlus-aMinus/)
       aneutron=(/aPlus-aMinus, aPlus, aPlus+aMinus/)
+c     write(*,*) "Pure proton scattering lengths"
+c     write(*,*) aproton
+c     write(*,*) "Pure neutron scattering lengths"
+c     write(*,*) aneutron
       
-      prefactor=(1+(PionMass/938))/(1+PionMass/Mnucl)!can make 938 more accurate later
-      output =prefactor*(Znucl*aproton + (Anucl-Znucl)*aneutron)
 
-      call makeoutputfilename(outfile,calctype,nucleus,descriptors,densityFileName,variedA,
-     &     Elow,Ehigh,Einterval,thetaLow,thetaHigh,thetaInterval,verbosity)
-c**********************************************************************
-c     FINAL PRELIMINARIES
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc     
-c     hgrie June 2017: keep original filename: needed for replacements of energy & angle later 
-      originaldensityFileName = densityFileName
-      
+      PionMass=(/139.57,134.977,139.57/)
+      prefactor=(1+(PionMass/938))/(1+PionMass/Mnucl)
+      output =prefactor*(Znucl*aproton + (Anucl-Znucl)*aneutron)
 
                   
 c**********************************************************************
+      outfile=nucleus//"-output.dat"
       open(unit=outUnitno, file=outfile,iostat=test)
-      if (test .ne. 0) stop "*** ERROR: Could not open output file!!! Aborting."
-c**********************************************************************
-c     Loop over Energies
-c**********************************************************************
+
+      call WriteOutput(output,outUnitno,nucleus,Anucl,Znucl)
+
       close(outUnitno,iostat=test)
       if (test .ne. 0) stop "*** ERROR: Could not close output file!!!"
-     
       write (*,*) '*** Wrote output to file: ',TRIM(outfile)
-      
       stop
       
- 20   format(' ',A,I6,A,8I8,A,E24.15,SP,E25.15," I")
- 30   format(' ',A,5I4,A,F20.13,SP,F21.13," I")
- 40   format(A,2F18.13)
+c20   format(' ',A,I6,A,8I8,A,E24.15,SP,E25.15," I")
+c30   format(' ',A,5I4,A,F20.13,SP,F21.13," I")
+c40   format(A,2F18.13)
       
       end PROGRAM
+
+      subroutine WriteOutput(output, outUnitno, nucleus,Anucl,Znucl)
+      implicit none
+      real*8 output(3)
+      integer outUnitno,i
+      integer*8 Anucl,Znucl
+      character*3 nucleus 
+
+      write(outUnitno,*) "One Body contribution to "//nucleus//" scattering length"
+      write(outUnitno,"(A4,A4,I2,A4,I2)") nucleus,": A=",Anucl,", Z=",Znucl
+      write(outUnitno,*) "Order of outputs is (π^-, π^0, π^+), units in MeV^{-1}"
+      do i=1,3
+        write(outUnitno,"(F0.7)") output(i)
+      end do
+
+      write(outUnitno,*) ""
+      write(outUnitno,*) "Mathematica friendly output:"
+      write(outUnitno,"(A1)",advance="no") "{"
+c     output(1)=987654321.1234567d0 !for testing outputs
+      do i=1,3
+        write(outUnitno,"(F0.7)",advance="no") output(i)
+        if (i.ne.3) then
+            write(outUnitno,"(A1)",advance="no") ","
+        end if
+      end do
+      write(outUnitno,"(A1)") "}"
+c     Now repeat everything with output to screen
+
+      write(*,*) "One Body contribution to "//nucleus//" scattering length"
+      write(*,"(A4,A4,I2,A4,I2)") nucleus,": A=",Anucl,", Z=",Znucl
+      write(*,*) "Order of outputs is (π^-, π^0, π^+), units in MeV^{-1}"
+      do i=1,3
+        write(*,"(F0.7)") output(i)
+      end do
+
+      write(*,*) ""
+      write(*,*) "Mathematica friendly output:"
+      write(*,"(A1)",advance="no") "{"
+      do i=1,3
+        write(*,"(F0.7)",advance="no") output(i)
+        if (i.ne.3) then
+            write(*,"(A1)",advance="no") ","
+        end if
+      end do
+      write(*,"(A1)") "}"
+
+      end subroutine
