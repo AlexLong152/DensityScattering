@@ -77,6 +77,7 @@ c      complex*16 Intx(-5:5,-5:5),Inty(-5:5,-5:5)   ! for STUMP, see below
 c      complex*16 Intpx(-5:5,-5:5),Intpy(-5:5,-5:5) ! for STUMP, see below
       complex*16 Yl12pstar
       real*8 cgcp,cgc,p12x,p12y,p12z,p12px,p12py,p12pz,p12,p12p
+      real*8 offset
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     
       if (verbosity.eq.1000) continue ! unused variable, kept for future use
@@ -132,9 +133,14 @@ c     for LebedevLaikov, only sum over diagonal elements of angweight12 (all oth
                   end if    
 c     angle integral: φ of p12
                   do iphi=imin,imax
+                     offset=10.d0*sqrt(2.d0)*PI/180
+c                    rotate by an irrational number of degrees to avoid singularities
+
+c     Inputs are theta and phi, outputs are x,y,z
+                    
                      call CalculatePVector(p12x,p12y,p12z,p12,
-     &                    th12(ith),phi12(iphi),verbosity)
-                     call getsphericalharmonics(Yl12,l12,th12(ith),phi12(iphi))
+     &                    mod(th12(ith)+offset,PI),mod(phi12(iphi)+offset,2*PI),verbosity)
+                     call getsphericalharmonics(Yl12,l12,mod(th12(ith)+offset,PI),mod(phi12(iphi)+offset,2.d0*PI))
 c     angle integral: θprime of p12p
                      do jth=1,Nth12
 c     c   $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$

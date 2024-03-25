@@ -141,7 +141,7 @@ c     LOCAL VARIABLES:
       real*8 factorAasy,factorBasy
       real*8 kVec(3),q1Vec(3)
       real*8 mPion, Mnucl
-      real*8 mu
+      real*8 mu, eps
 c     
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     
@@ -185,20 +185,32 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     
       tmpVec=pVec-ppVec+(kVec/2)
       tmpVec2=pVec-ppVec-(kVec/2)
-      mu=3.5d0
-      if (abs(DOT_PRODUCT(tmpVec,tmpVec)).le.0.0001d0) then
-          factorAsym=-(-1)**(t12)*(1.d0/(mu+DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
-          factorBsym=+2*(-1)**(t12)*(1.d0/(
-     &            DOT_PRODUCT(tmpVec,tmpVec)+mu))*
-     &            (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
-     &         *(2*Pi)**3/HC
-      else  
-          factorAsym=-(-1)**(t12)*(1.d0/(DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
-          factorBsym=+2*(-1)**(t12)*(1.d0/(
-     &            DOT_PRODUCT(tmpVec,tmpVec)))*
-     &            (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
-     &         *(2*Pi)**3/HC
-      end if
+      mu=5.d0
+c     eps=0.001d0
+
+c     if (DOT_PRODUCT(tmpVec,tmpVec).le.eps) then
+c         write(*,*) "##########################"
+c         write(*,*) "Inside tmp.tmp<=eps"
+c         write(*,*) "##########################"
+c         factorAsym=-(-1)**(t12)*(1.d0/(mu+DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
+c         factorBsym=+2*(-1)**(t12)*(1.d0/(
+c    &            DOT_PRODUCT(tmpVec,tmpVec)+mu))*
+c    &            (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
+c    &         *(2*Pi)**3/HC
+c     else  
+c         write(*,*) DOT_PRODUCT(tmpVec,tmpVec), ","
+c         factorAsym=-(-1)**(t12)*(1.d0/(DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
+c         factorBsym=+2*(-1)**(t12)*(1.d0/(
+c    &            DOT_PRODUCT(tmpVec,tmpVec)))*
+c    &            (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
+c    &         *(2*Pi)**3/HC
+c     end if
+
+      factorAsym=-(-1)**(t12)*(1.d0/(mu+DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
+      factorBsym=+2*(-1)**(t12)*(1.d0/(mu+
+     &        DOT_PRODUCT(tmpVec,tmpVec)))*
+     &        (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
+     &     *(2*Pi)**3/HC
       factorAasy=factorAsym
       factorBasy=factorBsym
       

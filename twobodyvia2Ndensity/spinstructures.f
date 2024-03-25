@@ -88,6 +88,9 @@ c
       hold=0.5*real(holdtmp)
       end subroutine
 
+
+
+
       subroutine doublesigmasym(hold,Ax,Ay,Az,Bx,By,Bz,Sp,S,verbosity)
 c     
 c     Calculates symmetric part of spin structure σ1.A σ2.B: σ1.A σ2.B + σ1.B σ2.A
@@ -152,20 +155,14 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc      
 cccc  new subroutine to calculate the matrix elements of A.σ 
       subroutine singlesigmasym(hold,Ax,Ay,Az,Sp,S,verbosity)
-c     
 c     Calculates symmetric part of spin structure σ.A: (σ1+σ2).A -- checked in manu-script Compton Densities pp. 65aff
-c     
 c********************************************************************
-c     
+
       implicit none
-c     
-c********************************************************************
-c     
       include '../common-densities/constants.def'
-c     
+
 c********************************************************************
 c     OUTPUT VARIABLE:
-c     
       complex*16,intent(out) :: hold(0:1,-1:1,0:1,-1:1)
 c     
 c********************************************************************
@@ -181,8 +178,6 @@ c********************************************************************
 c     LOCAL VARIABLES:
 c     
       complex*16 Aplus,Aminus
-c     
-c     
 c********************************************************************
 c     
       hold=c0 ! set all MEs to zero -- only Sp=S=1 MEs are nonzero
@@ -306,3 +301,13 @@ c
       if (verbosity.eq.1000) continue
       end
 c
+
+      real*8 function ddelta(a,b)
+      implicit none
+      integer, intent(in) :: a,b
+      if (a.eq.b) then
+          ddelta=1.d0  
+      else
+          ddelta=0.d0
+      end if
+      end function ddelta

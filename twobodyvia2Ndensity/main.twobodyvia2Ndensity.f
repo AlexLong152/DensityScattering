@@ -316,6 +316,9 @@ c     Set up angular quadratures for (12) integration
 c**********************************************************************
       open(unit=outUnitno, file=outfile,iostat=test)
       if (test .ne. 0) stop "*** ERROR: Could not open output file!!! Aborting."
+
+      open(unit=outUnitno+1, file="denom.dat",iostat=test)
+      if (test .ne. 0) stop "*** ERROR: Could not open output file!!! Aborting."
 c**********************************************************************
 c     Loop over Energies
 c**********************************************************************
