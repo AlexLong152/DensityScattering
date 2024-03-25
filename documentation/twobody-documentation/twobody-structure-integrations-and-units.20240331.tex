@@ -826,10 +826,11 @@ in the code itself, and denoting on the left the units of each line):
     [\MeV]^{3-n}\hqq&\;\genfrac{(}{)}{0pt}{}{A}{2}\;
     \bra\wfbra \sep M ' \, | O_{12} | \wf \sep M \, \ket \equiv\\
   % \\[0.5ex] &
-  [\fm]^{-6}\hqq&\sum_{\genfrac{}{}{0pt}{}{\fs\texttt{mt12,j12,s12,l12,m12}}{\fs
+    [\fm]^{-6}\hqq&\hqqq\genfrac{(}{)}{0pt}{}{A}{2}
+    \sum_{\genfrac{}{}{0pt}{}{\fs\texttt{mt12,j12,s12,l12,m12}}{\fs
   \text{in \texttt{main.twobody.f}}}}
-  \hqq\sum_{\genfrac{}{}{0pt}{}{\fs
-      \texttt{\pbox{\linewidth}{mt12p=mt12,j12p,s12p,l12p\\[-1ex]\hf m12p,Mzp,Mz\hf}}}
+  \sum_{\genfrac{}{}{0pt}{}{\fs
+      \texttt{\pbox{\linewidth}{\hf mt12p=mt12\hf\\[-2ex]j12p,s12p,l12p\\[-2ex]\hf m12p,Mzp,Mz\hf}}}
     {\fs\text{in \texttt{finalstatesums.*.f}}}}
   \underbrace{\int\frac{\deint{}{p_{12}'} p_{12}^{\prime \, 2 }}{(2\pi)^3}\;\int
     \deint{}{p_{12}} p_{12}^{2}}_{\text{in \texttt{f=\dots} of \texttt{finalstatesums.*.f}}}\;\\
@@ -851,9 +852,13 @@ in the code itself, and denoting on the left the units of each line):
     \pv_{12}; \qv )}_{\text{in \texttt{2Bspinisospintrans.f}}} \;\;.
 \end{split}
 \end{equation}
-using the Clebsch-Gordan coefficients $\CG{j_{1}}{j_{2}}{j}{m_1}{m_{2}}{m}$ in the
-convention of refs.~\cite{Edmonds, PDG}. The assignation of quantum numbers
-between code and the quantities should be self-explaining except maybe $\texttt{ms}=m_{12}^s$, $\texttt{msp}=m_{12}^{s\prime}$. 
+using the Clebsch-Gordan coefficients $\CG{j_{1}}{j_{2}}{j}{m_1}{m_{2}}{m}$ in
+the convention of refs.~\cite{Edmonds, PDG}. The assignation of quantum
+numbers between code and the quantities should be self-explaining except maybe
+$\texttt{ms}=m_{12}^s$, $\texttt{msp}=m_{12}^{s\prime}$. The isospin
+$\texttt{t12}=t_{12}^\prime$ is determined by the Pauli principle:
+$(-)=(-)^{s_{12}+l_{12}+t_{12}}=(-)^{s_{12}^\prime+l_{12}^\prime+t_{12}^\prime}$, implemented in \texttt{main.twobody.f} for
+the $\texttt{t12}\in\{0;1\}$ case as $\texttt{t12=(1-(-1)**(l12+s12+1))/2}$.
 
 Only the last line is coded in the kernel's \texttt{2Bspinisospintrans.f} and
 \texttt{spintricks*.f}, namely the twobody operator $\calO_{12}$ projected
