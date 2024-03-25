@@ -1,0 +1,1016 @@
+\documentclass[12pt%,draft
+]{article}%%%%%% Choose Draft version or final
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ``He is doing his best, I am afraid.''
+%                              British report card
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CONVENTIONS
+%
+% Grie\3hammer, Mei\3ner even in bibliography
+%
+% oft-used standards: EPJA
+% -----------------------
+% All refers are NON-capitalised:
+% ref.~
+% fig.~
+% sect.~
+% sects.~
+% app.~
+% eq.~
+% eqs.~
+% all the above NOT abbreviated but capitalised when beginning of sentence.
+%
+% cf.~ not italicised
+% see, \textit{e.g.}, XXX
+% 
+% colour, polarisability, renormalisation,...
+%
+% \mathrm{} labels (also in reactions): particle names, frame, 
+%
+% punctuations inside equations are separated as "\;\;,\;\;" etc.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage[british]{babel}
+\selectlanguage{british}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\AnswerYes{y}
+\def\pdflatex{y}                  %%%%%% Use pdflatex? (if not, latex)
+\def\ShowLabelsVersion{n}         %%%%%% Show defs. of refs, cites or final
+\def\ShowChangesVersion{n}        %%%%%% Changes highlighted or final version
+\def\ShowAnnotationsVersion{n}    %%%%%% Version with annotations or final
+\def\ShowFigures{y}               %%%%%% Show figures; if no: only show filename
+\def\feynVersion{y}               %%%%%% Choose whether feynman graphs to be
+                                  %%%%%%    generated, or .eps file included
+\def\MakeArXivLinksActive{y}      %%%%%% Choose whether ArXiv links are active
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% for pdflatex: treating figures
+\ifx\pdflatex\AnswerYes
+   \usepackage[update,prepend]{epstopdf} % automaticlaly converts .eps to .pdf file
+   \usepackage{grffile} % allows graphics files to have "." in filename
+   \epstopdfsetup{update} % only regenerate pdf files when eps file is newer
+   \DeclareGraphicsRule{*}{mps}{*}{}
+\fi
+%%%%% Colours in the graphs
+\ifx\pdflatex\AnswerYes
+    \usepackage{color}
+\else
+    \usepackage[dvips]{color}
+\fi
+%%%%% Thumbnails for PDF versions
+\ifx\pdflatex\AnswerYes
+    \usepackage{thumbpdf}    %
+\else
+    \usepackage[dvips]{thumbpdf}
+\fi
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% Following produces hyper-linked .pdf file
+%%%% should be the very package to load, except natbib after that:
+\ifx\pdflatex\AnswerYes
+    \usepackage[ 
+        final,
+        breaklinks=true,
+        colorlinks=true,           % coloured links 
+        pdfborder={0 0 1},    % coloured box about link
+        citecolor={blue},linkcolor={blue},urlcolor={red},
+        citebordercolor={1 0 0},linkbordercolor={0 0 1},urlbordercolor={1 0 0},
+        pdfpagemode=UseOutlines,% whether Acrobat opens with
+                               % None or
+                               % UseThumbs (thumbnails shown) or 
+                               % UseOutlines (bookmarks shown) or
+                               % FullScreen.
+%        pagebackref,          % insert pageref to \cite{} occurence in bibitem 
+        bookmarks=true,bookmarksopenlevel=4% write .pdf table of contents.
+        ]{hyperref}         % Hyperlinks for PDF versions
+%% Following must be used with hyperref; without it, can use ``cite'' to collapse
+\else
+    \usepackage[dvips,              % dvips,ps2pdf,pdftex driver 
+        final,
+        breaklinks=true,
+        colorlinks=true,      % coloured links 
+        pdfborder={0 0 1},    % coloured box about link
+        citecolor={blue},linkcolor={blue},urlcolor={red},
+        citebordercolor={1 0 0},linkbordercolor={0 0 1},urlbordercolor={1 0 0},
+        pdfpagemode=UseOutlines,% whether Acrobat opens with
+                               % None or
+                               % UseThumbs (thumbnails shown) or 
+                               % UseOutlines (bookmarks shown) or
+                               % FullScreen.
+%        pagebackref,          % insert pageref to \cite{} occurence in bibitem 
+        bookmarks=true,bookmarksopenlevel=4% write .pdf table of contents.
+         ]{hyperref}         % Hyperlinks for PDF versions
+\fi
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%  active links to arXiv papers, with minimal modification of SPIRES LaTeX citation:
+%%%%  use \arxiv[arXiv:1234.5678 [yyyy-xx]]  or  \arxivold[yyyy-xx/1234567]  
+%%%%  (yyyy-xx is hep-ph or nucl-ex...)
+\ifx\MakeArXivLinksActive\AnswerYes
+   \usepackage{xparse}
+   \NewDocumentCommand{\arxiv} %
+   {r [: u{ [} u{]]} }{[\href{http://arxiv.org/abs/#2}{arXiv:#2}~[#3]]}
+   \NewDocumentCommand{\arxivold} {r[]}{[\href{http://arxiv.org/abs/#1}{#1}]}
+   \NewDocumentCommand{\arXiv} %
+   {r [: u{ [} u{]]} }{[\href{http://arxiv.org/abs/#2}{arXiv:#2}~[#3]]}
+   \NewDocumentCommand{\arXivold} {r[]}{[\href{http://arxiv.org/abs/#1}{#1}]}
+\else
+%%%% commands have no effect
+   \newcommand{\arxiv}[1][]{[#1]}
+   \newcommand{\arxivold}[1][]{[#1]}
+   \newcommand{\arXiv}[1][]{[#1]}
+   \newcommand{\arXivold}[1][]{[#1]}
+\fi
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{doi} % \doi{} converts DOI numbers into clickable links
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage[numbers,sort&compress]{natbib}%%% collapses [1,2,3] -> [1-3] etc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{graphicx}            %%% for pictures and figures
+\graphicspath{{figures/}{./}}
+
+\usepackage{multirow}                   %%% tabs over multiple rows
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{bbm} % double-line symbols (RR), with numerals (11) and lower-case
+\usepackage{xspace}                    %%% correct spacing self-defined macros
+\usepackage{dcolumn}                    %%% Align table columns on decimal point
+\usepackage{pbox}
+
+\usepackage{bm}                        %%% bold math
+
+\usepackage{slashed}
+% the \slashed{}-command produces a Feynman dagger through a letter.
+% \declareslashed{#1}{#2}{#3}{#4}{#5}:
+%#1 normally empty, can be \mathop etc; #2 normally /
+% #3 right shift; #4 up shift; #5 symbol
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\ifx\feynVersion\AnswerYes
+   \usepackage{feynmp-auto} % for Feynman diagrams; nice definitions after \begin{document}
+\fi
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\setlength{\unitlength}{1pt}              %%% always good to have...
+
+\usepackage{chngcntr} % allows one to reset counters between sections etc
+\counterwithin*{equation}{section} % reset equation counter with each section
+\renewcommand{\theequation}{\thesection.\arabic{equation}}
+\renewcommand{\labelenumi}{(\arabic{enumi})}
+\renewcommand{\labelitemi}{--}
+\renewcommand{\arraystretch}{1.5}
+
+% less space between \paragraph headings
+\makeatletter
+\renewcommand{\paragraph}{%
+  \@startsection{paragraph}{4}%
+  {\z@}{1.5ex \@plus 1ex \@minus .2ex}{-1em}%
+  {\normalfont\normalsize\bfseries}%
+}
+\makeatother
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% text: dimensions for A4 and letter alike
+
+\textheight22cm
+\textwidth16.4cm
+\topmargin = -1.5 true cm
+\addtolength{\evensidemargin}{-1.25cm}
+\addtolength{\oddsidemargin}{-1.25cm}
+\renewcommand{\textfraction}{0}
+
+\flushbottom                               %%% footnotes inside page
+
+% Necessary new hyphenations
+\hyphenation{Z-para-meter-isa-tion re-scat-ter-ing Re-scat-ter-ing}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% Draft Versions
+%%%%
+%%%% For Draft version showing labels
+\ifx\ShowLabelsVersion\AnswerYes
+% shows definitions of labels, refs, cites etc.
+   \usepackage[color]{showkeys} 
+   \definecolor{refkey}{gray}{.5}   % slightly gray font
+   \definecolor{labelkey}{gray}{.5} % slightly gray font
+   \renewcommand{\showkeyslabelformat}[1]{\fbox{\normalfont\tiny\ttfamily#1}}
+   % very small font for labels
+\fi
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% For Draft version showing annotations
+\ifx\ShowAnnotationsVersion\AnswerYes
+% highlights changes and shows replaced text
+   \typeout{*** Draft version: annotations shown ***}
+% Comments
+   \newcommand{\comment}[1]{{\scriptsize\sffamily\bfseries{#1}}}
+   \newcommand{\margin}[1]{\marginpar{\scriptsize\sffamily\bfseries{#1}}}
+   \pagestyle{myheadings}
+   \markboth{\textbf{Draft version \today}}{\textbf{Draft version \today}}
+   \newcommand{\drafty}{\textbf{Draft version \today} \hfill}
+\else
+   \newcommand{\comment}[1]{}
+   \newcommand{\margin}[1]{}
+   \pagestyle{myheadings}
+   \markboth{\textbf{Version \today}}{\textbf{Version \today}}
+   \newcommand{\drafty}{\hspace*{\fill}\textbf{Version \today}\hspace*{\fill}}
+\fi
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% For Draft version showing changes
+\ifx\ShowChangesVersion\AnswerYes
+% highlights changes and shows replaced text
+   \typeout{*** Draft version: changes shown ***}
+   \usepackage{ulem}
+   % provides underlines of various styles, good for commenting etc.
+   % \uline{important}    underlined text
+   % \dashuline{dashing}  dashed underline
+   % \dotuline{dotty}     dotted underline
+   % \uuline{urgent}      double-underlined text
+   % \uwave{boat}         wavy underline 
+   % \sout{wrong}         line drawn _through_ word
+   % \xout{removed}       marked over (many "/////")
+   \newcommand{\replace}[2]{\sout{\protect#1}\textbf{#2}} 
+   % replace #1 (strike-out) with #2 (highlighted)
+   \newcommand{\add}[1]{\textbf{#1}}               % insert #1 (highlighted)
+   \newcommand{\delete}[1]{\sout{#1}}            % delete #1 (strike-out)
+   \renewcommand{\emph}[1]{\textit{#1}}           % ulem overwrites def of \emph as
+                                            % textit, so reinstate here
+\else
+   \newcommand{\uline}[1]{#1}
+   \newcommand{\dashuline}[1]{#1}
+   \newcommand{\dotuline}[1]{#1}
+   \newcommand{\uuline}[1]{#1}
+   \newcommand{\uwave}[1]{#1}
+   \newcommand{\sout}[1]{}
+   \newcommand{\xout}[1]{}
+   \newcommand{\replace}[2]{#2}
+   \newcommand{\add}[1]{#1}
+   \newcommand{\delete}[1]{}
+\fi
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% "Stylistic" Definitions
+%
+\newcommand{\3}{\ss}
+\newcommand{\disc}{\discretionary{}{}{}}%makes optional hyphenation without "-"
+\newcommand{\absatz}{\vspace{2ex}\noindent}
+
+% eliminate colours
+\newcommand{\blue}[1]{#1}
+\newcommand{\red}[1]{#1}
+\newcommand{\black}[1]{#1}
+\newcommand{\green}[1]{#1}
+
+% define abbreviations
+
+\newcommand{\eg}{\textit{e.g.}\xspace}
+\newcommand{\ie}{\textit{i.e.}\xspace}
+\newcommand{\etal}{\textit{et al.}\xspace}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Mathematical Defs.
+%
+
+\newcommand{\dis}{\displaystyle}
+\newcommand{\txt}{\textstyle}
+\newcommand{\script}{\scriptstyle}
+\newcommand{\fs}{\scriptstyle} % adjusts size of labels e.g. in feynmf-diagrams
+\newcommand{\non}{\nonumber}
+\newcommand{\hf}{\hspace*{\fill}}
+\newcommand{\hq}{\hspace{0.5em}}
+\newcommand{\hqq}{\hspace{1em}}
+\newcommand{\hqqq}{\hspace{2em}}
+\newcommand{\hqm}{\hspace*{-0.25em}}
+\newcommand{\hqmm}{\hspace*{-0.5em}}
+\newcommand{\hqmmm}{\hspace*{-1.0em}}
+
+\newcommand{\half}{\frac{1}{2}}
+\newcommand{\e}{\mathrm{e}}
+\newcommand{\ii}{\mathrm{i}}
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\tr}{\mathrm{tr}}
+\newcommand{\T}{\mathrm{T}}
+
+\newcommand{\deint}[2]{\dd^{#1}\! #2\;}
+\newcommand{\deintdim}[2]{\frac{\dd^{#1}\! #2}{(2\pi)^{#1}}\;}
+\newcommand{\dedreix}{\dd^{3}\:\!\! x\;}
+\newcommand{\dedreiy}{\dd^{3}\:\!\! y\;}
+
+\newcommand{\de}{\partial}
+
+\renewcommand{\deg}{\circ}
+
+% The following construct adds a bit of space to the end of a vector, so that
+% the vector arrows do not collide with subscript like ² and '  
+\newcommand{\vectorwithspace}[1]{\vec{#1}\mkern2mu\vphantom{#1}}
+\newcommand{\vect}[1]{\vectorwithspace{#1}}
+
+\newcommand{\grad}{\vectorwithspace{\nabla}}
+\newcommand{\dev}{\vectorwithspace{\de}}
+
+\newcommand{\av}{\vectorwithspace{a}}
+\newcommand{\bv}{\vectorwithspace{b}}
+\newcommand{\cv}{\vectorwithspace{c}}
+\newcommand{\dv}{\vectorwithspace{d}}
+\newcommand{\ev}{\vectorwithspace{e}}
+\newcommand{\fv}{\vectorwithspace{f}}
+\newcommand{\gv}{\vectorwithspace{g}}
+\newcommand{\hv}{\vectorwithspace{h}}
+\newcommand{\iv}{\vectorwithspace{i}}
+\newcommand{\jv}{\vectorwithspace{j}}
+\newcommand{\kv}{\vectorwithspace{k}}
+\newcommand{\lv}{\vectorwithspace{l}}
+\newcommand{\mv}{\vectorwithspace{m}}
+\newcommand{\nv}{\vectorwithspace{n}}
+\newcommand{\ov}{\vectorwithspace{o}}
+\newcommand{\pv}{\vectorwithspace{p}}
+\newcommand{\qv}{\vectorwithspace{q}}
+\newcommand{\rv}{\vectorwithspace{r}}
+\newcommand{\sv}{\vectorwithspace{s}}
+\newcommand{\tv}{\vectorwithspace{t}}
+\newcommand{\uv}{\vectorwithspace{u}}
+\newcommand{\vv}{\vectorwithspace{v}}
+\newcommand{\wv}{\vectorwithspace{w}}
+\newcommand{\xv}{\vectorwithspace{x}}
+\newcommand{\yv}{\vectorwithspace{y}}
+\newcommand{\zv}{\vectorwithspace{z}}
+\newcommand{\Av}{\vectorwithspace{A}}
+\newcommand{\Bv}{\vectorwithspace{B}}
+\newcommand{\Cv}{\vectorwithspace{C}}
+\newcommand{\Dv}{\vectorwithspace{D}}
+\newcommand{\Ev}{\vectorwithspace{E}}
+\newcommand{\Fv}{\vectorwithspace{F}}
+\newcommand{\Gv}{\vectorwithspace{G}}
+\newcommand{\Hv}{\vectorwithspace{H}}
+\newcommand{\Iv}{\vectorwithspace{I}}
+\newcommand{\Jv}{\vectorwithspace{J}}
+\newcommand{\Kv}{\vectorwithspace{K}}
+\newcommand{\Lv}{\vectorwithspace{L}}
+\newcommand{\Mv}{\vectorwithspace{M}}
+\newcommand{\Nv}{\vectorwithspace{N}}
+\newcommand{\Ov}{\vectorwithspace{O}}
+\newcommand{\Pv}{\vectorwithspace{P}}
+\newcommand{\Qv}{\vectorwithspace{Q}}
+\newcommand{\Rv}{\vectorwithspace{R}}
+\newcommand{\Sv}{\vectorwithspace{S}}
+\newcommand{\Tv}{\vectorwithspace{T}}
+\newcommand{\Uv}{\vectorwithspace{U}}
+\newcommand{\Vv}{\vectorwithspace{V}}
+\newcommand{\Wv}{\vectorwithspace{W}}
+\newcommand{\Xv}{\vectorwithspace{X}}
+\newcommand{\Yv}{\vectorwithspace{Y}}
+\newcommand{\Zv}{\vectorwithspace{Z}}
+
+\newcommand{\Complexes}{\mathbb{C}}
+\newcommand{\Imaginaries}{\mathbb{I}}
+\newcommand{\Integers}{\mathbb{Z}}
+\newcommand{\Naturals}{\mathbb{N}}
+\newcommand{\Rationals}{\mathbb{Q}}
+\newcommand{\Reals}{\mathbb{R}}
+
+
+\renewcommand{\Re}{\mathrm{Re}}
+\renewcommand{\Im}{\mathrm{Im}}
+\newcommand{\bra}{\langle}
+\newcommand{\ket}{\rangle}
+
+\newcommand{\Folgt}{\Longrightarrow}
+
+% Eff. Nuclear Theory
+
+\newcommand{\mpi}{\ensuremath{m_\pi}}
+\newcommand{\mpiphys}{\ensuremath{m_{\pi\text{phys}}}}
+\newcommand{\fpi}{\ensuremath{f_\pi}}
+\newcommand{\MeV}{\ensuremath{\mathrm{MeV}}}
+\newcommand{\fm}{\ensuremath{\mathrm{fm}}}
+\newcommand{\ChiEFT}{$\chi$EFT\xspace}
+\newcommand{\EFTNoPion}{EFT($\slashed{\pi}$)\xspace}
+\newcommand{\NoPion}{\ensuremath{\slashed{\pi}}}
+\newcommand{\upNoPion}{\ensuremath{{}^\slashed{\pi}}}
+\newcommand{\downNoPion}{\ensuremath{{}_\slashed{\pi}}}
+\newcommand{\LambdaChi}{\ensuremath{\overline{\Lambda}_\chi}}
+\newcommand{\LambdaNoPion}{\ensuremath{\Lambda_\slashed{\pi}}}
+\newcommand{\QNoPion}{\ensuremath{Q_\slashed{\pi}}}
+
+\newcommand{\NXLO}[1]{N\ensuremath{{}^{#1}}LO\xspace}
+\newcommand{\NtwoLO}{\NXLO{2}}
+\newcommand{\NthreeLO}{\NXLO{3}}
+
+\newcommand{\wave}[3]{\ensuremath{{}^{#1}\mathrm{#2}_{#3}}}
+\newcommand{\oneS}{\wave{1}{S}{0}}
+\newcommand{\twoS}{\wave{2}{S}{\half}}
+\newcommand{\threeS}{\wave{3}{S}{1}}
+\newcommand{\fourS}{\wave{4}{S}{\frac{3}{2}}}
+
+\newcommand{\HIGS}{HI$\gamma$S\xspace}
+\newcommand{\threeH}{\ensuremath{{}^3}H\xspace}
+\newcommand{\threeHe}{\ensuremath{{}^3}He\xspace}
+\newcommand{\fourHe}{\ensuremath{{}^4}He\xspace}
+
+% Definitions for Polarisabilities 
+
+\newcommand{\alphae}{\ensuremath{\alpha_{E1}}}
+\newcommand{\betam}{\ensuremath{\beta_{M1}}}
+\newcommand{\gammaee}{\ensuremath{\gamma_{E1E1}}}
+\newcommand{\gammamm}{\ensuremath{\gamma_{M1M1}}}
+\newcommand{\gammaem}{\ensuremath{\gamma_{E1M2}}}
+\newcommand{\gammame}{\ensuremath{\gamma_{M1E2}}}
+\newcommand{\gammazero}{\ensuremath{\gamma_{0}}}
+\newcommand{\gammapi}{\ensuremath{\gamma_{\pi}}}
+\newcommand{\alphaep}{\ensuremath{\alpha_{E1}^{(\mathrm{p})}}}
+\newcommand{\betamp}{\ensuremath{\beta_{M1}^{(\mathrm{p})}}}
+\newcommand{\gammaeep}{\ensuremath{\gamma_{E1E1}^{(\mathrm{p})}}}
+\newcommand{\gammammp}{\ensuremath{\gamma_{M1M1}^{(\mathrm{p})}}}
+\newcommand{\gammaemp}{\ensuremath{\gamma_{E1M2}^{(\mathrm{p})}}}
+\newcommand{\gammamep}{\ensuremath{\gamma_{M1E2}^{(\mathrm{p})}}}
+\newcommand{\gammazerop}{\ensuremath{\gamma_{0}^{(\mathrm{p})}}}
+\newcommand{\gammapip}{\ensuremath{\gamma_{\pi}^{(\mathrm{p})}}}
+\newcommand{\alphaen}{\ensuremath{\alpha_{E1}^{(\mathrm{n})}}}
+\newcommand{\betamn}{\ensuremath{\beta_{M1}^{(\mathrm{n})}}}
+\newcommand{\gammaeen}{\ensuremath{\gamma_{E1E1}^{(\mathrm{n})}}}
+\newcommand{\gammammn}{\ensuremath{\gamma_{M1M1}^{(\mathrm{n})}}}
+\newcommand{\gammaemn}{\ensuremath{\gamma_{E1M2}^{(\mathrm{n})}}}
+\newcommand{\gammamen}{\ensuremath{\gamma_{M1E2}^{(\mathrm{n})}}}
+\newcommand{\gammazeron}{\ensuremath{\gamma_{0}^{(\mathrm{n})}}}
+\newcommand{\gammapin}{\ensuremath{\gamma_{\pi}^{(\mathrm{n})}}}
+\newcommand{\alphaes}{\ensuremath{\alpha_{E1}^{(\mathrm{s})}}}
+\newcommand{\betams}{\ensuremath{\beta_{M1}^{(\mathrm{s})}}}
+\newcommand{\gammaees}{\ensuremath{\gamma_{E1E1}^{(\mathrm{s})}}}
+\newcommand{\gammamms}{\ensuremath{\gamma_{M1M1}^{(\mathrm{s})}}}
+\newcommand{\gammaems}{\ensuremath{\gamma_{E1M2}^{(\mathrm{s})}}}
+\newcommand{\gammames}{\ensuremath{\gamma_{M1E2}^{(\mathrm{s})}}}
+\newcommand{\gammazeros}{\ensuremath{\gamma_0^{(\mathrm{s})}}}
+\newcommand{\gammapis}{\ensuremath{\gamma_\pi^{(\mathrm{s})}}}
+\newcommand{\alphaev}{\ensuremath{\alpha_{E1}^{(\mathrm{v})}}}
+\newcommand{\betamv}{\ensuremath{\beta_{M1}^{(\mathrm{v})}}}
+\newcommand{\gammaeev}{\ensuremath{\gamma_{E1E1}^{(\mathrm{v})}}}
+\newcommand{\gammammv}{\ensuremath{\gamma_{M1M1}^{(\mathrm{v})}}}
+\newcommand{\gammaemv}{\ensuremath{\gamma_{E1M2}^{(\mathrm{v})}}}
+\newcommand{\gammamev}{\ensuremath{\gamma_{M1E2}^{(\mathrm{v})}}}
+\newcommand{\gammazerov}{\ensuremath{\gamma_{0}^{(\mathrm{v})}}}
+\newcommand{\gammapiv}{\ensuremath{\gamma_{\pi}^{(\mathrm{v})}}}
+
+\newcommand{\muv}{\ensuremath{\mu^{(\mathrm{v})}}}
+
+\newcommand{\kappas}{\ensuremath{\kappa^{(\mathrm{s})}}}
+\newcommand{\kappav}{\ensuremath{\kappa^{(\mathrm{v})}}}
+\newcommand{\kappap}{\ensuremath{\kappa^{(\mathrm{p})}}}
+
+\newcommand{\piN}{\pi\mathrm{N}}
+\newcommand{\gammaN}{\gamma \mathrm{N}}
+\newcommand{\gammaonp}{\gamma\mathrm{p}}
+\newcommand{\p}{\mathrm{p}}
+\newcommand{\n}{\mathrm{n}}
+\newcommand{\N}{\mathrm{N}}
+
+\newcommand{\MN}{\ensuremath{M_\mathrm{N}}} % nucleon mass
+\newcommand{\Mp}{\ensuremath{M_\mathrm{p}}} % proton mass
+\newcommand{\Mn}{\ensuremath{M_\mathrm{n}}} % neutron mass
+\newcommand{\Md}{\ensuremath{M_\mathrm{d}}} % deuteron mass
+\newcommand{\MHe}{\ensuremath{M_\text{\threeHe}}} % deuteron mass
+\newcommand{\MDelta}{\ensuremath{M_\Delta}} % Delta mass
+\newcommand{\DeltaM}{\ensuremath{\Delta_{\scriptscriptstyle M}}} % Delta-nucleon mass splitting
+\newcommand{\wpi}{\ensuremath{\omega_\pi}}
+\newcommand{\omegacm}{\ensuremath{\omega_\mathrm{cm}}}
+\newcommand{\thetacm}{\ensuremath{\theta_\mathrm{cm}}}
+
+\newcommand{\ga}{g_{\scriptscriptstyle A}}
+\newcommand{\gpiNN}{g_{\pi{\scriptscriptstyle\text{NN}}}}
+\newcommand{\gpiNDelta}{g_{\pi{\scriptscriptstyle\text{N}\Delta}}}
+\newcommand{\lambdachi}{\Lambda_\chi}
+\newcommand{\ChPT}{\ensuremath{\chi \mathrm{PT}}}
+\newcommand{\alphaEM}{\alpha_{\scriptscriptstyle\text{EM}}}
+
+\newcommand{\gE}{\ensuremath{g_{\scriptscriptstyle E}}}
+\newcommand{\gM}{\ensuremath{g_{\scriptscriptstyle M}}}
+
+
+% Defining the expansion parameter
+
+% Definition of all the nice cal-letters
+
+\newcommand{\calA}{\mathcal{A}} \newcommand{\calB}{\mathcal{B}}
+\newcommand{\calC}{\mathcal{C}} \newcommand{\calD}{\mathcal{D}}
+\newcommand{\calE}{\mathcal{E}} \newcommand{\calF}{\mathcal{F}}
+\newcommand{\calG}{\mathcal{G}} \newcommand{\calH}{\mathcal{H}}
+\newcommand{\calI}{\mathcal{I}} \newcommand{\calJ}{\mathcal{J}}
+\newcommand{\calK}{\mathcal{K}} \newcommand{\calL}{\mathcal{L}}
+\newcommand{\calM}{\mathcal{M}} \newcommand{\calN}{\mathcal{N}}
+\newcommand{\calO}{\mathcal{O}} \newcommand{\calP}{\mathcal{P}}
+\newcommand{\calQ}{\mathcal{Q}} \newcommand{\calR}{\mathcal{R}}
+\newcommand{\calS}{\mathcal{S}} \newcommand{\calT}{\mathcal{T}}
+\newcommand{\calU}{\mathcal{U}} \newcommand{\calV}{\mathcal{V}}
+\newcommand{\calW}{\mathcal{W}} \newcommand{\calX}{\mathcal{X}}
+\newcommand{\calY}{\mathcal{Y}} \newcommand{\calZ}{\mathcal{Z}}
+
+% Defining one's own title page
+
+\newcommand{\mytitle}[1]{\begin{center}\LARGE{\textbf{#1}}\end{center}}
+\newcommand{\myauthor}[1]{\textbf{#1}}
+\newcommand{\myaddress}[1]{\textit{#1}}
+\newcommand{\mypreprint}[1]{\begin{flushright}#1\end{flushright}}
+
+% Defining note command for reference to manu-script
+\newcommand{\note}[1]{\emph{[#1]}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% fixes for this paper
+
+\newcommand{\wf}{}%{\Psi,}    % ket
+\newcommand{\wfbra}{}%{\Psi,} % bra
+\newcommand{\sepp}{,}
+\newcommand{\sep}{}
+
+\newcommand{\jrel}{\ensuremath{j_{12}}}
+
+\usepackage{xstring}% so that can insert "()" between arguments if we have sums
+\newcommand{\CG}[6]{\langle {#1} {#2}%\;
+  {\IfSubStr{#4}{+}{(#4)}{\IfSubStr{#4}{-}{(#4)}{#4}}} 
+  {\IfSubStr{#5}{+}{(#5)}{\IfSubStr{#5}{-}{(#5)}{#5}}}  | 
+  {#3} {\IfSubStr{#6}{+}{(#6)}{\IfSubStr{#6}{-}{(#6)}{#6}}} \rangle}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Further Comments:
+%
+% TAKE SPIRES LaTeX(US) STYLE
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The following is used only if the Feynman diagrams are to be generated
+% explicitly:
+\ifx\feynVersion\AnswerYes
+\begin{fmffile}{figuresfeyn}
+  
+  \fmfset{curly_len}{2mm} \fmfset{dash_len}{1.5mm} \fmfset{wiggly_len}{3mm}
+% the following sets the galleries on which the external verices lie as 
+% straight lines, not curved. 
+  \fmfstraight
+
+\newcommand{\feynbox}[2]{\mbox{\black{\parbox{#1}{#2}}}}
+
+\fmfcmd{color green,truegreen; green:=(0 , .75 , 0); truegreen:=(0 , 1 , 0);}
+
+% invisible frame around fmfgraph*-environment:
+% #1: Optional text_after_ graph, e.g. \newline and figure label (a) etc. 
+% #2: x-size of fmfgraph* in \unitlength
+% #3: y-size of fmfgraph* in \unitlength
+% #4: additional space on LEFT of graph in \unitlength  
+% #5: additional space on TOP of graph in \unitlength  
+% #6: additional space on RIGHT of graph in \unitlength  
+% #7: additional space on BOTTOM of graph in \unitlength  
+% #8: the graph
+%
+% USAGE: 
+% \feyngraph[\\\protect\raisebox[-1ex}{\protect\centerline{(a)}}]
+%           {xsize}{ysize}{left}{top}{right}{bottom}{graph}  
+%  
+% If second and next-to-last line are commented out, a box is put around the
+% invisible frame: Good for proof-reading.
+%
+\newlength{\feyngraphlength}
+\newcommand{\feyngraph}[8][]{%
+  \setlength{\feyngraphlength}{#2\unitlength}%
+  \addtolength{\feyngraphlength}{#4\unitlength}%
+  \addtolength{\feyngraphlength}{#6\unitlength}%
+  \parbox[c]{\feyngraphlength} {%
+   %\framebox{%%%%%
+      \fmfframe(#4,#5)(#6,#7){%
+        \begin{fmfgraph*}(#2,#3)%
+          #8%
+        \end{fmfgraph*}%
+        }#1%
+      }%
+    %}%%%%%
+   }
+
+%  The following produces an ellipse along a line given by two vertices.
+%  Application: \fmf{ellipse,foreground=red,rubout=1}{v1,v2}
+%               draws ellipse with major semi-axis 0.6*(distance v1-v2) and
+%                                  minor semi-axis 0.3*(distance v1-v2). 
+%               around centre of {v1,v2}
+    \fmfcmd{vardef ellipseraw (expr p, ang) = save radx; numeric radx;
+      radx=6/10 length p; save rady; numeric rady; rady=3/10 length p; pair
+      center; center:=point 1/2 length(p) of p; save t; transform t;
+      t:=identity xscaled (2*radx*h) yscaled (2*rady*h) rotated (ang + angle
+      direction length(p)/2 of p) shifted center; fullcircle transformed t
+      enddef;
+                %
+      style_def ellipse expr p= shadedraw ellipseraw (p,0); enddef; }
+%  The following produces an ellipse along a line given by two vertices,
+%    hatched
+%  Application: \fmf{hatchedellipse,foreground=red,rubout=1}{v1,v2}
+%               draws ellipse with major semi-axis 0.6*(distance v1-v2) and
+%                                  minor semi-axis 0.3*(distance v1-v2). 
+%               around centre of {v1,v2}
+    \fmfcmd{ style_def hatchedellipse expr p= hatchdraw ellipseraw (p,0);
+      enddef; }
+%  The following produces an ellipse along a line given by two vertices.
+%  Application: \fmf{newellipse,foreground=red,rubout=1}{v1,v2}
+%               draws ellipse with major semi-axis 0.6*(distance v1-v2) and
+%                                  minor semi-axis 0.3*(distance v1-v2)
+%               around centre of {v1,v2}
+    \fmfcmd{vardef newellipseraw (expr p, ang) = save radx; numeric radx;
+      radx=8/10 length p; save rady; numeric rady; rady=4/10 length p; pair
+      center; center:=point 1/2 length(p) of p; save t; transform t;
+                t:=identity xscaled (radx*h) %here the difference to ellipse
+                yscaled (rady*h)             %here the difference to ellipse
+                rotated (ang + angle direction length(p)/2 of p) shifted
+                center; fullcircle transformed t enddef;
+                %
+                style_def newellipse expr p= shadedraw newellipseraw (p,0);
+                enddef; }
+%  The following produces a circle along a line given by two vertices.
+%  Application: \fmf{mycircle,foreground=red,rubout=1}{v1,v2}
+%               draws circle with radius 0.1*(distance v1-v2)
+%               around centre of {v1,v2}
+              \fmfcmd{vardef mycircleraw (expr p, ang) = save radx; numeric
+                radx; radx=1/10 length p; save rady; numeric rady; rady=1/10
+                length p; pair center; center:=point 1/2 length(p) of p; save
+                t; transform t; t:=identity xscaled (2*radx*h) yscaled
+                (2*rady*h) rotated (ang + angle direction length(p)/2 of p)
+                shifted center; fullcircle transformed t enddef;
+                %
+                style_def mycircle expr p= shadedraw mycircleraw (p,0);
+                enddef; }
+%  The following produces a semi-ellipse along a line given by two vertices.
+%  Application: \fmf{(left/right)semicircle,foreground=red,rubout=1}{v1,v2}
+%               draws semi-circle with major semi-axis 0.6*(distance v1-v2) and
+%                                  minor semi-axis 0.3*(distance v1-v2)
+%               around centre of {v1,v2}
+%  leftsemicircle: decresecnt moon; rightsemicircle: crescent moon.
+              \fmfcmd{vardef mysemicircleraw (expr p, ang) = save radx;
+                numeric radx; radx=6/10 length p; save rady; numeric rady;
+                rady=4/10 length p; pair center; center:=point 1/2 length(p)
+                of p; save t; transform t; t:=identity xscaled (2*radx*h)
+                yscaled (2*rady*h) rotated (ang + angle direction length(p)/2
+                of p) shifted center; halfcircle transformed t enddef;
+                %
+                style_def leftsemicircle expr p= shadedraw mysemicircleraw
+                (p,0)--cycle enddef; style_def rightsemicircle expr p=
+                shadedraw mysemicircleraw (p,180)--cycle enddef; }
+%  The following produces a triple line. Improvable.
+              \fmfcmd{style_def triple expr p = save oldpen; pen oldpen;
+                oldpen := currentpen; pickup oldpen scaled 5; ccutdraw p;
+                pickup oldpen scaled 3; cullit; draw p withcolor white;
+                cullit; pickup oldpen scaled 1; cullit; ccutdraw p; cullit;
+                enddef;}
+%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\fmfcmd{vardef  mysemicircleraw (expr p, ang) =
+                save radx;
+                numeric radx;
+                radx=4/10 length p;%was 6/10 originally....
+                save rady;
+                numeric rady;
+                rady=4/10 length p;
+                pair center;
+                center:=point 1/2 length(p) of p;
+                save t;
+                transform t;
+                t:=identity xscaled (2*radx*h)
+                yscaled (2*rady*h)
+                rotated (ang + angle direction length(p)/2 of p)
+                shifted center;
+                halfcircle transformed t
+                enddef;
+                %
+                style_def leftsemicircle expr p=
+                shadedraw mysemicircleraw (p,0)--cycle
+                enddef;
+                style_def rightsemicircle expr p=
+                shadedraw mysemicircleraw (p,180)--cycle
+                enddef;
+                }
+\fi
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% End of part which is active when Feynman graphs to be drawn explicitly.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Notes On the Twobody Density Code Structure: Units and Integrations}
+\label{sec:}
+
+
+\emph{Harald W.~Grie\3hammer}
+
+\absatz
+Institute for Nuclear Studies, Department of Physics,
+George Washington University, Washington DC 20052, USA
+
+\absatz Based on hgrie's and Alex Long's research of the code, these notes are
+expanded from my notes in hgrie's notebook \note{Few-N Processes With Densities,
+pp.~15-21}. Equation and page numbers in \emph{emphasis} refer to this
+notebook. In addition, there are comments in the code and emails Nov 2023.
+
+Text in \texttt{texttt} refers to code variable, file names, routines, etc.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Main Body
+%
+
+\ref{eq} \comment{nonsense} This is \replace{wrong}{right} \add{this is added
+  text}
+\delete{no text}
+
+
+\drafty
+
+\tableofcontents
+
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Purpose}
+\label{sec:purpose}
+
+An explanation of the twobody code structure with emphasis on integrations and
+units.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Units}
+\label{sec:units}
+
+
+The "mantle" code has base unit $\fm$ (but NOT the output
+file/\texttt{Result()}, see below!):
+
+\begin{tabular}{ll}
+  \texttt{p12, p12p} & momenta in $\fm^{-1}$\\
+  \texttt{rho}       & 2N density in $\fm^3$ (quantum numbers per volume
+                       momentum space)\\
+  \texttt{k}        &photon omentum/energy still given in $\MeV$
+\end{tabular}
+
+However, in \texttt{finalstatesums.twobodyvia2Ndensity.f}, the call
+
+\hqqq         \texttt{call
+  Calculate2BIntegralI2(...,p12*HC,P12MAG(ip12p)*HC,...)}
+
+converts the momenta from $\fm^{-1}$ to $\MeV$. That subroutine is defined in \texttt{calculate2BI2.f}.
+Therefore, that routine and the subsequent "kernel" parts of the code use base
+unit $\MeV$:
+
+\begin{tabular}{ll}
+  \texttt{calculate2BI2.f}&\\
+  \texttt{2Bspinisospintrans.f} & part of "kernel"\\
+  \texttt{spintricks.f}         & part of "kernel"\\
+  \texttt{spintricksasy.f}      & part of "kernel"
+\end{tabular}
+Therefore, the twobody "kernel diagrams" in these files are all using base
+unit of $\MeV$.
+
+\textbf{Output units:} The code is constructed such that if the kernel is
+given in units of $MeV^{-n}$, then the variable \texttt{Result()} and its
+output-to-file is in $\MeV^{(3-n)}$.
+
+Multiplying by powers of $\texttt{HC}=197.\dots\;\MeV\fm$ translates into output of final MEs \texttt{Result()} into powers of $\fm$.
+
+EXAMPLE: Compton has twobody kernel in $\MeV^{-4}$ ($n=4$), so the resultant
+ME is in $\MeV^{-1}$. To convert to $\fm$, multiply by \texttt{HC}. In Compton, that multiplication by HC is not done in the fortran code, but
+later in the mathematica processing files.
+
+EXAMPLE: Pion Photoproduction kernel has units $\MeV^{-2}$ if the output
+should be the twobody functions $F_{TL}$. Therefore,  $n=-2$ and the
+\texttt{Results()} output is in $\MeV^1$. But the $F_{TL}$ output should be in $\fm^{-1}$, so divide here in kernel by \texttt{HC} to get $\fm^{-1}$ units in \texttt{Results()}.
+
+Routines which compute vectors, like \texttt{calcmomenta.f}, simply use the same base unit in and out, i.e. are "unit neutral".
+ 
+Therefore, the overall units of the output are $\MeV^{3-n}$ for a kernel with base units $\MeV^{-n}$!
+
+The conversion $\frac{(\texttt{HC})^3}{(2\pi)^3}$ above is programmed
+in \texttt{finalstatesums.twobodyvia2Ndensity.f}'s "f=...") and converts
+between the $\fm$ units of the "mantle" and the $\MeV$ units of the "kernel".
+
+It ALSO includes ONE of the Fourier volumes $\frac{1}{(2\pi)^3}$ as a factor of
+the twobody integration. There is no second Fourier volume (killed by phase
+space). This guarantees that onebody and twobody have the same size and can
+simply be summed to get the total amplitude:
+\begin{equation}
+  \label{eq:addamps}
+  \mbox{amplitude } = \mbox{ onebody } + \mbox{ twobody }\;\;,
+\end{equation}
+without any relative factors (provided both provide output in same base
+units). However, \emph{to include this factor or not depends on your choice of
+  twobody kernel}.
+
+That means in pion photoproduction, one may instead define it as part of the
+prefactor \texttt{K2n} of a diagram. This implies that if you want the twobody
+\texttt{Result()} output to be $F_{TL}$, you must un-compensate it here by
+\texttt{*(2*Pi)**3}. On the other hand, if you want the twobody
+\texttt{Result()} output to be $E_+$ etc., so that you can simply add as in
+eq.~\eqref{eq:addamps} above, then the prefactor \texttt{K2n} shouldNOT
+contain the $\frac{1}{(2\pi)^3}$, i.e.~multiply NOT with
+\texttt{*(2*Pi)**3/HC}, but with
+\begin{equation}
+  \texttt{K2n = sqrt(4*Pi*alpaEM)*gA*mpi**2/(16*Pi*fpi**3)*10**3}
+\end{equation}
+to get \texttt{Result()} in the canonical units of $10^{-3}\;m_{\pi+}^{-1}$.
+ 
+Set your kernel up in \texttt{2Bspinisospintrans.f} so that your \texttt{Result()} has the desired units and factors of $(2\pi)^3$. Do NOT make unit changes outside this file!
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Integration Coding}
+\label{sec:integration}
+
+The integral is symbolically (including the permutation factor already
+in the code itself, and denoting on the left the units of each line):
+\begin{equation}
+  \label{eq:twobody}
+  \begin{split}
+    [\MeV]^{3-n}\hqq&\;\genfrac{(}{)}{0pt}{}{A}{2}\;
+    \bra\wfbra \sep M ' \, | O_{12} | \wf \sep M \, \ket \equiv\\
+  % \\[0.5ex] &
+  [\fm]^{-6}\hqq&\sum_{\genfrac{}{}{0pt}{}{\fs\texttt{mt12,j12,s12,l12,m12}}{\fs
+  \text{in \texttt{main.twobody.f}}}}
+  \hqq\sum_{\genfrac{}{}{0pt}{}{\fs
+      \texttt{\pbox{\linewidth}{mt12p=mt12,j12p,s12p,l12p\\[-1ex]\hf m12p,Mzp,Mz\hf}}}
+    {\fs\text{in \texttt{finalstatesums.*.f}}}}
+  \underbrace{\int\frac{\deint{}{p_{12}'} p_{12}^{\prime \, 2 }}{(2\pi)^3}\;\int
+    \deint{}{p_{12}} p_{12}^{2}}_{\text{in \texttt{f=\dots} of \texttt{finalstatesums.*.f}}}\;\\
+  [\MeV\fm]^3\hqq&\hqqq\times
+%  O_{12}^{\alpha_{12}' \alpha_{12}} (p_{12}', p_{12}) \;
+  \texttt{HC}^3\hspace*{25ex}\mbox{in \texttt{f=\dots} of \texttt{finalstatesums.*.f}}\\
+  [\fm]^3\hqq&\hqqq\times\rho_{\alpha_{12}'\,\alpha_{12}}^{%M_{T},
+    M'M} (p_{12}',p_{12};\qv)\hspace*{10.8ex}\mbox{in \texttt{f=\dots} of \texttt{finalstatesums.*.f}}\\
+  [\text{no units}]\hqq&\hqqq\times\hqmmm\hqmmm\hqmm\sum_{\genfrac{}{}{0pt}{}{\fs
+    \texttt{msp}\equiv m_{12}^{s\prime},\texttt{ms}\equiv m_{12}^s}{\fs\text{in \texttt{calculate2BI2.f}}}}
+  \hspace*{-5ex}\CG{l_{12}'}{s_{12}'}{\jrel'}
+  {m_{12}' - m^{s \prime }_{12}}{m^{s
+      \prime}_{12}}{m_{12}'} \CG{l_{12}}{s_{12}}{\jrel}
+  {m_{12} - m^{s}_{12}}{m^{s}_{12}}{m_{12}}   \hf\\[0.5ex]
+  [\text{no units}]\hqq&\hqqq\hqqq\times \hqmmm\int\limits_{\fs\text{in \texttt{calculate2BI2.f}}} \hqmmm\deint{}{\hat p_{12}'} \deint{}{\hat p_{12}}
+  Y^{\dagger}_{l_{12}' (m_{12}' - m^{s \prime }_{12})} ( \hat p_{12}') \;
+  Y_{l_{12} (m_{12} - m^{s }_{12})} ( \hat p_{12})\; \\
+  [\MeV]^{-n}\hqq&\hqqq\hqqq\hqqq\hqqq\times \underbrace{O_{12}^{\alpha_{12}'m_{12}^{s\prime} \alpha_{12}m_{12}^{s}} (\pv_{12}^{\,\prime},
+    \pv_{12}; \qv )}_{\text{in \texttt{2Bspinisospintrans.f}}} \;\;.
+\end{split}
+\end{equation}
+using the Clebsch-Gordan coefficients $\CG{j_{1}}{j_{2}}{j}{m_1}{m_{2}}{m}$ in the
+convention of refs.~\cite{Edmonds, PDG}. The assignation of quantum numbers
+between code and the quantities should be self-explaining except maybe $\texttt{ms}=m_{12}^s$, $\texttt{msp}=m_{12}^{s\prime}$. 
+
+Only the last line is coded in the kernel's \texttt{2Bspinisospintrans.f} and
+\texttt{spintricks*.f}, namely the twobody operator $\calO_{12}$ projected
+onto orbital angular momenta via Clebsches.
+
+All other lines are coded in the mantle.
+
+The radial integration grids are set up in \texttt{main.twobody.f}
+via
+
+\texttt{call TRNS(NP12A,NP12B,NP12,P12A,P12B,P12C,P12MAG,AP12MAG)}
+
+The angular  integration grids are set up in \texttt{main.twobody.f}
+via
+
+\texttt{call Setquad12(th12,Nth12,phi12,Nphi12,\dots)}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{}
+\label{sec:}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{}
+\label{sec:}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Concluding Questions}
+\label{sec:conculsions}
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \subsection{}
+% \label{sec:}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section*{Acknowledgements}
+
+As usual, we acknowledge no responsibility whatsoever.
+
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \section{}
+% \label{app:appendix}
+
+% %%%%%%%%%%%%%%%
+% \subsection{}
+% \label{app:}
+
+% \newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% TAKE SPIRES LaTeX(US) STYLE
+%
+\begin{thebibliography}{99}
+
+%\cite{Edmonds}
+\bibitem{Edmonds} A.~R.~Edmonds, ``Angular Momentum in Quantum Mechanics'',
+  Princeton University Press (1974).
+
+%\cite{PDG}
+\bibitem{PDG}
+  R.~L.~Workman \textit{et al.} [Particle Data Group],
+  % ``Review of Particle Physics,''
+  PTEP \textbf{2022} (2022) 083C01
+  \doi{10.1093/ptep/ptac097} and \url{http://pdg.lbl.gov}.
+  % 3 citations counted in INSPIRE as of 12 Jul 2022
+
+\end{thebibliography}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\begin{equation}
+%  \label{eq:}
+%\end{equation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% use following instead of eqnarray (append "*" for no numbers) 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\begin{align}
+%  \label{eq:}
+%\end{align}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% use following for one equation number over several lines:
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\begin{equation}
+%  \label{eq:}
+%  \begin{split}
+%  \end{split}
+%\end{equation}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\begin{figure}[!htbp]
+%\begin{center}
+%  \ifx\feynVersion\AnswerYes
+%      %%% if Feynman graphs explicit
+%      \feyngraph{100}{100}{}{}{}{}{
+%         ******}
+%  \else
+%      %%% if Feynman graphs as .eps file
+%      \includegraphics[width=0.82\linewidth]{}
+%  \fi
+%\caption{(Colour online) }
+%\label{fig:}
+%\end{center}
+%\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\begin{figure}[!htbp]
+%\begin{center}
+%      \includegraphics[width=0.82\linewidth]{}
+%\caption{(Colour online) }
+%\label{fig:}
+%\end{center}
+%\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \begin{figure}[!htbp]
+% \begin{center}
+%   \includegraphics[width=0.48\linewidth]{}\hfill
+%   \includegraphics[width=0.48\linewidth]{}
+% \caption{(Colour online) }
+% \label{fig:}
+% \end{center}
+% \end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \begin{figure}[!htbp]
+% \begin{center}
+%   \includegraphics[width=0.48\linewidth]{}\hfill
+%   \includegraphics[width=0.48\linewidth]{}
+%   \\[2ex]
+%   \includegraphics[width=0.48\linewidth]{}\hfill
+%   \includegraphics[width=0.48\linewidth]{}
+% \caption{(Colour online) }
+% \label{fig:}
+% \end{center}
+% \end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \begin{table}[!htbp]
+%   \centering
+%   \begin{tabular}{|c||l|l||c|}
+%     \hline
+%    \rule[-1.5ex]{0ex}{4ex}
+%    partial wave $l$&$s_l(\lambda=1)$&$s_l(\lambda=-\half)$
+%    &$s_{l,\text{simplistic}}=l+1$\\
+%    \hline
+%    \hline
+%    \rule[-1.5ex]{0ex}{4ex}
+%    0&$1.00624\dots\;\ii$&2.16622\dots&1\\
+%    \hline
+%   \end{tabular}
+%   \caption{} 
+%   \label{tab:}
+% \end{table}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\ifx\feynVersion\AnswerYes
+   \end{fmffile}
+\fi
+\end{document}
+%Nice you made it till here.
