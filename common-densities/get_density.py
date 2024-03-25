@@ -36,7 +36,8 @@ def main():
         # use mirror if server is offline
         densdf = access.database(
             workdir=workdir,
-            webbase="https://datapub.fz-juelich.de/anogga/files/densindx/")
+#            webbase="https://datapub.fz-juelich.de/anogga/files/densindx/",
+            webbase="https://just-object.fz-juelich.de:8080/v1/AUTH_1715b19bd3304fb4bb04f4beccea0cf2/densitystore-beta/")
 
     print("Proceeding with workdir="+workdir)
     myState = state(densdf, workdir)
