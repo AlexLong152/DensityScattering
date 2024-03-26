@@ -756,9 +756,9 @@ unit $\MeV$:
 
 \begin{tabular}{ll}
   \texttt{calculate2BI2.f}&\\
-  \texttt{2Bspinisospintrans.f} & part of "kernel"\\
-  \texttt{spintricks.f}         & part of "kernel"\\
-  \texttt{spintricksasy.f}      & part of "kernel"
+  \texttt{2Bkernel.*.f} & part of "kernel", specific to process\\
+  \texttt{2Bspinsym.*.f}         & part of "kernel", specific to process\\
+  \texttt{2Bspinasym.*.f}      & part of "kernel", specific to process
 \end{tabular}
 Therefore, the twobody "kernel diagrams" in these files are all using base
 unit of $\MeV$.
@@ -782,7 +782,7 @@ Routines which compute vectors, like \texttt{calcmomenta.f}, simply use the same
 Therefore, the overall units of the output are $\MeV^{3-n}$ for a kernel with base units $\MeV^{-n}$!
 
 The conversion $\frac{(\texttt{HC})^3}{(2\pi)^3}$ above is programmed
-in \texttt{finalstatesums.twobodyvia2Ndensity.f}'s "f=...") and converts
+in \texttt{finalstatesums.twobodyvia2Ndensity.f}'s "fact=...") and converts
 between the $\fm$ units of the "mantle" and the $\MeV$ units of the "kernel".
 
 It ALSO includes ONE of the Fourier volumes $\frac{1}{(2\pi)^3}$ as a factor of
@@ -810,13 +810,16 @@ contain the $\frac{1}{(2\pi)^3}$, i.e.~multiply NOT with
 \end{equation}
 to get \texttt{Result()} in the canonical units of $10^{-3}\;m_{\pi+}^{-1}$.
  
-Set your kernel up in \texttt{2Bspinisospintrans.f} so that your \texttt{Result()} has the desired units and factors of $(2\pi)^3$. Do NOT make unit changes outside this file!
+Set your kernel up in \texttt{2Bkernel.*.f} so that your \texttt{Result()} has the desired units and factors of $(2\pi)^3$. Do NOT make unit changes outside this file!
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Integration Coding}
 \label{sec:integration}
+
+\subsection{Overall Structure}
+\label{sec:integration-structure}
 
 The integral is symbolically (including the permutation factor already
 in the code itself, and denoting on the left the units of each line):
@@ -833,12 +836,12 @@ in the code itself, and denoting on the left the units of each line):
       \texttt{\pbox{\linewidth}{\hf mt12p=mt12\hf\\[-2ex]j12p,s12p,l12p\\[-2ex]\hf m12p,Mzp,Mz\hf}}}
     {\fs\text{in \texttt{finalstatesums.*.f}}}}
   \underbrace{\int\frac{\deint{}{p_{12}'} p_{12}^{\prime \, 2 }}{(2\pi)^3}\;\int
-    \deint{}{p_{12}} p_{12}^{2}}_{\text{in \texttt{f=\dots} of \texttt{finalstatesums.*.f}}}\;\\
+    \deint{}{p_{12}} p_{12}^{2}}_{\text{in \texttt{fact=\dots} of \texttt{finalstatesums.*.f}}}\;\\
   [\MeV\fm]^3\hqq&\hqqq\times
 %  O_{12}^{\alpha_{12}' \alpha_{12}} (p_{12}', p_{12}) \;
-  \texttt{HC}^3\hspace*{25ex}\mbox{in \texttt{f=\dots} of \texttt{finalstatesums.*.f}}\\
+  \texttt{HC}^3\hspace*{25ex}\mbox{in \texttt{fact=\dots} of \texttt{finalstatesums.*.f}}\\
   [\fm]^3\hqq&\hqqq\times\rho_{\alpha_{12}'\,\alpha_{12}}^{%M_{T},
-    M'M} (p_{12}',p_{12};\qv)\hspace*{10.8ex}\mbox{in \texttt{f=\dots} of \texttt{finalstatesums.*.f}}\\
+    M'M} (p_{12}',p_{12};\qv)\hspace*{10.8ex}\mbox{in \texttt{fact=\dots} of \texttt{finalstatesums.*.f}}\\
   [\text{no units}]\hqq&\hqqq\times\hqmmm\hqmmm\hqmm\sum_{\genfrac{}{}{0pt}{}{\fs
     \texttt{msp}\equiv m_{12}^{s\prime},\texttt{ms}\equiv m_{12}^s}{\fs\text{in \texttt{calculate2BI2.f}}}}
   \hspace*{-5ex}\CG{l_{12}'}{s_{12}'}{\jrel'}
@@ -849,7 +852,7 @@ in the code itself, and denoting on the left the units of each line):
   Y^{\dagger}_{l_{12}' (m_{12}' - m^{s \prime }_{12})} ( \hat p_{12}') \;
   Y_{l_{12} (m_{12} - m^{s }_{12})} ( \hat p_{12})\; \\
   [\MeV]^{-n}\hqq&\hqqq\hqqq\hqqq\hqqq\times \underbrace{O_{12}^{\alpha_{12}'m_{12}^{s\prime} \alpha_{12}m_{12}^{s}} (\pv_{12}^{\,\prime},
-    \pv_{12}; \qv )}_{\text{in \texttt{2Bspinisospintrans.f}}} \;\;.
+    \pv_{12}; \qv )}_{\text{in \texttt{2Bkernel.*.f}}} \;\;.
 \end{split}
 \end{equation}
 using the Clebsch-Gordan coefficients $\CG{j_{1}}{j_{2}}{j}{m_1}{m_{2}}{m}$ in
@@ -860,21 +863,124 @@ $\texttt{t12}=t_{12}^\prime$ is determined by the Pauli principle:
 $(-)=(-)^{s_{12}+l_{12}+t_{12}}=(-)^{s_{12}^\prime+l_{12}^\prime+t_{12}^\prime}$, implemented in \texttt{main.twobody.f} for
 the $\texttt{t12}\in\{0;1\}$ case as $\texttt{t12=(1-(-1)**(l12+s12+1))/2}$.
 
-Only the last line is coded in the kernel's \texttt{2Bspinisospintrans.f} and
+Only the last line is coded in the kernel's \texttt{2Bkernel.*.f} and
 \texttt{spintricks*.f}, namely the twobody operator $\calO_{12}$ projected
 onto orbital angular momenta via Clebsches.
 
 All other lines are coded in the mantle.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Radial Integrations}
+\label{sec:integration-radial}
 
 The radial integration grids are set up in \texttt{main.twobody.f}
 via
 
 \texttt{call TRNS(NP12A,NP12B,NP12,P12A,P12B,P12C,P12MAG,AP12MAG)}
 
+They are passed down to \texttt{finalstatesums.*.f}, where they are performed:
+
+\begin{tabular}{ll}
+  $\texttt{ip12}=1,\dots,\texttt{NP12}$& index of the \texttt{NP12} points of radial integration $p_{12}$\\
+  \texttt{P12MAG(ip12)}& momentum  $p_{12}$ of index \texttt{ip12}\\
+  \texttt{AP12MAG(ip12)}& Gau\3ian weight of momentum  $p_{12}$ of index \texttt{ip12}
+\end{tabular}
+
+\absatz
+The integration over $p_{12}$ is done as sum over \texttt{ip12} in
+\texttt{main.twobody.f}, but the integrand (including weight
+$p_{12}^2\texttt{AP12MAG}$) is set up in \texttt{finalstatesums.*.f}.
+
+\absatz
+The integration over $p_{12}^\prime$ is
+done inside \texttt{finalstatesums.*.f} as sum over \texttt{ip12p}:
+
+\begin{tabular}{ll}
+  $\texttt{ip12p}=1,\dots,\texttt{NP12}$& index of the \texttt{NP12} points of radial integration $p_{12}^\prime$\\
+  \texttt{P12MAG(ip12p)}& momentum  $p_{12}^\prime$ of index \texttt{ip12p}\\
+  \texttt{AP12MAG(ip12p)}& Gau\3ian weight of momentum  $p_{12}^\prime$ of index \texttt{ip12p}
+\end{tabular}
+
+\absatz
+The combined integrand plus permutation factor plus measure plus density plus
+$\hbar c$ factor is set up in \texttt{finalstatesums.*.f} as
+\begin{equation}
+\begin{split}
+    \texttt{fact=}&
+    \underbrace{\texttt{Anucl*(Anucl-1)/2}}_{\dis\genfrac{(}{)}{0pt}{}{A}{2}}
+    \underbrace{\texttt{*p12**2*wp12}}_{\dis\deint{}{p_{12}} p_{12}^{2}}\\&    \underbrace{\texttt{*P12MAG(ip12p)**2*AP12MAG(ip12p)/(2*Pi)**3}}_{\dis\frac{\deint{}{p_{12}'} p_{12}^{\prime \, 2 }}{(2\pi)^3}}\\
+  &\underbrace{\texttt{*rho(ip12,ip12p,rindx)}}_
+  {\dis\rho_{\alpha_{12}'\,\alpha_{12}}^{M'M} (p_{12}',p_{12};\qv)}
+  \underbrace{\texttt{*HC**3.d0}}_{\dis(\hbar c)^3}
+  \end{split}
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Angular Integrations}
+\label{sec:integration-radial}
+
 The angular  integration grids are set up in \texttt{main.twobody.f}
 via
 
 \texttt{call Setquad12(th12,Nth12,phi12,Nphi12,\dots)}
+
+and passed via \texttt{finalstatesums.*.f} to \texttt{calculate2BI2.f}, where
+they are performed, calling the kernel-specific file \texttt{2Bkernel.*.f}.
+
+The integral is performed by adding iteratively to the variable
+\texttt{Int(extQnum,ml12p,ml12)} the following:
+\begin{equation}
+  \begin{split}
+    \underbrace{\texttt{Yl12pstar(ml12p)}}_
+    {\dis Y^{\dagger}_{l_{12}' (m_{12}' - m^{s \prime }_{12})} ( \hat p_{12}')}
+    \underbrace{\texttt{*Yl12(ml12)}}_{\dis Y_{l_{12} (m_{12} - m^{s }_{12})} ( \hat p_{12})}&
+ \underbrace{\texttt{*angweight12(ith,iphi)}}_
+ {\dis\deint{}{\hat p_{12}}}
+ \underbrace{\texttt{*angweight12(jth,jphi)}}
+ _{\dis\deint{}{\hat p_{12}^\prime}}\\[2ex]&
+ \underbrace{\texttt{*Kernel2B(extQnum,s12p,msp,s12,ms)}}_
+ {\dis O_{12}^{\alpha_{12}'m_{12}^{s\prime} \alpha_{12}m_{12}^{s}} (\pv_{12}^{\,\prime}, \pv_{12}; \qv )}
+     \end{split}
+   \end{equation}
+   [Strictly speaking,
+   \texttt{Yl12pstar=Real(Yl12p(ml12p))-ci*Imag(Yl12p(ml12p))} is defined just
+   before the summation \texttt{do extQnum=1,extQnumlimit} is done.]
+
+   \noindent
+   [\texttt{ml12=m12-ms}, \texttt{ml12p=m12p-msp}. The other quantum numbers
+   should be self-explanatory.]
+   
+The summation is again over indices:
+
+\begin{tabular}{ll}
+  $\texttt{ith}=1,\dots,\texttt{Nth12}$& index of the \texttt{Nth12} points of
+                                        angular integration $\theta_{12}$\\
+  $\texttt{iphi}$& index of the \texttt{Nphi12} points of
+                                          angular integration $\phi_{12}$\\
+  & where $\texttt{iphi=ith}$ when the Lebedev-Laikov method is used\\
+  & \phantom{where} $\texttt{iphi=1,\dots,\texttt{Nphi12}}$ when Gau\3ian integrations\\&\hf
+    in $\theta$ and $\phi$ separately are used\\
+  \texttt{th12(ith)}& angle  $\theta_{12}$ of index \texttt{ith}\\
+  \texttt{phi12(iphi)}& angle  $\phi_{12}$ of index \texttt{iphi}\\
+  \texttt{angweight12(ith,iphi)}& weight of angle  $(\theta_{12},\phi_{12})$ of index (\texttt{ith},\texttt{iphi}).
+\end{tabular}
+
+\absatz
+For the primed variables:
+
+\begin{tabular}{ll}
+  $\texttt{jth}=1,\dots,\texttt{Nth12}$& index of the \texttt{Nth12} points of
+                                        angular integration $\theta_{12}^\prime$\\
+  $\texttt{jphi}$& index of the \texttt{Nphi12} points of
+                                          angular integration $\phi_{12}^\prime$\\
+  & where $\texttt{jphi=jth}$ when the Lebedev-Laikov method is used\\
+  & \phantom{where} $\texttt{jphi=1,\dots,\texttt{Nphi12}}$ when Gau\3ian integrations\\&\hf
+    in $\theta$ and $\phi$ separately are used\\
+  \texttt{th12(jth)}& angle  $\theta_{12}^\prime$ of index \texttt{jth}\\
+  \texttt{phi12(jphi)}& angle  $\phi_{12}^\prime$ of index \texttt{jphi}\\
+  \texttt{angweight12(jth,jphi)}& weight of angle  $(\theta_{12}^\prime,\phi_{12}^\prime)$ of index (\texttt{jth},\texttt{jphi}).
+\end{tabular}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{}

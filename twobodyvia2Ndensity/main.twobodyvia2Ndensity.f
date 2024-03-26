@@ -29,9 +29,9 @@ c     converts the momenta from fm^-1 to MeV.
 c     That subroutine is defined in calculate2BI2.f.
 c     Therefore, that routine and the subsequent "kernel" parts of the code use base unit MeV:
 c     calculate2BI2.f
-c     2Bspinisospintrans.f : part of "kernel"
-c     spintricks.f         : part of "kernel"
-c     spintricksasy.f      : part of "kernel"
+c     2Bkernel.*.f          : part of "kernel", specific to process
+c     2Bspinsym.*.f         : part of "kernel", specific to process
+c     2Bspinasym.*.f        : part of "kernel", specific to process
 c
 c     Therefore, the twobody "kernel diagrams" are all using base unit of MeV.
 c
@@ -55,7 +55,7 @@ c                                   "mantle" code                               
 c
 c     ===> Overall units of output are MeV^(3-n) for kernel with base units MeV^-n !!!!
 c 
-c     The (HC)³/(2π)³ above (programmed in finalstatesums.twobodyvia2Ndensity.f 's "f=...")
+c     The (HC)³/(2π)³ above (programmed in finalstatesums.twobodyvia2Ndensity.f 's "fact=...")
 c     converts between the fm units of the "mantle" and the MeV units of the "kernel".
 c     It ALSO includes ONE of the Fourier volumes 1/(2π)³. There is no second Fourier volume (killed by phase space). 
 c     This guarantees that onebody and twobody have the same size and can simply be summed to get the total amplitude:

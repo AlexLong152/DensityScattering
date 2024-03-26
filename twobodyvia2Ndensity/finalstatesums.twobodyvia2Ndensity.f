@@ -135,8 +135,8 @@ c     hgrie May 2018/July 2020:
 c     original factor 3.d0 in 3He-code is replaced by number of nucleon pairs inside nucleus -- see 3He-densities paper
 c     hgrie Oct 2022: include here factor 1/(2π)³ so that final amplitudes for onebody and twobody have SAME sizes.
 c     multiplication by HC**3.d0 transforms ME units from fm^-3 to MeV^3
-                           fact=Anucl*(Anucl-1)/2*p12**2*wp12*P12MAG(ip12p)**2*AP12MAG(ip12p)*
-     &                          rho(ip12,ip12p,rindx)*HC**3.d0/(2*Pi)**3
+                           fact=Anucl*(Anucl-1)/2*p12**2*wp12*P12MAG(ip12p)**2*AP12MAG(ip12p)/(2*Pi)**3*
+     &                          rho(ip12,ip12p,rindx)*HC**3.d0
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc                           
 c     hgrie Nov 2023: Following is a STUMP from the Compton code, used there only for OQ4 -- NOT YET IMPLEMENTED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 c     I leave this here because maybe some of this can be recycled later for boost corrections or so?
