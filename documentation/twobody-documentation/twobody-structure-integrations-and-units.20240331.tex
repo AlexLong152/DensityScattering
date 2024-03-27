@@ -877,8 +877,16 @@ The radial integration grids are set up in \texttt{main.twobody.f}
 via
 
 \texttt{call TRNS(NP12A,NP12B,NP12,P12A,P12B,P12C,P12MAG,AP12MAG)}
+\\
+The $p_{12}^\prime$ integration uses the same Gau\3ian grid as the $p_{12}$
+integration.
+\\
+They are passed down to \texttt{finalstatesums.*.f}.
 
-They are passed down to \texttt{finalstatesums.*.f}, where they are performed:
+\absatz
+The integration over $p_{12}$ is done as sum over index \texttt{ip12} in
+\texttt{main.twobody.f}, but the integrand (including weight
+$p_{12}^2\texttt{AP12MAG}$) is set up in \texttt{finalstatesums.*.f}.
 
 \begin{tabular}{ll}
   $\texttt{ip12}=1,\dots,\texttt{NP12}$& index of the \texttt{NP12} points of radial integration $p_{12}$\\
@@ -887,13 +895,8 @@ They are passed down to \texttt{finalstatesums.*.f}, where they are performed:
 \end{tabular}
 
 \absatz
-The integration over $p_{12}$ is done as sum over \texttt{ip12} in
-\texttt{main.twobody.f}, but the integrand (including weight
-$p_{12}^2\texttt{AP12MAG}$) is set up in \texttt{finalstatesums.*.f}.
-
-\absatz
 The integration over $p_{12}^\prime$ is
-done inside \texttt{finalstatesums.*.f} as sum over \texttt{ip12p}:
+done inside \texttt{finalstatesums.*.f} as sum over index \texttt{ip12p}:
 
 \begin{tabular}{ll}
   $\texttt{ip12p}=1,\dots,\texttt{NP12}$& index of the \texttt{NP12} points of radial integration $p_{12}^\prime$\\
