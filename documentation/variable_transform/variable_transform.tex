@@ -1,0 +1,65 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage[parfill]{parskip}
+\usepackage{bigints}
+\usepackage{titling}
+\usepackage{bbm}
+\setlength{\droptitle}{-10em}  
+\newcommand{\bv}{\boldsymbol}
+\newcommand{\br}[1]{\left\langle #1 \right |}
+\newcommand{\kt}[1]{\left| #1 \right \rangle}
+\newcommand{\bkt}[2]{\left \langle #1 |#2 \right \rangle}
+\newcommand{\brkt}[3]{\left\langle #1 \right |#2 \left| #3 \right \rangle}
+\newcommand\ddfrac[2]{\frac{\displaystyle #1}{\displaystyle #2}}
+\newcommand{\e}{\mathrm{e}}
+\newcommand\vp[1]{\vec{#1}^{\,\prime}}
+\newcommand\vsp[1]{\vec{#1}\,}
+\newcommand{\te}[1]{+(-\vec{p}^{\,\prime}+\vec{k}/2)_#1=q_#1}
+\author{Alexander P Long}
+\title{Variable transform}
+% \usepackage{feynmf}
+\begin{document}
+\maketitle
+
+Lets analyze 
+\begin{align}
+    \alpha= \int d^3 p' \int d^3 p \ddfrac{f(\vec{p},\vp{p})}{(\vec{p}-\vp{p}+\vec{k}/2)^2}  
+\end{align}
+Make the substitution:
+\begin{align}
+    \vec{q}&=\vec{p}-\vp{p}+\vec{k}/2\\
+    \implies \vec{p}&=\vec{q}+\vp{p} - \vec{k}/2
+\end{align}
+So with respect to the first integral $d^3p$ we have $d^3p =d^3q$. Do we have to account for the fact that we are substituting a variable that is later integrated over? Certainly if we consider only the first integral:
+
+\begin{align}
+    \beta&= \int d^3 p \ddfrac{f(\vec{p},\vp{p})}{(\vec{p}-\vp{p}+\vec{k}/2)^2}\\
+         &= \int d^3 q \ddfrac{f(\vec{q}+\vp{p}-\vec{k}/2,\;\vp{p})}{\vsp{q}^2}\\
+         &= \int dq\int d\widehat{q}\;f(\vec{q}+\vp{p}-\vec{k}/2,\;\vp{p})
+\end{align}
+Where in the last step we write this in spherical coordinates, and $d\widehat{q}=d\phi_q d\theta_q \sin{\theta_q}$ represents the radial integration.
+If we don't have to worry about doing a substitution with a variable we are later integrating with then we can write $\alpha$ as:
+
+\begin{align}
+    \alpha = \int dp' d\widehat{p}\,'p'^2\int dq\;d\widehat{q}\;f(\vec{q}+\vp{p}-\vec{k}/2,\;\vp{p})
+\end{align}
+But the mathematician in me is uneasy since it appears the dependence just vanishes. To explain this first consider a trivial example:
+\begin{align}
+    1=\int_0^\infty \int_0^\infty dx dy\; \e^{-(x+y)} &= \int_0^\infty \int_y^{\infty+y}  e^{-u} du dy\\
+                                                    &= \int_0^\infty \int_y^\infty  e^{-u} du dy=1
+\end{align}
+So the dependence goes into the bounds of the integration. In our example we have:
+
+\begin{align}
+    \alpha&= \int d^3 p' \int_{-\infty}^{\infty} dp_x\int_{-\infty}^{\infty} dp_y\int_{-\infty}^{\infty} dp_z \ddfrac{f(\vec{p},\vp{p})}{(\vec{p}-\vp{p}+\vec{k}/2)^2}\\
+          &= \int d^3 p' \int_{-\infty\te{x}}^{\infty\te{x}} dq_x\int_{-\infty\te{y}}^{\infty\te{y}}dq_y\nonumber\\
+          &\qquad\qquad\times\int_{-\infty\te{z}}^{\infty\te{z}} dq_z \ddfrac{f(\vec{q}+\vp{p}-\vec{k}/2,\;\vp{p})}{\vec{q}^{\,2}}\\
+    &= \int d^3 p' \int_{-\infty}^{\infty} dq_x\int_{-\infty}^{\infty} dq_y\int_{-\infty}^{\infty} dq_z \ddfrac{f(\vec{q}+\vp{p}-\vec{k}/2,\;\vp{p})}{\vec{q}^{\,2}}\\
+    &= \int d^3 p' \int d^3 q \ddfrac{f(\vec{q}+\vp{p}-\vec{k}/2,\;\vp{p})}{\vec{q}^{\,2}}\\
+    &= \int dp' d\widehat{p}\,'p'^2\int dq\;d\widehat{q}\;f(\vec{q}+\vp{p}-\vec{k}/2,\;\vp{p})
+\end{align}
+\end{document}

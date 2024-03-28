@@ -186,24 +186,6 @@ c
       tmpVec=pVec-ppVec+(kVec/2)
       tmpVec2=pVec-ppVec-(kVec/2)
 
-c      mu=3.5d0
-c      if (abs(DOT_PRODUCT(tmpVec,tmpVec)).le.0.0001d0) then
-cc         write(*,*) "##########################"
-cc         write(*,*) "Inside tmp.tmp<=eps"
-cc         write(*,*) "##########################"
-c          factorAsym=-(-1)**(t12)*(1.d0/(mu+DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
-c          factorBsym=+2*(-1)**(t12)*(1.d0/(
-c     &            DOT_PRODUCT(tmpVec,tmpVec)+mu))*
-c     &            (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
-c     &         *(2*Pi)**3/HC
-c      else  
-cc         write(*,*) DOT_PRODUCT(tmpVec,tmpVec), ","
-c          factorAsym=-(-1)**(t12)*(1.d0/(DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
-c          factorBsym=+2*(-1)**(t12)*(1.d0/(
-c     &            DOT_PRODUCT(tmpVec,tmpVec)))*
-c     &            (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
-c     &         *(2*Pi)**3/HC
-c      end if
       factorAsym=-(-1)**(t12)*(1.d0/(mu+DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
       factorBsym=+2*(-1)**(t12)*(1.d0/(mu+
      &        DOT_PRODUCT(tmpVec,tmpVec)))*
