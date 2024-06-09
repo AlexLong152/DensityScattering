@@ -58,7 +58,24 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       SUBROUTINE TRNS(NP1,NP2,NP,P1,P2,P3,XP,AP)
       IMPLICIT REAL(8)(a-h,o-z)
       IMPLICIT INTEGER(i-n)
-      
+c     TRNS distributes the arrays XP and AP with transformed Gauß-Legendre points and weights.
+
+c     NP1 points are mapped onto the interval [0;2π] via the hyperbolic transformation
+
+c     X --> (1.+X) / (1./P1-(1./P1-2./P2)*X)
+
+c     with
+
+c     NP1/2 points in [0;π] and
+c     NP1/2 points in [π;2π]
+
+c     NP2 points are mapped onto the interval [p2;p3] via the linear transformation
+
+c     X --> (P3+P2)/2. + (P3-P2)/2.*X
+
+c     Finally,
+
+c     NP = NP1 + NP2
 C     ===============
 C     
 C     TRNS BELEGT DIE FELDER XP UND AP MIT TRANSFORMIERTEN

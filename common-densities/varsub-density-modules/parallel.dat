@@ -1,0 +1,3 @@
+# distribution of processes over number of CPU's1
+1 1 1 1 1  ! npe_p12 npe_p3  npe_q4  npe_alpha npe_ener
+# Product should be npe

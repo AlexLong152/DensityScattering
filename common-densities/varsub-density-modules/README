@@ -1,0 +1,12 @@
+example code for reading the densities
+compile and execute with
+
+change the compiler and options in make.inc
+
+make
+./testcompdens
+
+in order to see usage of the array rho containing the
+density, please see comments in file testcompdens.F90
+
+

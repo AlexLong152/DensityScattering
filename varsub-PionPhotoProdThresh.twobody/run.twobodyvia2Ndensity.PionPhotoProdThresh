@@ -1,0 +1,46 @@
+#!/bin/tcsh -bf
+
+if ( ( $#argv == 0 ) | ( ( $#argv == 1 ) & ( "$1" =~ \-[hH]* ) ) ) then
+        echo "Usage: run.twobodyvia2Ndensity.PionPhotoProdThresh <inputfile(s)>"
+        echo ""
+        echo "Run 3He Compton twobodyvia2Ndensity.PionPhotoProdThresh code on <inputfiles>."
+        exit
+endif
+
+# A bunch of files which MUST be present in home directory.
+# This should be hardwired better, maybe in Makefile. 
+
+if !(-f amplitudes.dat) `cp ../common-densities/density-modules/amplitudes.dat .`
+if !(-f book-para.dat) `cp ../common-densities/density-modules/book-para.dat .`
+if !(-f meshpoints.dat) `cp ../common-densities/density-modules/meshpoints.dat .`
+if !(-f parallel.dat) `cp ../common-densities/density-modules/parallel.dat .`
+if !(-f rmeshpoints.dat) `cp ../common-densities/density-modules/rmeshpoints.dat .`
+
+
+set files = `ls $argv`
+
+echo "Input files:"
+echo $files
+echo ""
+
+foreach arg ( $files )
+	echo "***** Running input $arg."
+	set datestring = `date --rfc-3339=seconds`
+	set temp = `date +%s%N`
+	set startdatum = `date +%s`
+	./twobodyvia2Ndensity.PionPhotoProdThresh $arg | tee $temp.tmp
+	set enddatum = `date +%s`
+	set filename = `grep -e "Write output to file" $temp.tmp | sed s/Write\ output\ to\ file:\ //`
+        cat $temp.tmp >> $filename
+	echo "Production date: $datestring" >> $filename
+	set diffdatum = `expr $enddatum - $startdatum`
+	echo "Real Time used: $diffdatum seconds on host $HOST"
+	echo "Real Time used: $diffdatum seconds on host $HOST" >> $filename
+	echo "**************************************************" >> $filename
+        echo "*********            INPUT FILE          *********" >> $filename
+        echo "**************************************************" >> $filename
+        cat $arg >> $filename
+
+	rm -rf $temp.tmp
+end
+

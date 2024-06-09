@@ -1,0 +1,4 @@
+TRNS
+1.0  4.0  20.0  300 300   ! r grid for Fourier trafo
+1.0  4.0  15.0  400 400   ! p grid for Fourier trafo 
+1E-5                      ! cutoff for low mom interpolations 
