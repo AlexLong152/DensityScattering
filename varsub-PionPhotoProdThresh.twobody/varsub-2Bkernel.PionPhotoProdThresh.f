@@ -243,8 +243,7 @@ c     integer, intent(out) :: diagNumber
       integer, intent(in) :: t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12, verbosity
 
 c     Internal variables
-      real*8 tmpVec(3), ppVec(3),ell(3), r, theta, phi, tmpVec2(3)
-      complex*16 Yl12p(-5:5), Yl12pstar
+      real*8 tmpVec(3), ppVec(3),ell(3), tmpVec2(3)!, r, theta, phi,
       complex*16 factorAsym, factorAasy
       complex*16 factorBsym, factorBasy
       logical useTransform
@@ -340,8 +339,7 @@ c     integer, intent(out) :: diagNumber
       integer, intent(in) :: t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12, verbosity
 
 c     Internal variables
-      real*8 tmpVec(3), ppVec(3), r, theta, phi
-      complex*16 Yl12p(-5:5), Yl12pstar
+      real*8 tmpVec(3), ppVec(3)!, r, theta, phi
       complex*16 factorAsym, factorAasy
       logical useTransform
       real*8 Jacobian
@@ -423,8 +421,7 @@ c     integer, intent(out) :: diagNumber
       integer, intent(in) :: t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12, verbosity
 
 c     Internal variables
-      real*8 tmpVec(3), ppVec(3), r, theta, phi
-      complex*16 Yl12p(-5:5), Yl12pstar
+      real*8 tmpVec(3), ppVec(3)!, r, theta, phi
       complex*16 factorAsym, factorAasy
       logical useTransform
       real*8 Jacobian
