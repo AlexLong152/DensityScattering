@@ -220,7 +220,7 @@ c                                  write(*,*) ""
 c                              end if
 
                                ppTmp=ppAbs/HC!TODO combine this into the HC**3 in fact
-c                              pTmp=pAbs/HC
+c                              pTmp=pAbs/HC!just use p12
                                fact=(Anucl*(Anucl-1)/2)*(p12**2)*wp12*(ppTmp**2)*AP12MAG(ip12p)/(2*Pi)**3*
      &                                 tmpRho*HC**3.d0
 c                              fact=(Anucl*(Anucl-1)/2)*(pTmp**2)*wp12*(ppTmp**2)*AP12MAG(ip12p)/(2*Pi)**3*

@@ -1,3 +1,5 @@
+c   TODO: find out why "HDFinit: Using standard driver in HDF for all writing" prints twice. Are we initing twice?
+
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Part of MANTLE code for Twobody Contributions to Few-Nucleon Processes Calculated Via 2N-Density Matrix
 c     NEW Nov 2023: v1.0 Alexander Long/hgrie 
