@@ -23,7 +23,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       subroutine Calculate2BIntegralI2(Int2B,ppVecs,Mnucl,
      &     extQnumlimit,
      &     j12p,m12p,l12p,s12p,t12p,mt12p,j12,m12,
-     &     l12,s12,t12,mt12,p12,p12p,th12,phi12,Nth12,Nphi12,
+     &     l12,s12,t12,mt12,p12,uVecR,th12,phi12,Nth12,Nphi12,
      &     thetacm,k,
      &     AngularType12,angweight12,calctype,numDiagrams,verbosity)
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -76,9 +76,10 @@ c      complex*16 Compton2Bpy(0:1,-1:1,0:1,-1:1) ! for STUMP, see below
 c      complex*16 Intx(-5:5,-5:5),Inty(-5:5,-5:5)   ! for STUMP, see below
 c      complex*16 Intpx(-5:5,-5:5),Intpy(-5:5,-5:5) ! for STUMP, see below
       complex*16 Yl12pstar
-      real*8 cgcp,cgc,p12x,p12y,p12z,p12,p12p
+      real*8 cgcp,cgc,p12x,p12y,p12z,p12,uVecR
       real*8 ux,uy,uz
-      real*8 pVec(3), uVec(3)
+      real*8 pVec(3), uVec(3), radVec(3)
+      logical passFlag
 
 c     complex*16 Ylm(-5:5)!for testing
 c     integer l,mPrint,lMax
@@ -109,8 +110,6 @@ c
       Int2B=c0
       Kernel2B=c0
       
-c     write(*,*) "In calculate2BI2.f: extQnumlimit=",extQnumlimit 
-c     write(*,*) "In calculate2BI2.f: numDiagrams=",numDiagrams 
       call initclebsch                ! Initializing the factorial array
 c     Loop  to sum over the spin projections of the (12) system: ms12 and ms12p (called ms and msp here). 
 c     The value of ms and msp together with m12 & m12p determine ml12 and ml12p. 
@@ -171,11 +170,11 @@ c     for LebedevLaikov, only sum over diagonal elements of angweight12 (all oth
                         end if    
 c     angle integral: φprime of p12p
                         do jphi=jmin,jmax
-                           call sphere2cart(ux,uy,uz,p12p,
-     &                          th12(jth),phi12(jphi),verbosity)
+                           call sphere2cart(ux,uy,uz,uVecR,
+     &                          th12(jth),phi12(jphi),verbosity)!uVecR used to be p12p
+
+                           radVec=(/uVecR,th12(jth),phi12(jphi)/)!To be deleted after debugging
                            uVec=(/ux,uy,uz/)!generic integration variable
-c                          write(*,*) "diff of |uVec|-p12p should be zero, it is"
-c                          write(*,*) sqrt(dot_product(uVec,uVec))-p12p
 
 c                          call getsphericalharmonics(Yl12p,l12p,th12(jth),phi12(jphi))
 c                          Yl12pstar=Real(Yl12p(ml12p))-ci*Imag(Yl12p(ml12p))
@@ -187,9 +186,17 @@ c                          Yl12pstar=Real(Yl12p(ml12p))-ci*Imag(Yl12p(ml12p))
      &                          uVec,calctype,numDiagrams,verbosity)
 
                           do diagNum=1,numDiagrams
-                              call getHarmonicCart(Yl12p,l12p,ppVecs(diagNum,:),verbosity)
+                              call getHarmonicCart(Yl12p,l12p,ppVecs(diagNum,:),verbosity,radVec,passFlag)
                               Yl12pstar=Real(Yl12p(ml12p))-ci*Imag(Yl12p(ml12p))
-
+c                              write(*,'(3F10.3,2A,3F10.3,2A,3F10.3,2A)') ppVecs(diagNum,1), ', ', ppVecs(diagNum,2), ', ', ppVecs(diagNum,3)
+                               if (.not.passFlag) then
+                                   write(*,*) ""
+                                   write(*,'(A)') "Yl12p(ml12p), l12, ml12p, ppVecs(diagNum,1), ppVecs(diagNum,2), ppVecs(diagNum,3)"
+                                   write(*,'(F7.5,SP,F7.5,"I,",I3,","I3,","F12.5,",",F12.5",",F12.5)') Yl12p(ml12p),l12p, ml12p,ppVecs(diagNum,1),ppVecs(diagNum,2),ppVecs(diagNum,3)
+                                   write(*,'(A,F12.5,",",F12.5",",F12.5,A)') "uVec=",uVec(1),uVec(2),uVec(3) 
+                                   write(*,'(A,F10.5,",",F10.5",",F10.5)') "uVec: r, theta, phi= ", uVecR,th12(jth),phi12(jphi)
+                                   write(*,'(A)') "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+                               end if
                                do extQnum=1,extQnumlimit
                                    Int(diagNum,extQnum,ml12p,ml12) = Int(diagNum,extQnum,ml12p,ml12)+Yl12(ml12)*Yl12pstar*
      &                                      angweight12(ith,iphi)*angweight12(jth,jphi)*Kernel2B(diagNum,extQnum,s12p,msp,s12,ms)
@@ -245,33 +252,57 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       end
 
 
-      subroutine getHarmonicCart(Yl,l12,uVec,verbosity)
+      subroutine getHarmonicCart(Yl,l12,uVec,verbosity,radVec,passFlag)
 c     Gets the spherical harmonic Y for uVec which is given in cartiesian
 c     useful for evaluating Y_l(\hat{uVec+offsetVec})
 c     this is "trivial" but its easy to make a typo so just offload it to this subroutine
 
       implicit none
+      include '../common-densities/constants.def'!can be removed once PI is not longer needed for debugging
 c     Inputs ---------------------------------------
-      real*8, intent(in) :: uVec(3)
+      real*8, intent(in) :: uVec(3), radVec(3)
       integer, intent(in):: l12,verbosity
+      logical passFlag
+      
 
 c     Outputs----------------------------------------
       complex*16, intent(out) ::  Yl(-5:5)
 
 c     Internal --------------------------------------
       real*8 r,theta,phi
+      complex*16 testYl(-5:5)
+      logical cond
+      real*8 tmp(3)
 
       call cart2Sphere(uVec(1),uVec(2),uVec(3),
      &       r,theta,phi,verbosity)
-      
       call getsphericalharmonics(Yl,l12,theta,phi)
-      if (any(Yl.ne.Yl))then
-          write(*,*) "In calculate2BI2.f: uVec=",uVec 
-          write(*,*) "Yl12pstar is NaN, exiting"
-          write(*,*) "In calculate2BI2.f: r=",r 
-          write(*,*) "In calculate2BI2.f: theta=",theta 
-          write(*,*) "In calculate2BI2.f: phi=",phi 
-          stop
+c     write(*,*) "if eval on next line", mod(abs(radVec-(/r,theta,phi/)), 2*PI)
+
+      tmp=abs(radVec-(/r,theta,phi/))/(2*PI)
+      cond=all(abs(tmp-nint(tmp)).le.1e-5)!nint gets closest whole number
+      if (cond) then!dmod=double precision mod
+          passFlag=.true.
+      else
+          write(*,*) "test array is", dmod(abs(radVec-(/r,theta,phi/)), 2*PI)
+          write(*,'(A)') "Test failed, as passed to spherical harmonic"
+          write(*,'(A,F12.5,",",F12.5",",F12.5,A)') "uVec=",uVec(1),uVec(2),uVec(3) ,"     : This is actually ppVecs(diagNum,:)"
+          write(*,'(A,F10.5,",",F10.5",",F10.5,A)') "r, theta, phi= ", radVec(1), radVec(2), radVec(3), " : radvec"
+          write(*,'(A,F10.5,",",F10.5",",F10.5,A)') "r, theta, phi= ", r, theta, phi, " : cart2sphere in getHarmonicCart"
+          write(*,'(A,F10.5,",",F10.5",",F10.5)') "sphere diffs = ", radVec(1)-r, radVec(2)-theta, radVec(3)-phi
+          call getsphericalharmonics(testYl,l12,radVec(2),radVec(3))
+          write(*,'(A)') "Spherical Harmonic diff is: "
+          write(*,*) testYl(-l12:l12)-Yl(-l12:l12)
+          passFlag=.false.
       end if
+
+c     if (any(Yl.ne.Yl))then
+c         write(*,*) "In calculate2BI2.f: uVec=",uVec 
+c         write(*,*) "Yl12pstar is NaN, exiting"
+c         write(*,*) "In calculate2BI2.f: r=",r 
+c         write(*,*) "In calculate2BI2.f: theta=",theta 
+c         write(*,*) "In calculate2BI2.f: phi=",phi 
+c         stop
+c     end if
       return 
       end subroutine

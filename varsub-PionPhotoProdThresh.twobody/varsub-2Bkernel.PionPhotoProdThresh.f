@@ -149,6 +149,7 @@ c     LOCAL VARIABLES:
       real*8 r,theta,phi
       complex*16 Yl12(-5:5)
       complex*16 KernelA(1:extQnumlimit,0:1,-1:1,0:1,-1:1) !contribution just from diagram A
+      integer diagNum
 c     
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     
@@ -202,28 +203,28 @@ c     call getDiagAB(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,m
 c     diagNumber=2
 c     Kernel2B(diagNumber,:,:,:,:,:)=0.d0
 c     ppVecs(diagNumber,:)=ppVecs(1,:)
+
+
+c     For higher order diagrams, leave in the functionality to add one order at a time
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     end Odelta2 2N contributions
-      if (calctype.eq.Odelta2) return
+c     if (calctype.eq.Odelta2) return
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Odelta3 2N contributions: NONE
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     <if they were nonzero, enter diagrams here>
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     end Odelta3 2N contributions
-      if (calctype.eq.Odelta3) return
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     Odelta4 2N contributions: NONE
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     <if they were nonzero, enter diagrams here>
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     end Odelta2 2N contributions
-      if (calctype.eq.Odelta4) return
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c      
-      if (verbosity.eq.1000) continue
+c     if (verbosity.eq.1000) continue
+c     doing this check every time will be slow
+c     do diagNumber=1,numDiagrams
+c         if (all(ppVecs(diagNumber,:).eq.0.d0)) then
+c           write(*,*) "ppVecs(diagNumber,:)==(0,0,0)"
+c           write(*,*) "Likely forgot to assign ppVecs"
+c           stop
+c         end if
+c     end do
       end
 
 
@@ -344,7 +345,7 @@ c     Internal variables
       logical useTransform
       real*8 Jacobian
 
-      useTransform=.true.!For easy changes by the 2Bkernel "user", may want to change this in the final version for speed
+      useTransform=.false.!For easy changes by the 2Bkernel "user", may want to change this in the final version for speed
 
       if (.not.(all(ppVecA.eq.0))) then
           write(*,*) "ppVec assigned elsewhere, stopping"
@@ -371,20 +372,16 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
       tmpVec=pVec-ppVec+(kVec/2)!=uVec in case of transform
 
-      if (DOT_PRODUCT(tmpVec-uVec,tmpVec-uVec).ge.1e-6) then
+      if (useTransform.and.(DOT_PRODUCT(tmpVec-uVec,tmpVec-uVec).ge.1e-6)) then
           write(*,*) "DOT_PRODUCT(tmpVec-uVec,tmpVec-uVec).ge.1e-6 evaluated true, stopping"
+          write(*,*) "uVec=",uVec 
+          write(*,*) "tmpVec=",tmpVec 
           stop
       end if
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
-      if (DOT_PRODUCT(tmpVec,tmpVec).le.0.001) then
-          write(*,*) "In 2Bkernel"
-          write(*,*) "DOT_PRODUCT(tmpVec,tmpVec).le.0.001 evaluated true, stopping"
-          write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: DOT_PRODUCT(tmpVec,tmpVec)=", DOT_PRODUCT(tmpVec,tmpVec)
-          stop
-      end if
 
-      factorAsym=-(-1)**(t12)*(1.d0/(mpi2+DOT_PRODUCT(uVec,uVec)))*(2*Pi)**3/HC
+      factorAsym=-(-1)**(t12)*(1.d0/(mpi2+DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
       factorAasy=factorAsym
       factorAsym=factorAsym*Jacobian
       factorAasy=factorAasy*Jacobian
@@ -410,7 +407,7 @@ c     diagrams (A/B) have no components with t12!=t12p.
 
       subroutine getmpiEZsub(KernelA,pVec,uVec,ppVecA,kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
       implicit none
-c     Uses the non-physical propogator mpi[ m_\pi^2 + (ppVec+kGamma/2)^2 + pVec^2]^(-2)
+c     Uses the non-physical propogator mpi[ m_\pi^2 + (ppVec+kGamma/2)^2 + pVec^2]^(-1)
       include '../common-densities/constants.def'
 c     Parameters-------------------------------------
       complex*16,intent(out) :: KernelA(1:extQnumlimit,0:1,-1:1,0:1,-1:1)
@@ -427,7 +424,7 @@ c     Internal variables
       real*8 Jacobian
 c     For easy changes by the 2Bkernel "user", may want to change this in the final version for speed, since "if"
 c     statements are slow
-      useTransform=.true.
+      useTransform=.False.
 
       if (.not.(all(ppVecA.eq.0))) then
           write(*,*) "ppVec assigned elsewhere, stopping"
@@ -459,6 +456,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
      &    (mpi2+DOT_PRODUCT(tmpVec,tmpVec)+DOT_PRODUCT(pVec,pVec))**(-2.d0)
      &      *(2*Pi)**3/HC
       factorAasy=factorAsym
+
       factorAsym=factorAsym*Jacobian
       factorAasy=factorAasy*Jacobian
       
@@ -479,4 +477,4 @@ c     diagrams (A/B) have no components with t12!=t12p.
       end if                    !t12 question
       ppVecA=ppVec
 
-      end subroutine getmpiEZsub
+      end subroutine

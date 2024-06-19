@@ -97,8 +97,22 @@ c      logical invokesymmetryextQnum ! function to invoke symmetry/-ies of ampli
       real*8,allocatable :: P12_MeV(:)
       integer locp,loc2p,loc2pp, locpp!,loc
       real*8 x1,x2,y1,y2,fQ11,fQ12,fQ21,fQ22
+      real ppTmp, pTmp
 c     real*8 switch1, switch2,switch
 
+c     TODO: check rhoDensity assignment doesn't fail in CompDens.F90 for large rho due to block reading etc. check line 1315
+c     Note that P12MAG(ip12p) isn't actually physical momenta, but p12 is.
+                            
+      if (.not.allocated(diffspp)) then
+           allocate(diffspp, mold=P12P_density)
+      end if 
+
+      if (.not.allocated(diffsp)) then
+          allocate(diffsp, mold=P12P_density)
+      end if 
+      if (.not.allocated(P12_MeV)) then
+          allocate(P12_MeV, mold=P12P_density)
+      end if
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       mt12p=mt12                              ! isospin projection in (12), fixes charge of spectator(s)    
@@ -150,19 +164,16 @@ c     multiplication by HC**3.d0 transforms ME units from fm^-3 to MeV^3
 c     TODO: check rhoDensity assignment doesn't fail in CompDens.F90 for large rho due to block reading etc. check line 1315
 c     Note that P12MAG(ip12p) isn't actually physical momenta, but p12 is.
                             
-c                          allocate(diffspp(size(P12P_density)))
-                           if (.not.allocated(diffspp)) then
-                                allocate(diffspp, mold=P12P_density)
-                           end if 
+c                          if (.not.allocated(diffspp)) then
+c                               allocate(diffspp, mold=P12P_density)
+c                          end if 
 
-                           if (.not.allocated(diffsp)) then
-                               allocate(diffsp, mold=P12P_density)
-                           end if 
-                           if (.not.allocated(P12_MeV)) then
-                               allocate(P12_MeV, mold=P12P_density)
-                           end if
-c                          allocate(diffsp(size(P12P_density)))
-c                          allocate(P12_MeV(size(P12P_density)))
+c                          if (.not.allocated(diffsp)) then
+c                              allocate(diffsp, mold=P12P_density)
+c                          end if 
+c                          if (.not.allocated(P12_MeV)) then
+c                              allocate(P12_MeV, mold=P12P_density)
+c                          end if
 
 c P12P_density units in  fm^-1, so convert to MeV 
                            P12_MeV=P12P_density*HC
@@ -197,21 +208,23 @@ c use the names Q to decrease the likelihood of a transcription error
                                fQ22=rhoDensity(loc2p,loc2pp,rindx)
 
                                call bilinear_interpolate(tmpRho, fQ11,fQ12,fQ21,fQ22,x1,x2,y1,y2,pAbs,ppAbs)
-c                              if (tmpRho.ge.0.1) then
-c                                  write(*,*) "In finalstatesums.twobodyvia2Ndensity.f"
-c                                  write(*,*) "locp,locpp=",locp,loc2p,"-> x1,x2=",x1,x2
-c                                  write(*,*) "loc2p,loc2pp=",locpp,loc2pp, "-> y1,y2=",y1,y2
-c                                  write(*,*) "tmpRho, rho(ip12,ip12p,rindx)=",tmpRho, rho(ip12,ip12p,rindx)
-c                                  write(*,*) "fQ21,fQ22", fQ21,fQ22
-c                                  write(*,*) "fQ11,fQ12,=",fQ11,fQ12 
-c                                  write(*,*) "x,y=",pAbs,ppAbs
-c                                  stop
+c                           This check only works if useTransform=False in 2Bkernel
+c                              if (abs(rho(ip12,ip12p,rindx)-tmpRho)/tmpRho.ge.0.01d0 ) then
+c                                  write(*,*) "In varsub-finalstatesums: diff was big"
+c                                  write(*,*) "In varsub-finalstatesums:rho(ip12,ip12p,rindx)-tmpRho)=",rho(ip12,ip12p,rindx)-tmpRho 
+c                                  write(*,*) "In varsub-finalstatesums: ip12,ip12p,rindx=",ip12,ip12p,rindx 
+c                                  write(*,*) "In varsub-finalstatesums: rho(ip12,ip12p,rindx)=",rho(ip12,ip12p,rindx)
+c                                  write(*,*) "In varsub-finalstatesums: tmpRho=",tmpRho
+c                                  write(*,*) ""
+c                                  write(*,*) ""
 c                              end if
 
-                               ppAbs=ppAbs/HC!TODO combine this into the HC**3 in fact
-                               pAbs=pAbs/HC
-                               fact=(Anucl*(Anucl-1)/2)*(pAbs**2)*wp12*(ppAbs**2)*AP12MAG(ip12p)/(2*Pi)**3*
+                               ppTmp=ppAbs/HC!TODO combine this into the HC**3 in fact
+c                              pTmp=pAbs/HC
+                               fact=(Anucl*(Anucl-1)/2)*(p12**2)*wp12*(ppTmp**2)*AP12MAG(ip12p)/(2*Pi)**3*
      &                                 tmpRho*HC**3.d0
+c                              fact=(Anucl*(Anucl-1)/2)*(pTmp**2)*wp12*(ppTmp**2)*AP12MAG(ip12p)/(2*Pi)**3*
+c    &                                 tmpRho*HC**3.d0
 c                              fact=Anucl*(Anucl-1)/2*p12**2*wp12*P12MAG(ip12p)**2*AP12MAG(ip12p)/(2*Pi)**3*
 c    &                                 rho(ip12,ip12p,rindx)*HC**3.d0
                            do extQnum=1,extQnumlimit
@@ -232,8 +245,11 @@ c    &                                 rho(ip12,ip12p,rindx)*HC**3.d0
       end
 
       subroutine bilinear_interpolate(tmpRho, fQ11,fQ12,fQ21,fQ22,x1,x2,y1,y2,x,y)
-c Implimentation of this: https://en.wikipedia.org/wiki/Bilinear_interpolation
-c TODO: check if order matters 
+c   Implimentation of this: https://en.wikipedia.org/wiki/Bilinear_interpolation
+c   Essentially this is first order multivariable polynomial interpolation 
+c   A higher order multivariable interpolation can be done in mathematica if needed (but I doubt this will be required)
+c   fQ11 =f(x1, y1), fQ12 =f(x1, y2), fQ21 =f(x2, y1), and fQ22 =f(x2, y2).
+c   Order of arguments x1<x2, or y1<y2 etc doesn't matter
       implicit none
       real*8 fQ11, fQ12, fQ21, fQ22
       real*8 x1,x2,y1,y2,x,y
