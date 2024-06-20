@@ -66,15 +66,32 @@ c     OUTPUT VARIABLES:
 c
 c**********************************************************************
 c
+c     write(*,*) "In sphereCartConvert: PI=",PI 
+c     write(*,*) "In sphereCartConvert: dcos(PI/2.d0)=",dcos(PI/2.d0)
+c     write(*,*) "In sphereCartConvert: acos(0)=",acos(0.d0) 
+c     write(*,*) "In sphereCartConvert: acos(1)=",acos(1.d0) 
+c     write(*,*) "In sphereCartConvert: sign(1.d0,-0.2d0)=",sign(1.d0,-0.2d0) 
+c     write(*,*) "In sphereCartConvert: sign(1.d0,0.2d0)=",sign(1.d0,0.2d0) 
+c     write(*,*) "In sphereCartConvert: sign(1.d0,0.d0)=",sign(1.d0,0.d0) 
+c     stop
       q=sqrt(qx*qx+qy*qy+qz*qz)
       thq=acos(qz/q)
       phiq=sign(1.d0,qy)*acos(qx/sqrt(qx*qx+qy*qy))
-      if(thq.le.0) then !same as taking mod 2pi
+
+      if(thq.lt.0) then !same as taking mod 2pi
           thq=thq+2.d0*PI
       end if
 
-      if(phiq.le.0) then !same as taking mod 2pi
+      if(phiq.lt.0) then !same as taking mod 2pi
           phiq=phiq+2.d0*PI
+      end if
+
+      if ((0.d0.eq.qx).and.(0.d0.eq.qy)) then
+          phiq=0.d0
+      end if
+
+      if (abs(thq-PI).le.1e-6) then
+          phiq=0.d0!ambiguous edge case, assigning to zero makes this match with Lebedev Laikov integration routine
       end if
 
       if (verbosity.eq.1000) continue
