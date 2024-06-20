@@ -47,19 +47,19 @@ SHELL=/bin/sh
 # OBJS defined below, modify as needed.  OBJS are the source files (.f)
 # with .f -> .o .   Directories are relative to make directory.
 OBJS=\
-calculateQs.PionPhotoProdThresh.o \
-readinput.twobody.PionPhotoProdThresh.o \
-2Bkernel.PionPhotoProdThresh.o \
-2Bspinsym.PionPhotoProdThresh.o \
-2Bspinasy.PionPhotoProdThresh.o \
-usesymmetries.PionPhotoProdThresh.o \
-../varsub-twobodyvia2Ndensity/calculate2BI2.o \
-../varsub-twobodyvia2Ndensity/finalstatesums.twobodyvia2Ndensity.o \
-../varsub-twobodyvia2Ndensity/LebedevLaikov.o \
-../varsub-twobodyvia2Ndensity/main.twobodyvia2Ndensity.o \
-../varsub-twobodyvia2Ndensity/read2Ndensity.o \
-../varsub-twobodyvia2Ndensity/setquads.o \
-../varsub-twobodyvia2Ndensity/spinstructures.o \
+varsub-calculateQs.PionPhotoProdThresh.o \
+varsub-readinput.twobody.PionPhotoProdThresh.o \
+varsub-2Bkernel.PionPhotoProdThresh.o \
+varsub-2Bspinsym.PionPhotoProdThresh.o \
+varsub-2Bspinasy.PionPhotoProdThresh.o \
+varsub-usesymmetries.PionPhotoProdThresh.o \
+../varsub-twobodyvia2Ndensity/varsub-calculate2BI2.o \
+../varsub-twobodyvia2Ndensity/varsub-finalstatesums.twobodyvia2Ndensity.o \
+../varsub-twobodyvia2Ndensity/varsub-LebedevLaikov.o \
+../varsub-twobodyvia2Ndensity/varsub-main.twobodyvia2Ndensity.o \
+../varsub-twobodyvia2Ndensity/varsub-read2Ndensity.o \
+../varsub-twobodyvia2Ndensity/varsub-setquads.o \
+../varsub-twobodyvia2Ndensity/varsub-spinstructures.o \
 ../common-densities/andreasquads.o \
 ../common-densities/sphereCartConvert.o \
 ../common-densities/gauleg.o \
@@ -122,7 +122,7 @@ CFT=  mpif90
 # 	-ffpe-summary=none  -mcmodel=large \
 # 	-I../common-densities/density-modules -I../common-densities 
 #Along June 2024 optimized compiling with -O3 and changed fixed line length to infinite
-# -O3 change my break debugging
+# -O3 change my break debugging with GDB debugger needs to be done with -O0
 FFLAGS= -O3 -fopenmp -g -c -Wall -Wno-tabs -ffixed-line-length-0  \
 	-ffpe-summary=none  -mcmodel=large \
 	-I../common-densities/varsub-density-modules -I../common-densities 
@@ -152,9 +152,11 @@ LDFLAGS= $(LIBSTD1) $(LIBSTD2) $(LIBSTD3) $(LIBSTD4) $(LIBSTD5) $(LIBSTD6) $(LIB
 ifeq ($(USER),hgrie)
 	LDFLAGS += -L /usr/lib/x86_64-linux-gnu/hdf5/openmpi/ 
 else ifeq ($(USER),alex) # your username
-	LDFLAGS += -L /usr/lib/  -I /usr/include/ #whatever your path is
+#LDFLAGS += -L /usr/lib/  -I /usr/include/ #whatever your path is
+	LDFLAGS += -L /usr/lib/openmpi # -I /usr/include/ #whatever your path is
 else ifeq ($(USER),along) # your username
-	LDFLAGS += -L /usr/lib/  -I /usr/include/ #whatever your path is
+#	LDFLAGS += -L /usr/lib/  -I /usr/include/ #whatever your path is
+#   LDFLAGS += -L /usr/lib/  -I /usr/include/ #whatever your path is
 endif
 
 LIBS=  
