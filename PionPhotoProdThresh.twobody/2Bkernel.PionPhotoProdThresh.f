@@ -141,7 +141,6 @@ c     LOCAL VARIABLES:
       real*8 factorAasy,factorBasy
       real*8 kVec(3),q1Vec(3)
       real*8 mPion, Mnucl
-      real*8 mu, eps
 c     
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     
@@ -183,11 +182,12 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Odelta2 2N contributions
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     
+
       tmpVec=pVec-ppVec+(kVec/2)
       tmpVec2=pVec-ppVec-(kVec/2)
 
-      factorAsym=-(-1)**(t12)*(1.d0/(mu+DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
-      factorBsym=+2*(-1)**(t12)*(1.d0/(mu+
+      factorAsym=-(-1)**(t12)*(1.d0/(DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
+      factorBsym=+2*(-1)**(t12)*(1.d0/(
      &        DOT_PRODUCT(tmpVec,tmpVec)))*
      &        (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
      &     *(2*Pi)**3/HC
@@ -206,7 +206,7 @@ c
      &           pVec-ppVec, ! preceding is vector dotted with ε
      &           s12p,s12,extQnumlimit,verbosity)
          else                   ! s12 question: s12-s12p=±1 => l12-l12p is odd; spin anti-symmetric part only
-c     
+      
             call CalcKernel2BAasy(Kernel2B,
      &           factorAasy,
      &           s12p,s12,extQnumlimit,verbosity)
@@ -219,9 +219,10 @@ c
 
          end if                 ! s12 question
       else                      ! t12!=t12p
-         continue
-c     diagrams (A/B) have no components with t12!=t12p. 
+         continue  !diagrams (A/B) have no components with t12!=t12p. 
       end if                    !t12 question
+
+
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     end Odelta2 2N contributions
       if (calctype.eq.Odelta2) return

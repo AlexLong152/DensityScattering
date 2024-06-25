@@ -133,14 +133,14 @@ c     for LebedevLaikov, only sum over diagonal elements of angweight12 (all oth
                   end if    
 c     angle integral: φ of p12
                   do iphi=imin,imax
-                     offset=10.d0*sqrt(2.d0)*PI/180
+c                    offset=10.d0*sqrt(2.d0)*PI/180
 c                    rotate by an irrational number of degrees to avoid singularities
 
 c     Inputs are theta and phi, outputs are x,y,z
                     
-                     call CalculatePVector(p12x,p12y,p12z,p12,
-     &                    mod(th12(ith)+offset,PI),mod(phi12(iphi)+offset,2*PI),verbosity)
-                     call getsphericalharmonics(Yl12,l12,mod(th12(ith)+offset,PI),mod(phi12(iphi)+offset,2.d0*PI))
+                     call sphere2cart(p12x,p12y,p12z,p12,
+     &                    th12(ith),phi12(iphi),verbosity)
+                     call getsphericalharmonics(Yl12,l12,th12(ith),phi12(iphi))
 c     angle integral: θprime of p12p
                      do jth=1,Nth12
 c     c   $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -158,7 +158,7 @@ c     for LebedevLaikov, only sum over diagonal elements of angweight12 (all oth
                         end if    
 c     angle integral: φprime of p12p
                         do jphi=jmin,jmax
-                           call CalculatePVector(p12px,p12py,p12pz,p12p,
+                           call sphere2cart(p12px,p12py,p12pz,p12p,
      &                          th12(jth),phi12(jphi),verbosity)
                            call getsphericalharmonics(Yl12p,l12p,th12(jth),phi12(jphi))
                            Yl12pstar=Real(Yl12p(ml12p))-ci*Imag(Yl12p(ml12p))
