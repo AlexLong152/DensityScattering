@@ -208,6 +208,7 @@ c use the names Q to decrease the likelihood of a transcription error
                                fQ22=rhoDensity(loc2p,loc2pp,rindx)
 
                                call bilinear_interpolate(tmpRho, fQ11,fQ12,fQ21,fQ22,x1,x2,y1,y2,pAbs,ppAbs)
+
 c                           This check only works if useTransform=False in 2Bkernel
 c                              if (abs(rho(ip12,ip12p,rindx)-tmpRho)/tmpRho.ge.0.01d0 ) then
 c                                  write(*,*) "In varsub-finalstatesums: diff was big"

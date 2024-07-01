@@ -193,10 +193,11 @@ c     <if they were nonzero, enter diagrams here>
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Odelta2 2N contributions
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cccccccccccccccccccccccTrue
       diagNumber=1
 c     call getDiagmpi(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
       call getmpiEZsub(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
+c     call testOffset(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
 c     call getDiagAB(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
       Kernel2B(diagNumber,:,:,:,:,:)=KernelA
 
@@ -326,7 +327,6 @@ c     diagrams (A/B) have no components with t12!=t12p.
       end subroutine getDiagAB
 
 
-
       subroutine getDiagmpi(KernelA,pVec,uVec,ppVecA,kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
       implicit none
 
@@ -405,6 +405,80 @@ c     diagrams (A/B) have no components with t12!=t12p.
 
       end subroutine getDiagmpi
 
+      subroutine testOffset(KernelA,pVec,uVec,ppVecA,kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
+      implicit none
+c     Tests if offsetting ppVec messes with the integration
+c     Does not actually do any transformation so the "useTransform" variable becomes "useOffset" 
+c     The idea is that a simple offset should not change the result of an integral if rho is const
+      include '../common-densities/constants.def'
+
+c     Parameters-------------------------------------
+      complex*16,intent(out) :: KernelA(1:extQnumlimit,0:1,-1:1,0:1,-1:1)
+c     integer, intent(out) :: diagNumber
+      real*8, intent(out) :: ppVecA(3)
+      integer,intent(in) :: extQnumlimit
+      real*8, intent(in) :: pVec(3), kVec(3), uVec(3)
+      integer, intent(in) :: t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12, verbosity
+
+c     Internal variables
+      real*8 tmpVec(3), ppVec(3)!, r, theta, phi
+      complex*16 factorAsym, factorAasy
+      logical useOffset
+      real*8 Jacobian
+c     For easy changes by the 2Bkernel "user", may want to change this in the final version for speed, since "if"
+c     statements are slow
+      useOffset=.True.
+      ppVec=uVec
+
+      if (.not.(all(ppVecA.eq.0))) then
+          write(*,*) "ppVec assigned elsewhere, stopping"
+          write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: ppVecA=",ppVecA 
+          stop
+      end if
+
+c     Use this block if you actually want to use the transformation
+      if (useOffset) then
+c         write(*,*) "In varsub-2Bkernel: kVec=",kVec 
+          tmpVec=ppVec+kVec
+          Jacobian=1.d0
+      else
+          tmpVec=ppVec
+          Jacobian=1.d0
+      end if
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     This line below ppVec=uVec if you don't want to use the transformation
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+      factorAsym=-(-1)**(t12)/
+     &    (mpi2+DOT_PRODUCT(tmpVec,tmpVec)+DOT_PRODUCT(pVec,pVec))
+     &      *(2*Pi)**3/HC
+      factorAasy=factorAsym
+
+      factorAsym=factorAsym*Jacobian
+      factorAasy=factorAasy*Jacobian
+      
+      if ((t12 .eq. t12p) .and. (mt12 .eq. 0) .and.(mt12p .eq. 0)) then
+         if (s12p .eq. s12) then ! s12-s12p=0 => l12-l12p is even; spin symmetric part only
+
+            call CalcKernel2BAsym(KernelA,
+     &           factorAsym,
+     &           s12p,s12,extQnumlimit,verbosity)
+         else                   ! s12 question: s12-s12p=±1 => l12-l12p is odd; spin anti-symmetric part only
+            call CalcKernel2BAasy(KernelA,
+     &           factorAasy,
+     &           s12p,s12,extQnumlimit,verbosity)
+         end if                 ! s12 question
+      else                      ! t12!=t12p
+         continue
+c     diagrams (A/B) have no components with t12!=t12p. 
+      end if                    !t12 question
+      ppVecA=ppVec
+
+      end subroutine
+
       subroutine getmpiEZsub(KernelA,pVec,uVec,ppVecA,kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
       implicit none
 c     Uses the non-physical propogator mpi[ m_\pi^2 + (ppVec+kGamma/2)^2 + pVec^2]^(-1)
@@ -424,7 +498,7 @@ c     Internal variables
       real*8 Jacobian
 c     For easy changes by the 2Bkernel "user", may want to change this in the final version for speed, since "if"
 c     statements are slow
-      useTransform=.False.
+      useTransform=.True.
 
       if (.not.(all(ppVecA.eq.0))) then
           write(*,*) "ppVec assigned elsewhere, stopping"
@@ -453,7 +527,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
       tmpVec=ppVec+(kVec/2.d0)
       factorAsym=-(-1)**(t12)*mpi*
-     &    (mpi2+DOT_PRODUCT(tmpVec,tmpVec)+DOT_PRODUCT(pVec,pVec))**(-2.d0)
+     &    (mpi2+DOT_PRODUCT(tmpVec,tmpVec)+DOT_PRODUCT(pVec,pVec))**(-1.d0)
      &      *(2*Pi)**3/HC
       factorAasy=factorAsym
 

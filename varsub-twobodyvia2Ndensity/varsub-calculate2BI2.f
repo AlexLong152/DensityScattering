@@ -259,7 +259,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       end subroutine
 
 
-      subroutine getHarmonicCart(Yl,l12,uVec,verbosity)!,radVec,passFlag)!TODO: remove radVec and passFlag when done debugging
+      subroutine getHarmonicCart(Yl,l12,ppVec,verbosity)!,radVec,passFlag)!TODO: remove radVec and passFlag when done debugging
 c     Gets the spherical harmonic Y for uVec which is given in cartiesian
 c     useful for evaluating Y_l(\hat{uVec+offsetVec})
 c     this is "trivial" but its easy to make a typo so just offload it to this subroutine
@@ -267,7 +267,7 @@ c     this is "trivial" but its easy to make a typo so just offload it to this s
       implicit none
       include '../common-densities/constants.def'!can be removed once PI is not longer needed for debugging
 c     Inputs ---------------------------------------
-      real*8, intent(in) :: uVec(3)
+      real*8, intent(in) :: ppVec(3)
       integer, intent(in):: l12,verbosity
       
 
@@ -289,7 +289,7 @@ c     logical passFlag
 c     real*8 tmp(3)
 c     integer ell
 
-      call cart2Sphere(uVec(1),uVec(2),uVec(3),
+      call cart2Sphere(ppVec(1),ppVec(2),ppVec(3),
      &       r,theta,phi,verbosity)
       call getsphericalharmonics(Yl,l12,theta,phi)
     
@@ -302,7 +302,7 @@ c         passFlag=.true.
 c     else
 c         write(*,*) "test array is", dmod(abs(radVec-(/r,theta,phi/)), 2*PI)
 c         write(*,'(A)') "Test failed, as passed to spherical harmonic"
-c         write(*,'(A,F12.5,",",F12.5",",F12.5,A)') "uVec=",uVec(1),uVec(2),uVec(3) ,"     : This is actually ppVecs(diagNum,:)"
+c         write(*,'(A,F12.5,",",F12.5",",F12.5,A)') "ppVec=",ppVec(1),ppVec(2),ppVec(3) ,"     : This is actually ppVecs(diagNum,:)"
 c         write(*,'(A,F10.5,",",F10.5",",F10.5,A)') "r, theta, phi= ", radVec(1), radVec(2), radVec(3), " : radvec"
 c         write(*,'(A,F10.5,",",F10.5",",F10.5,A)') "r, theta, phi= ", r, theta, phi, " : cart2sphere in getHarmonicCart"
 c         write(*,'(A,F10.5,",",F10.5",",F10.5)') "sphere diffs = ", radVec(1)-r, radVec(2)-theta, radVec(3)-phi
