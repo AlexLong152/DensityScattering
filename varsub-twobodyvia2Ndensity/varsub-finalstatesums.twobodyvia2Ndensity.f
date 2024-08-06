@@ -126,7 +126,6 @@ c     Angular-momentum sums are implemented exactly as in one-body version of th
 c     
                   do ip12p=1,NP12 ! mag of momentum (12) subsystem
 c
-c                   write(*,*) "In finalstatesums.twobodyvia2Ndensity.f: P12MAG(ip12p)*HC=",P12MAG(ip12p)*HC 
                      call Calculate2BIntegralI2(Int2B,ppVecs,Mnucl,
      &                    extQnumlimit,
      &                    j12p,m12p,l12p,s12p,t12p,mt12p,
@@ -220,10 +219,13 @@ c                                  write(*,*) ""
 c                                  write(*,*) ""
 c                              end if
 
-                               ppTmp=ppAbs/HC!TODO combine this into the HC**3 in fact
+c                              ppTmp=ppAbs/HC!TODO combine this into the HC**3 in fact
 c                              pTmp=pAbs/HC!just use p12
-                               fact=(Anucl*(Anucl-1)/2)*(p12**2)*wp12*(ppTmp**2)*AP12MAG(ip12p)/(2*Pi)**3*
+                               fact=(Anucl*(Anucl-1)/2)*(p12**2)*wp12*(P12MAG(ip12p)**2)*AP12MAG(ip12p)/(2*Pi)**3*
      &                                 tmpRho*HC**3.d0
+
+c                              fact=(Anucl*(Anucl-1)/2)*(p12**2)*wp12*(ppTmp**2)*AP12MAG(ip12p)/(2*Pi)**3*
+c    &                                 tmpRho*HC**3.d0
 c                              fact=(Anucl*(Anucl-1)/2)*(pTmp**2)*wp12*(ppTmp**2)*AP12MAG(ip12p)/(2*Pi)**3*
 c    &                                 tmpRho*HC**3.d0
 c                              fact=Anucl*(Anucl-1)/2*p12**2*wp12*P12MAG(ip12p)**2*AP12MAG(ip12p)/(2*Pi)**3*

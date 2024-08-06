@@ -195,8 +195,8 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Odelta2 2N contributions
 cccccccccccccccccccccccTrue
       diagNumber=1
-c     call getDiagmpi(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
-      call getmpiEZsub(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
+      call getDiagmpi(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
+c     call getmpiEZsub(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
 c     call testOffset(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
 c     call getDiagAB(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
       Kernel2B(diagNumber,:,:,:,:,:)=KernelA
@@ -249,6 +249,7 @@ c     Internal variables
       complex*16 factorAsym, factorAasy
       complex*16 factorBsym, factorBasy
       logical useTransform
+      real*8 Jacobian
 
       if (.not.(all(ppVecA.eq.0))) then
           write(*,*) "ppVec assigned elsewhere, stopping"
@@ -256,25 +257,27 @@ c     Internal variables
           stop
       end if
 
-      useTransform=.true.
+      useTransform=.false.
       if (useTransform) then
 c       uVec=pVec-ppVec+kVec/2!-> ppVec= pVec-uVec+kVec/2 -> jacobian on the integration gives a factor of -1
         ppVec=pVec-uVec+kVec/2
+        Jacobian=-1.d0
       end if
 
       if (.not.useTransform) then
           ppVec=uVec
+          Jacobian=1.d0
       end if
 
       tmpVec=pVec-ppVec+(kVec/2)
 
 
-      if (DOT_PRODUCT(tmpVec-uVec,tmpVec-uVec).ge.1e-5) then
-        write(*,*) "tmpVec!=uVec"
-        write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: uVec=",uVec 
-        write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: tmpVec=",tmpVec 
-        stop
-      end if
+c     if (DOT_PRODUCT(tmpVec-uVec,tmpVec-uVec).ge.1e-5) then
+c       write(*,*) "tmpVec!=uVec"
+c       write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: uVec=",uVec 
+c       write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: tmpVec=",tmpVec 
+c       stop
+c     end if
 
       if (DOT_PRODUCT(tmpVec,tmpVec).le.0.001) then
           write(*,*) "In 2Bkernel"
@@ -323,7 +326,7 @@ c
 c     diagrams (A/B) have no components with t12!=t12p. 
       end if                    !t12 question
       ppVecA=ppVec
-
+      Kerneltmp=Kerneltmp*Jacobian
       end subroutine getDiagAB
 
 
@@ -345,7 +348,7 @@ c     Internal variables
       logical useTransform
       real*8 Jacobian
 
-      useTransform=.false.!For easy changes by the 2Bkernel "user", may want to change this in the final version for speed
+      useTransform=.True.!For easy changes by the 2Bkernel "user", may want to change this in the final version for speed
 
       if (.not.(all(ppVecA.eq.0))) then
           write(*,*) "ppVec assigned elsewhere, stopping"
@@ -480,6 +483,7 @@ c     diagrams (A/B) have no components with t12!=t12p.
       end subroutine
 
       subroutine getmpiEZsub(KernelA,pVec,uVec,ppVecA,kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
+
       implicit none
 c     Uses the non-physical propogator mpi[ m_\pi^2 + (ppVec+kGamma/2)^2 + pVec^2]^(-1)
       include '../common-densities/constants.def'
@@ -494,11 +498,12 @@ c     integer, intent(out) :: diagNumber
 c     Internal variables
       real*8 tmpVec(3), ppVec(3)!, r, theta, phi
       complex*16 factorAsym, factorAasy
-      logical useTransform
+      logical useTransform, useNegative
       real*8 Jacobian
 c     For easy changes by the 2Bkernel "user", may want to change this in the final version for speed, since "if"
 c     statements are slow
       useTransform=.True.
+      useNegative=.True.
 
       if (.not.(all(ppVecA.eq.0))) then
           write(*,*) "ppVec assigned elsewhere, stopping"
@@ -506,7 +511,6 @@ c     statements are slow
           stop
       end if
 
-c     Use this block if you actually want to use the transformation
       if (useTransform) then
 c         uVec=ppVec+kVec/2 -> ppVec= uVec-kVec/2 
           ppVec=uVec-kVec/2
@@ -523,11 +527,14 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
           Jacobian=1.d0
       end if
 
+      if (useNegative) then
+          ppVec=-1.d0*ppVec
+      end if
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
       tmpVec=ppVec+(kVec/2.d0)
-      factorAsym=-(-1)**(t12)*mpi*
-     &    (mpi2+DOT_PRODUCT(tmpVec,tmpVec)+DOT_PRODUCT(pVec,pVec))**(-1.d0)
+      factorAsym=-(-1)**(t12)*mpi*mpi*
+     &    (mpi+DOT_PRODUCT(tmpVec,tmpVec)+DOT_PRODUCT(pVec,pVec))**(-1.d0)
      &      *(2*Pi)**3/HC
       factorAasy=factorAsym
 

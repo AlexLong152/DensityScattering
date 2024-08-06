@@ -185,6 +185,9 @@ c                          Yl12pstar=Real(Yl12p(ml12p))-ci*Imag(Yl12p(ml12p))
      &                          t12,mt12,t12p,mt12p,l12,
      &                          s12,l12p,s12p,thetacm,k,pVec,
      &                          uVec,calctype,numDiagrams,verbosity)
+c                          write(*,*) "In varsub-calculate2BI2: ppVecs(1,:)=",ppVecs(1,:) 
+c                          write(*,*) "In varsub-calculate2BI2: pVec=",pVec 
+c                          write(*,*) ""
 
                           do diagNum=1,numDiagrams
 c                             radVec=(/uVecR,th12(jth),phi12(jphi)/)!TODO: remove after debugging
@@ -254,6 +257,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
             end do
          end do                 !ms12
       end do                    !ms12p
+       
       if (verbosity.eq.1000) continue
  100  return
       end subroutine
