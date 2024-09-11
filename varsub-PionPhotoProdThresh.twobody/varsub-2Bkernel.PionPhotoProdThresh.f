@@ -195,10 +195,10 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Odelta2 2N contributions
 cccccccccccccccccccccccTrue
       diagNumber=1
-      call getDiagmpi(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
+c     call getDiagmpi(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
 c     call getmpiEZsub(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
 c     call testOffset(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
-c     call getDiagAB(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
+      call getDiagAB(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
       Kernel2B(diagNumber,:,:,:,:,:)=KernelA
 
 c     diagNumber=2
@@ -257,7 +257,7 @@ c     Internal variables
           stop
       end if
 
-      useTransform=.false.
+      useTransform=.true.
       if (useTransform) then
 c       uVec=pVec-ppVec+kVec/2!-> ppVec= pVec-uVec+kVec/2 -> jacobian on the integration gives a factor of -1
         ppVec=pVec-uVec+kVec/2
@@ -270,7 +270,7 @@ c       uVec=pVec-ppVec+kVec/2!-> ppVec= pVec-uVec+kVec/2 -> jacobian on the int
       end if
 
       tmpVec=pVec-ppVec+(kVec/2)
-
+      tmpVec2=pVec-ppVec-(kVec/2)
 
 c     if (DOT_PRODUCT(tmpVec-uVec,tmpVec-uVec).ge.1e-5) then
 c       write(*,*) "tmpVec!=uVec"
@@ -285,10 +285,16 @@ c     end if
           stop
       end if
 
-      factorAsym=-(-1)**(t12)*(1.d0/(DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
 
+      factorAsym=-(-1)**(t12)*(1.d0/(DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
       factorBsym=+2*(-1)**(t12)*(1.d0/(
      &        DOT_PRODUCT(tmpVec,tmpVec)))*
+     &        (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
+     &     *(2*Pi)**3/HC
+
+      factorAsym=-(-1)**(t12)*(2*Pi)**3/HC
+
+      factorBsym=+2*(-1)**(t12)*
      &        (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
      &     *(2*Pi)**3/HC
 

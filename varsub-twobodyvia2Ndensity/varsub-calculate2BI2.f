@@ -23,12 +23,13 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       subroutine Calculate2BIntegralI2(Int2B,ppVecs,Mnucl,
      &     extQnumlimit,
      &     j12p,m12p,l12p,s12p,t12p,mt12p,j12,m12,
-     &     l12,s12,t12,mt12,p12,uVecR,th12,phi12,Nth12,Nphi12,
+     &     l12,s12,t12,mt12,pAbs,uVecRs,th12,phi12,Nth12,Nphi12,NP12,
      &     thetacm,k,
-     &     AngularType12,angweight12,calctype,numDiagrams,verbosity)
+     &     AngularType12,angweight12,calctype,numDiagrams,ip12p,twoSnucl,twoMzp,twoMz,verbosity)
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
       USE clebsch
+      USE CompDens
       implicit none
 c     
       include '../common-densities/constants.def'
@@ -38,7 +39,7 @@ c
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     INPUT VARIABLES:
       
-      integer,intent(in) :: extQnumlimit, numDiagrams
+      integer,intent(in) :: extQnumlimit, numDiagrams,ip12p,twoSnucl
       integer,intent(in) :: m12p,m12,j12p,s12p,l12p,j12,s12,l12,Nth12,Nphi12
       integer,intent(in) :: t12p,t12,mt12p,mt12
       
@@ -47,7 +48,9 @@ c     INPUT VARIABLES:
       integer,intent(in) :: AngularType12
       real*8,intent(in) :: angweight12(Nangmax,Nangmax)
       integer,intent(in) :: calctype,verbosity
-      real*8 ppVecs(1:numDiagrams,1:3)
+      real*8 ppVecs(1:numDiagrams,1:3),ppAbs
+      real*8 tmpRho 
+      integer twoMz,twoMzp
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     OUTPUT VARIABLES:
 
@@ -69,41 +72,22 @@ c      complex*16 Compton2Bpx(0:1,-1:1,0:1,-1:1) ! for STUMP, see below
 c      complex*16 Compton2Bpy(0:1,-1:1,0:1,-1:1) ! for STUMP, see below
      
       integer extQnum,diagNum           ! counter of combined external quantum numbers of in and out state
-      
+      integer NP12
       integer ith,iphi,jth,jphi,msp,ms,ml12p,ml12
       complex*16 Yl12(-5:5),Yl12p(-5:5)
       complex*16 Int(1:numDiagrams,1:extQnumlimit,-5:5,-5:5)
 c      complex*16 Intx(-5:5,-5:5),Inty(-5:5,-5:5)   ! for STUMP, see below
 c      complex*16 Intpx(-5:5,-5:5),Intpy(-5:5,-5:5) ! for STUMP, see below
       complex*16 Yl12pstar
-      real*8 cgcp,cgc,p12x,p12y,p12z,p12,uVecR
+      real*8 cgcp,cgc,p12x,p12y,p12z,pAbs,uVecRs(NP12)
       real*8 ux,uy,uz
       real*8 pVec(3), uVec(3)
-c     debug variables
-      real*8 radVec(3)
-      logical passFlag
+      real*8,allocatable :: P12_MeV(:)
+      integer alpha2N, alpha2Np, rindx
+      if (.not.allocated(P12_MeV)) then
+          allocate(P12_MeV, mold=P12P_density)
+      end if
 
-c     complex*16 Ylm(-5:5)!for testing
-c     integer l,mPrint,lMax
-c     real*8 x,y,z, vec(3)
-
-c     lMax=2
-c     x=2.d0
-c     y=1.d0
-c     z=0.d0
-c     vec=(/x,y,z/)
-c     do l=0,lMax
-c         call getHarmonicCart(Ylm,l,vec,verbosity)
-c         write(*,'(A,F5.3,A,F5.3,A,F5.3,A,I1)') " Ylm(x=",x,", y=",y,", z=",z,") l=",l
-
-c         do mPrint=-l,l
-c           write(*,'(A,I2,A,F7.3, " + ", F5.3, "i")')" m=",mPrint,":", real(Ylm(mPrint)), aimag(Ylm(mPrint))
-c         end do
-c         write(*,*) ""
-c         write(*,*) "cccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
-c     end do
-c     stop
-      
       if (verbosity.eq.1000) continue ! unused variable, kept for future use
 c     
       if ((l12p .gt. 5) .or. (l12 .gt. 5)) then
@@ -112,9 +96,14 @@ c
       Int2B=c0
       Kernel2B=c0
       
+      alpha2N = get2Nchannum(l12,s12,j12,mt12,m12,twoMz)
+      alpha2Np = get2Nchannum(l12p,s12p,j12p,mt12p,m12p,twoMzp)
+      rindx=rhoindx(alpha2N,alpha2Np)
+
       call initclebsch                ! Initializing the factorial array
 c     Loop  to sum over the spin projections of the (12) system: ms12 and ms12p (called ms and msp here). 
 c     The value of ms and msp together with m12 & m12p determine ml12 and ml12p. 
+      P12_MeV=P12P_density*HC
       do msp=-s12p,s12p,1
          ml12p=m12p-msp
          do ms=-s12,s12,1
@@ -151,7 +140,7 @@ c     angle integral: φ of p12
 
 c     Inputs are theta and phi, outputs are x,y,z
                     
-                     call sphere2cart(p12x,p12y,p12z,p12,
+                     call sphere2cart(p12x,p12y,p12z,pAbs,
      &                    th12(ith),phi12(iphi),verbosity)
                      pVec=(/p12x,p12y,p12z/)
                      call getsphericalharmonics(Yl12,l12,th12(ith),phi12(iphi))
@@ -172,63 +161,34 @@ c     for LebedevLaikov, only sum over diagonal elements of angweight12 (all oth
                         end if    
 c     angle integral: φprime of p12p
                         do jphi=jmin,jmax
-                           call sphere2cart(ux,uy,uz,uVecR,
+                           call sphere2cart(ux,uy,uz,uVecRs(ip12p),
      &                          th12(jth),phi12(jphi),verbosity)!uVecR used to be p12p
 
                            uVec=(/ux,uy,uz/)!generic integration variable
 
-c                          call getsphericalharmonics(Yl12p,l12p,th12(jth),phi12(jphi))
-c                          Yl12pstar=Real(Yl12p(ml12p))-ci*Imag(Yl12p(ml12p))
                         
                            call Calc2Bspinisospintrans(Kernel2B,ppVecs,Mnucl,
      &                          extQnumlimit,ml12,ml12p,
      &                          t12,mt12,t12p,mt12p,l12,
      &                          s12,l12p,s12p,thetacm,k,pVec,
      &                          uVec,calctype,numDiagrams,verbosity)
-c                          write(*,*) "In varsub-calculate2BI2: ppVecs(1,:)=",ppVecs(1,:) 
-c                          write(*,*) "In varsub-calculate2BI2: pVec=",pVec 
-c                          write(*,*) ""
 
+c                         tmpRho=0.0000001
                           do diagNum=1,numDiagrams
 c                             radVec=(/uVecR,th12(jth),phi12(jphi)/)!TODO: remove after debugging
-                              call getHarmonicCart(Yl12p,l12p,ppVecs(diagNum,:),verbosity)!,radVec,passFlag)
+                              call getHarmonicCart(Yl12p,l12p,ppVecs(diagNum,:),verbosity)
                               Yl12pstar=Real(Yl12p(ml12p))-ci*Imag(Yl12p(ml12p))
-c                              if (.not.passFlag) then
-c                              if (.true.) then
-c                              if (j12.ge.1) then
-                               if (.false.) then
-                                   write(*,'(A)') "The below command is for copy pasting into mathematica/CheckCartSphericalHarmonic.nb"
-                                   write(*,'(A)') "Yl12p(ml12p), l12p, ml12p, ppVecs(diagNum,1), ppVecs(diagNum,2), ppVecs(diagNum,3)"
-                                   write(*,'(A,F9.7,SP,F9.7,"I,",I3,","I3,","F15.7,",",F15.7",",F15.7,A)')
-     &                             "-> diff[",Yl12p(ml12p),l12p, ml12p,ppVecs(diagNum,1),ppVecs(diagNum,2),ppVecs(diagNum,3),"]"
-                                   write(*,'(A,F12.5,",",F12.5",",F12.5,A)') "ppVec=",ppVecs(diagNum,:)
-                                   write(*,'(A,F12.5,",",F12.5",",F12.5,A)') " uVec=",uVec(1),uVec(2),uVec(3) 
-                                   write(*,*) ""
-                                   write(*,'(A,F10.5,",",F10.5",",F10.5)') "uVec: r, theta, phi= ", uVecR,th12(jth),phi12(jphi)
-                                   write(*,'(A)') "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
-                               end if
-                               do extQnum=1,extQnumlimit
+
+                              ppAbs= sqrt(DOT_PRODUCT(ppVecs(diagNum,:),ppVecs(diagNum,:)))!in MeV
+                              call interpolate(tmpRho, real(rhoDensity(:,:,rindx),8), P12_MeV, ppAbs, pAbs, size(P12_MeV))
+
+                              do extQnum=1,extQnumlimit
                                    Int(diagNum,extQnum,ml12p,ml12) = Int(diagNum,extQnum,ml12p,ml12)+Yl12(ml12)*Yl12pstar*
-     &                                      angweight12(ith,iphi)*angweight12(jth,jphi)*Kernel2B(diagNum,extQnum,s12p,msp,s12,ms)
+     &                              angweight12(ith,iphi)*angweight12(jth,jphi)*Kernel2B(diagNum,extQnum,s12p,msp,s12,ms)*
+     &                                  tmpRho!*(ppAbs/HC)**2
+c   need ppAbs**2 here if you don't explicitly cancel it in 2Bkernel
                                 end do!extQnum   
                            end do!diagNum
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     hgrie Nov 2023: Following is a STUMP from the Compton code, used there only for OQ4 -- NOT YET IMPLEMENTED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
-c     I leave this here because maybe some of this can be recycled later for boost corrections or so?
-c                           Intx(ml12p,ml12)=Intx(ml12p,ml12)+Yl12pstar*Yl12(ml12)*
-c     &                          angweight12(ith,iphi)*angweight12(jth,jphi)*
-c     &                          Compton2Bx(s12p,msp,s12,ms)
-c                           Inty(ml12p,ml12)=Inty(ml12p,ml12)+Yl12pstar*Yl12(ml12)*
-c     &                          angweight12(ith,iphi)*angweight12(jth,jphi)*
-c     &                          Compton2By(s12p,msp,s12,ms)
-c                           Intpx(ml12p,ml12)=Intpx(ml12p,ml12)+Yl12pstar*Yl12(ml12)*
-c     &                          angweight12(ith,iphi)*angweight12(jth,jphi)*
-c     &                          Compton2Bpx(s12p,msp,s12,ms)
-c                           Intpy(ml12p,ml12)=Intpy(ml12p,ml12)+Yl12pstar*Yl12(ml12)*
-c     &                          angweight12(ith,iphi)*angweight12(jth,jphi)*
-c     &                          Compton2Bpy(s12p,msp,s12,ms)
-c     END OF STUMP    
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc  
                         end do  ! jphi
                      end do     ! jth
                   end do        ! iphi
@@ -237,18 +197,6 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Clebsches for unprimed and primed quantum numbers
             cgc=CG(2*l12,2*s12,2*j12,2*ml12,2*ms,2*m12)
             cgcp=CG(2*l12p,2*s12p,2*j12p,2*ml12p,2*msp,2*m12p)
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc            
-c     hgrie Nov 2023: Following is a STUMP from the Compton code, used there only for OQ4 -- NOT YET IMPLEMENTED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
-c     I leave this here because maybe some of this can be recycled later for boost corrections or so?
-c            Int2Bxx=Int2Bxx+Intxx(ml12p,ml12)*cgc*cgcp
-c            Int2Bxy=Int2Bxy+Intxy(ml12p,ml12)*cgc*cgcp
-c            Int2Byx=Int2Byx+Intyx(ml12p,ml12)*cgc*cgcp
-c            Int2Byy=Int2Byy+Intyy(ml12p,ml12)*cgc*cgcp
-c            Int2Bx=Int2Bx+Intx(ml12p,ml12)*cgc*cgcp
-c            Int2By=Int2By+Inty(ml12p,ml12)*cgc*cgcp
-c            Int2Bpx=Int2Bpx+Intpx(ml12p,ml12)*cgc*cgcp
-c            Int2Bpy=Int2Bpy+Intpy(ml12p,ml12)*cgc*cgcp
-c     END OF STUMP    
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
             do diagNum=1,numDiagrams
             do extQnum=1,extQnumlimit
@@ -257,13 +205,120 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
             end do
          end do                 !ms12
       end do                    !ms12p
-       
+
+        
+c     do extQnum=1,extQnumlimit
+c     do diagNum=1,numDiagrams
+c        ppAbs= sqrt(DOT_PRODUCT(ppVecs(diagNum,:),ppVecs(diagNum,:)))!in MeV
+c        call interpolate(tmpRho, real(rhoDensity(:,:,rindx),8), P12_MeV, ppAbs, pAbs, size(P12_MeV))
+c        Int2B(diagNum,extQnum)=Int2B(diagNum,extQnum)*tmpRho
+c     end do !diagNum
+c     end do !extQnum
+      
       if (verbosity.eq.1000) continue
  100  return
       end subroutine
 
 
-      subroutine getHarmonicCart(Yl,l12,ppVec,verbosity)!,radVec,passFlag)!TODO: remove radVec and passFlag when done debugging
+      subroutine interpolate(tmpRho,rho,P12_MeV, ppAbs, pAbs, Nlength)
+c     Units of all momenta in MeV
+      implicit none
+      real*8 tmpRho,ppAbs,pAbs,P12_MeV(Nlength)
+      integer Nlength
+      real*8 rho(Nlength,Nlength)
+      real*8 fQ11, fQ12,fQ21,fQ22
+      integer locp, loc2p, locpp, loc2pp
+      real*8 x1,x2,y1,y2
+      real*8 diffspp(Nlength), diffsp(Nlength)
+c     integer i
+
+      diffspp=abs((P12_MeV-ppAbs))
+      locpp = minloc(diffspp,DIM=1) !closest value
+      loc2pp = minloc(diffspp,DIM=1,
+     &              mask=.not.(diffspp.eq.diffspp(locpp)))! second closest value
+c   Now                                       
+      diffsp=abs((P12_MeV-pAbs))
+      locp = minloc(diffsp,DIM=1)
+      loc2p = minloc(diffsp,DIM=1,mask=.not.(diffsp.eq.diffsp(locp)))
+
+      x1=P12_MeV(locp)
+      x2=P12_MeV(loc2p)
+
+      y1=P12_MeV(locpp)
+      y2=P12_MeV(loc2pp)
+
+c https://en.wikipedia.org/wiki/Bilinear_interpolation
+c use the names Q to decrease the likelihood of a transcription error
+
+      fQ11=rho(locp,locpp)
+      fQ12=rho(locp,loc2pp)
+      fQ21=rho(loc2p,locpp)
+      fQ22=rho(loc2p,loc2pp)
+
+      call bilinear_interpolate(tmpRho, fQ11,fQ12,fQ21,fQ22,x1,x2,y1,y2,pAbs,ppAbs)
+
+c     write(*,*) "In varsub-calculate2BI2: locp,loc2p,locpp,loc2pp=",locp,loc2p,locpp,loc2pp 
+c     write(*,*) "In varsub-calculate2BI2: ppAbs,pAbs=",ppAbs,pAbs 
+c     do i=1,size(P12_MeV)
+c         write(*,'(A, I0, A, F0.6)') "  P12_MeV(",i,")=",P12_MeV(i) 
+c     end do !i
+c     write(*,*) "In varsub-calculate2BI2: P12_MeV(locp),P12_MeV(loc2p)=",P12_MeV(locp),P12_MeV(loc2p) 
+c     write(*,*) "In varsub-calculate2BI2: P12_MeV(locpp),P12_MeV(loc2pp)=",P12_MeV(locpp),P12_MeV(loc2pp) 
+c     write(*,*) "In varsub-calculate2BI2: fQ11,fQ12,fQ21,fQ22=",fQ11,fQ12,fQ21,fQ22 
+c     write(*,*) "In varsub-calculate2BI2: tmpRho=",tmpRho 
+c     stop
+      end subroutine
+
+
+      subroutine bilinear_interpolate(tmpRho, fQ11,fQ12,fQ21,fQ22,x1,x2,y1,y2,x,y)
+c   Implimentation of this: https://en.wikipedia.org/wiki/Bilinear_interpolation
+c   Essentially this is first order multivariable polynomial interpolation 
+c   A higher order multivariable interpolation can be done in mathematica if needed (but I doubt this will be required)
+c   fQ11 =f(x1, y1), fQ12 =f(x1, y2), fQ21 =f(x2, y1), and fQ22 =f(x2, y2).
+c   Order of arguments x1<x2, or y1<y2 etc doesn't matter
+      implicit none
+      real*8 fQ11, fQ12, fQ21, fQ22
+      real*8 x1,x2,y1,y2,x,y
+      real*8 tmpRho 
+      real*8 term1,term2 
+
+c     real*8 tmpRho2
+c     real*8 xVec(2),yVec(2)
+c     real*8 pAbs, ppAbs
+c     real*8 myMat(2,2), output(2,1)
+      term1=((y2-y)/(y2-y1))
+      term1=term1*(((x2-x)/(x2-x1))*fQ11+(((x-x1)/(x2-x1))*fQ21))
+
+      term2=((y-y1)/(y2-y1))
+      term2=term2*(
+     &   ((x2-x)/(x2-x1))*fQ12+
+     &   ((x-x1)/(x2-x1))*fQ22)
+      tmpRho=term1+term2
+      
+
+c     Below this is in theory the same implimentation as above, but its implimented twice as a cross check
+
+c     xVec=(/x2-x,x-x1/)
+c     yVec=(/y2-y,y-y1/)
+c     myMat=reshape((/fQ11,fQ12,fQ21,fQ22/),shape(myMat))
+c     tmp(1)=DOT_PRODUCT(myMat(:,1),yVec)!matrix dot product with a vector
+c     tmp(2)=DOT_PRODUCT(myMat(:,2),yVec)
+
+c     tmpRho2=DOT_PRODUCT(xVec, tmp)/((x2-x1)*(y2-y1))
+
+c     if (abs(tmpRho-tmpRho2).ge.1e-8) then
+c         write(*,*) ""
+c         write(*,*) "abs(tmpRho-tmpRho2).ge.1e-8 evaluated true"
+c         write(*,*) "In finalstatesums.twobodyvia2Ndensity.f: tmpRho=",tmpRho 
+c         write(*,*) "In finalstatesums.twobodyvia2Ndensity.f: tmpRho2=",tmpRho2
+c         write(*,*) "fQ11,fQ12,fQ21,fQ22=",fQ11,fQ12,fQ21,fQ22 
+c         write(*,*) "Values dont match, stopping"
+c         stop
+c     end if
+
+      end subroutine
+
+      subroutine getHarmonicCart(Yl,l12,ppVec,verbosity)
 c     Gets the spherical harmonic Y for uVec which is given in cartiesian
 c     useful for evaluating Y_l(\hat{uVec+offsetVec})
 c     this is "trivial" but its easy to make a typo so just offload it to this subroutine

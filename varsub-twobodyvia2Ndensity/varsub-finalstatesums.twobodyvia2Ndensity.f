@@ -98,21 +98,16 @@ c      logical invokesymmetryextQnum ! function to invoke symmetry/-ies of ampli
       integer locp,loc2p,loc2pp, locpp!,loc
       real*8 x1,x2,y1,y2,fQ11,fQ12,fQ21,fQ22
       real ppTmp, pTmp
-c     real*8 switch1, switch2,switch
 
 c     TODO: check rhoDensity assignment doesn't fail in CompDens.F90 for large rho due to block reading etc. check line 1315
 c     Note that P12MAG(ip12p) isn't actually physical momenta, but p12 is.
                             
-      if (.not.allocated(diffspp)) then
-           allocate(diffspp, mold=P12P_density)
-      end if 
-
-      if (.not.allocated(diffsp)) then
-          allocate(diffsp, mold=P12P_density)
-      end if 
       if (.not.allocated(P12_MeV)) then
           allocate(P12_MeV, mold=P12P_density)
       end if
+
+      P12_MeV=P12P_density*HC
+      pAbs=p12*HC!pAbs in units of MeV now
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       mt12p=mt12                              ! isospin projection in (12), fixes charge of spectator(s)    
@@ -126,110 +121,44 @@ c     Angular-momentum sums are implemented exactly as in one-body version of th
 c     
                   do ip12p=1,NP12 ! mag of momentum (12) subsystem
 c
-                     call Calculate2BIntegralI2(Int2B,ppVecs,Mnucl,
-     &                    extQnumlimit,
-     &                    j12p,m12p,l12p,s12p,t12p,mt12p,
-     &                    j12,m12,l12,s12,t12,mt12,
-     &                    p12*HC,P12MAG(ip12p)*HC,th12,
-     &                    phi12,Nth12,Nphi12,thetacm,k,
-     &                    AngularType12,angweight12,calctype,numDiagrams,verbosity)
-c     Note P12MAG(ip12p) is the generic integration variable, not physical momenta 
-
                      do twoMzp=twoSnucl,-twoSnucl,-2
 c     check if ME to be skipped and reconstructed via a symmetry of the amplitudes
 c                        if (invokesymmetrytwoMzp(symmetry,twoSnucl,twoMzp,verbosity)) exit
                         
                         do twoMz=twoSnucl,-twoSnucl,-2
+                     call Calculate2BIntegralI2(Int2B,ppVecs,Mnucl,
+     &                    extQnumlimit,
+     &                    j12p,m12p,l12p,s12p,t12p,mt12p,
+     &                    j12,m12,l12,s12,t12,mt12,
+     &                    p12*HC,P12MAG*HC,th12,
+     &                    phi12,Nth12,Nphi12,NP12,thetacm,k,
+     &                    AngularType12,angweight12,calctype,numDiagrams,ip12p,twoSnucl,twoMzp,twoMz,verbosity)
+c     Note P12MAG(ip12p) is the generic integration variable, not physical momenta 
+
 c     check if ME to be skipped and reconstructed via a symmetry of the amplitudes
 c                           if (invokesymmetrytwoMz(symmetry,twoSnucl,twoMzp,twoMz,verbosity)) exit
 c                           
 c     now call density
 c                           write(*,*) l12,s12,j12,mt12,m12,twoMz
 c                           write(*,*) l12p,s12p,j12p,mt12p,m12p,twoMzp
-                           alpha2N = get2Nchannum(l12,s12,j12,mt12,m12,twoMz)
-                           alpha2Np = get2Nchannum(l12p,s12p,j12p,mt12p,m12p,twoMzp)
-                           rindx=rhoindx(alpha2N,alpha2Np)
-c                           write(*,*) "rindx = ",rindx," ; alpha2N  = ",alpha2N," ; alpha2Np = ",alpha2Np
-c                           write(*,*) "             ρ12 = ",rho(ip12,ip12,rindx)
-c                           write(*,'(3(A,I5),A,E15.8,SP,E16.8," I")')
-c     &                          "    ρ(rindx=",rindx,",ip12=",ip12,",ip12p=",ip12p,") = ",rho(ip12,ip12p,rindx)
-                           
-c     Next line: integration volume of p12 and p12p magnitudes and 2Ndensity ρ
-c     hgrie May 2018/July 2020:
-c     original factor 3.d0 in 3He-code is replaced by number of nucleon pairs inside nucleus -- see 3He-densities paper
-c     hgrie Oct 2022: include here factor 1/(2π)³ so that final amplitudes for onebody and twobody have SAME sizes.
-c     multiplication by HC**3.d0 transforms ME units from fm^-3 to MeV^3
-
-c     TODO: check rhoDensity assignment doesn't fail in CompDens.F90 for large rho due to block reading etc. check line 1315
-c     Note that P12MAG(ip12p) isn't actually physical momenta, but p12 is.
-                            
-c                          if (.not.allocated(diffspp)) then
-c                               allocate(diffspp, mold=P12P_density)
-c                          end if 
-
-c                          if (.not.allocated(diffsp)) then
-c                              allocate(diffsp, mold=P12P_density)
-c                          end if 
-c                          if (.not.allocated(P12_MeV)) then
-c                              allocate(P12_MeV, mold=P12P_density)
-c                          end if
-
 c P12P_density units in  fm^-1, so convert to MeV 
-                           P12_MeV=P12P_density*HC
-                           pAbs=p12*HC!pAbs in units of MeV now
-c                          ppVecs=ppVecs        !ppVecs in units of MeV from 2Bkernel already
-
                            do diagNum=1,numDiagrams
                                ppAbs= sqrt(DOT_PRODUCT(ppVecs(diagNum,:),ppVecs(diagNum,:)))!in MeV
-
 c   Find the closest values in the P12 array to ppAbs
-                               diffspp=abs((P12_MeV-ppAbs))
-                               locpp = minloc(diffspp,DIM=1) !closest value
-                               loc2pp = minloc(diffspp,DIM=1,
-     &                                      mask=.not.(diffspp.eq.diffspp(locpp)))! second closest value
-c   Now do the same thing for p                                       
-                               diffsp=abs((P12_MeV-pAbs))
-                               locp = minloc(diffsp,DIM=1)
-                               loc2p = minloc(diffsp,DIM=1,mask=.not.(diffsp.eq.diffsp(locp)))
 
-                               x1=P12_MeV(locp)
-                               x2=P12_MeV(loc2p)
-
-                               y1=P12_MeV(locpp)
-                               y2=P12_MeV(loc2pp)
-
-c https://en.wikipedia.org/wiki/Bilinear_interpolation
-c use the names Q to decrease the likelihood of a transcription error
-
-                               fQ11=rhoDensity(locp,locpp,rindx)
-                               fQ12=rhoDensity(locp,loc2pp,rindx)
-                               fQ21=rhoDensity(loc2p,locpp,rindx)
-                               fQ22=rhoDensity(loc2p,loc2pp,rindx)
-
-                               call bilinear_interpolate(tmpRho, fQ11,fQ12,fQ21,fQ22,x1,x2,y1,y2,pAbs,ppAbs)
-
-c                           This check only works if useTransform=False in 2Bkernel
-c                              if (abs(rho(ip12,ip12p,rindx)-tmpRho)/tmpRho.ge.0.01d0 ) then
-c                                  write(*,*) "In varsub-finalstatesums: diff was big"
-c                                  write(*,*) "In varsub-finalstatesums:rho(ip12,ip12p,rindx)-tmpRho)=",rho(ip12,ip12p,rindx)-tmpRho 
-c                                  write(*,*) "In varsub-finalstatesums: ip12,ip12p,rindx=",ip12,ip12p,rindx 
-c                                  write(*,*) "In varsub-finalstatesums: rho(ip12,ip12p,rindx)=",rho(ip12,ip12p,rindx)
-c                                  write(*,*) "In varsub-finalstatesums: tmpRho=",tmpRho
-c                                  write(*,*) ""
-c                                  write(*,*) ""
-c                              end if
 
 c                              ppTmp=ppAbs/HC!TODO combine this into the HC**3 in fact
 c                              pTmp=pAbs/HC!just use p12
-                               fact=(Anucl*(Anucl-1)/2)*(p12**2)*wp12*(P12MAG(ip12p)**2)*AP12MAG(ip12p)/(2*Pi)**3*
-     &                                 tmpRho*HC**3.d0
+c                              call interpolate(tmpRho, real(rhoDensity(:,:,rindx),8), P12_MeV, ppAbs, pAbs, size(P12_MeV))
 
-c                              fact=(Anucl*(Anucl-1)/2)*(p12**2)*wp12*(ppTmp**2)*AP12MAG(ip12p)/(2*Pi)**3*
+c                              fact=(Anucl*(Anucl-1)/2)*(p12**2)*wp12*(P12MAG(ip12p)**2)*AP12MAG(ip12p)/(2*Pi)**3*
 c    &                                 tmpRho*HC**3.d0
-c                              fact=(Anucl*(Anucl-1)/2)*(pTmp**2)*wp12*(ppTmp**2)*AP12MAG(ip12p)/(2*Pi)**3*
-c    &                                 tmpRho*HC**3.d0
-c                              fact=Anucl*(Anucl-1)/2*p12**2*wp12*P12MAG(ip12p)**2*AP12MAG(ip12p)/(2*Pi)**3*
-c    &                                 rho(ip12,ip12p,rindx)*HC**3.d0
+
+c                              fact=(Anucl*(Anucl-1)/2)*(p12**2)*wp12*((ppAbs/HC)**2)*AP12MAG(ip12p)/(2*Pi)**3*
+c    &                                 HC**3.d0
+                               fact=(Anucl*(Anucl-1)/2)*(p12**2)*wp12*AP12MAG(ip12p)/(2*Pi)**3*
+     &                                 HC**1.d0
+c   not including explcit (ppAbs/HC)**2 so lose two powers of HC
                            do extQnum=1,extQnumlimit
                               Result(extQnum,twoMzp,twoMz) = Result(extQnum,twoMzp,twoMz) + fact*Int2B(diagNum,extQnum)
                            end do! extQnum
@@ -247,50 +176,3 @@ c    &                                 rho(ip12,ip12p,rindx)*HC**3.d0
       return
       end
 
-      subroutine bilinear_interpolate(tmpRho, fQ11,fQ12,fQ21,fQ22,x1,x2,y1,y2,x,y)
-c   Implimentation of this: https://en.wikipedia.org/wiki/Bilinear_interpolation
-c   Essentially this is first order multivariable polynomial interpolation 
-c   A higher order multivariable interpolation can be done in mathematica if needed (but I doubt this will be required)
-c   fQ11 =f(x1, y1), fQ12 =f(x1, y2), fQ21 =f(x2, y1), and fQ22 =f(x2, y2).
-c   Order of arguments x1<x2, or y1<y2 etc doesn't matter
-      implicit none
-      real*8 fQ11, fQ12, fQ21, fQ22
-      real*8 x1,x2,y1,y2,x,y
-      real*8 tmpRho 
-      real*8 term1,term2 
-
-c     real*8 tmpRho2
-c     real*8 xVec(2),yVec(2)
-c     real*8 pAbs, ppAbs
-c     real*8 myMat(2,2), output(2,1)
-      term1=((y2-y)/(y2-y1))
-      term1=term1*(((x2-x)/(x2-x1))*fQ11+(((x-x1)/(x2-x1))*fQ21))
-
-      term2=((y-y1)/(y2-y1))
-      term2=term2*(
-     &   ((x2-x)/(x2-x1))*fQ12+
-     &   ((x-x1)/(x2-x1))*fQ22)
-      tmpRho=term1+term2
-      
-
-c     Below this is in theory the same implimentation as above, but its implimented twice as a cross check
-
-c     xVec=(/x2-x,x-x1/)
-c     yVec=(/y2-y,y-y1/)
-c     myMat=reshape((/fQ11,fQ12,fQ21,fQ22/),shape(myMat))
-c     tmp(1)=DOT_PRODUCT(myMat(:,1),yVec)!matrix dot product with a vector
-c     tmp(2)=DOT_PRODUCT(myMat(:,2),yVec)
-
-c     tmpRho2=DOT_PRODUCT(xVec, tmp)/((x2-x1)*(y2-y1))
-
-c     if (abs(tmpRho-tmpRho2).ge.1e-8) then
-c         write(*,*) ""
-c         write(*,*) "abs(tmpRho-tmpRho2).ge.1e-8 evaluated true"
-c         write(*,*) "In finalstatesums.twobodyvia2Ndensity.f: tmpRho=",tmpRho 
-c         write(*,*) "In finalstatesums.twobodyvia2Ndensity.f: tmpRho2=",tmpRho2
-c         write(*,*) "fQ11,fQ12,fQ21,fQ22=",fQ11,fQ12,fQ21,fQ22 
-c         write(*,*) "Values dont match, stopping"
-c         stop
-c     end if
-
-      end subroutine
