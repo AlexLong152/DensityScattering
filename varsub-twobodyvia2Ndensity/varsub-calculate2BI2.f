@@ -179,13 +179,20 @@ c                             radVec=(/uVecR,th12(jth),phi12(jphi)/)!TODO: remov
                               call getHarmonicCart(Yl12p,l12p,ppVecs(diagNum,:),verbosity)
                               Yl12pstar=Real(Yl12p(ml12p))-ci*Imag(Yl12p(ml12p))
 
-                              ppAbs= sqrt(DOT_PRODUCT(ppVecs(diagNum,:),ppVecs(diagNum,:)))!in MeV
+                              ppAbs = sqrt(DOT_PRODUCT(ppVecs(diagNum,:),ppVecs(diagNum,:)))!in MeV
+c                             write(*,*) "In varsub-calculate2BI2: ppAbs=",ppAbs 
+c                             write(*,*) "In varsub-calculate2BI2: ppVecs(diagNum,:)=",ppVecs(diagNum,:) 
+c                             stop
                               call interpolate(tmpRho, real(rhoDensity(:,:,rindx),8), P12_MeV, ppAbs, pAbs, size(P12_MeV))
 
                               do extQnum=1,extQnumlimit
                                    Int(diagNum,extQnum,ml12p,ml12) = Int(diagNum,extQnum,ml12p,ml12)+Yl12(ml12)*Yl12pstar*
      &                              angweight12(ith,iphi)*angweight12(jth,jphi)*Kernel2B(diagNum,extQnum,s12p,msp,s12,ms)*
-     &                                  tmpRho!*(ppAbs/HC)**2
+     &                                  tmpRho
+c    &                                  *(ppAbs/HC)**2!Original working line with HC**1 in varsub-finalstatesums
+c    &                                  (1/HC)**2!explcit cancel
+c    &                                  (1/HC)**2!explcit cancel
+c    &                                  (uVecRs(ip12p)/HC)**2!implcit cancel
 c   need ppAbs**2 here if you don't explicitly cancel it in 2Bkernel
                                 end do!extQnum   
                            end do!diagNum

@@ -143,7 +143,7 @@ c                           write(*,*) l12,s12,j12,mt12,m12,twoMz
 c                           write(*,*) l12p,s12p,j12p,mt12p,m12p,twoMzp
 c P12P_density units in  fm^-1, so convert to MeV 
                            do diagNum=1,numDiagrams
-                               ppAbs= sqrt(DOT_PRODUCT(ppVecs(diagNum,:),ppVecs(diagNum,:)))!in MeV
+c                              ppAbs= sqrt(DOT_PRODUCT(ppVecs(diagNum,:),ppVecs(diagNum,:)))!in MeV
 c   Find the closest values in the P12 array to ppAbs
 
 
@@ -156,8 +156,8 @@ c    &                                 tmpRho*HC**3.d0
 
 c                              fact=(Anucl*(Anucl-1)/2)*(p12**2)*wp12*((ppAbs/HC)**2)*AP12MAG(ip12p)/(2*Pi)**3*
 c    &                                 HC**3.d0
-                               fact=(Anucl*(Anucl-1)/2)*(p12**2)*wp12*AP12MAG(ip12p)/(2*Pi)**3*
-     &                                 HC**1.d0
+                               fact=(Anucl*(Anucl-1)/2)*(p12**2)*wp12*AP12MAG(ip12p)*(P12MAG(ip12p)**2)/(2*Pi)**3*
+     &                                 HC**3.d0
 c   not including explcit (ppAbs/HC)**2 so lose two powers of HC
                            do extQnum=1,extQnumlimit
                               Result(extQnum,twoMzp,twoMz) = Result(extQnum,twoMzp,twoMz) + fact*Int2B(diagNum,extQnum)
