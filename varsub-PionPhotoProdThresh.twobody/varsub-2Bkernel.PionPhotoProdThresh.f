@@ -200,6 +200,7 @@ c     call getmpiEZsub(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12
 c     call testOffset(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
       call getDiagAB(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
       Kernel2B(diagNumber,:,:,:,:,:)=KernelA
+c     write(*,*) "In varsub-2Bkernel main: ppVecs=",ppVecs 
 
 c     diagNumber=2
 c     Kernel2B(diagNumber,:,:,:,:,:)=0.d0
@@ -269,7 +270,7 @@ c       uVec=pVec-ppVec+kVec/2!-> ppVec= pVec-uVec+kVec/2 -> jacobian on the int
           Jacobian=1.d0
       end if
 
-      tmpVec=pVec-ppVec+(kVec/2)
+      tmpVec=pVec-ppVec+(kVec/2)!tmpVec=uVec with the substitution
       tmpVec2=pVec-ppVec-(kVec/2)
 
 c     if (DOT_PRODUCT(tmpVec-uVec,tmpVec-uVec).ge.1e-5) then
@@ -285,18 +286,30 @@ c     end if
           stop
       end if
 
-
+c     For imlicit cancelation
       factorAsym=-(-1)**(t12)*(1.d0/(DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
       factorBsym=+2*(-1)**(t12)*(1.d0/(
      &        DOT_PRODUCT(tmpVec,tmpVec)))*
      &        (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
      &     *(2*Pi)**3/HC
 
-      factorAsym=-(-1)**(t12)*(2*Pi)**3/HC
+c     factorAsym=-(-1)**(t12)*(2*Pi)**3/HC
 
-      factorBsym=+2*(-1)**(t12)*
-     &        (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
-     &     *(2*Pi)**3/HC
+c     factorBsym=+2*(-1)**(t12)*
+c    &        (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
+c    &     *(2*Pi)**3/HC
+
+c     write(*,*) "In varsub-2Bkernel: tmpVec=",tmpVec 
+c     write(*,*) "In varsub-2Bkernel: sqrt(DOT_PRODUCT(tmpVec,tmpVec))=",sqrt(DOT_PRODUCT(tmpVec,tmpVec)) 
+c     write(*,*) ""
+c     write(*,*) "In varsub-2Bkernel: uVec=",uVec 
+c     write(*,*) "In varsub-2Bkernel: sqrt(DOT_PRODUCT(uVec,uVec))=",sqrt(DOT_PRODUCT(uVec,uVec))
+c     write(*,*) ""
+c     write(*,*) "In varsub-2Bkernel: ppVec=",ppVec 
+c     write(*,*) "In varsub-2Bkernel: sqrt(DOT_PRODUCT(ppVec,ppVec))=",sqrt(DOT_PRODUCT(ppVec,ppVec))
+c     write(*,*) ""
+c     factorAsym=factorAsym*DOT_PRODUCT(uVec,uVec)!explicitly put the Jacobian r^2 here
+c     factorBsym=factorBsym*DOT_PRODUCT(uVec,uVec)
 
       factorAasy=factorAsym
       factorBasy=factorBsym
@@ -332,6 +345,8 @@ c
 c     diagrams (A/B) have no components with t12!=t12p. 
       end if                    !t12 question
       ppVecA=ppVec
+c     write(*,*) "In varsub-2Bkernel: ppVecA=",ppVecA 
+c     write(*,*) ""
       Kerneltmp=Kerneltmp*Jacobian
       end subroutine getDiagAB
 
