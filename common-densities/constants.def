@@ -98,7 +98,8 @@ c     Judith's improved parameter set, version I
 c         PARAMETER (b1 = 4.8d0, gpind = 1.425d0, Mdelta=1232.0, delta = Mdelta-Mnucleon)
 c     Judith's improved parameter set, version II.
 c     This is the "preferred" one, used in e²δ² fit of Compton review.
-      PARAMETER (b1 = 5.0d0, gpind = 1.425d0, Mdelta=1232.0, delta = Mdelta-Mnucleon)
+      PARAMETER (b1 = 5.0d0, gpind = 1.425d0)
+      PARAMETER (Mdelta=1232.0, delta = Mdelta-Mnucleon)
       
 
 

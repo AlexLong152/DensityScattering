@@ -46,14 +46,13 @@ SHELL=/bin/sh
 # OBJS defined below, modify as needed.  OBJS are the source files (.f)
 # with .f -> .o .   Directories are relative to make directory.
 OBJS= \
-calcAmpVars.o \
-calculateAs.OQ3poles.o \
-calculateAs.OQ3nopoles.o \
-calculateAs.Delta.o \
-main.onebodyvia1Ndensity.o \
-construct1NAmps.o \
-read1Ndensity.o \
-trafo1Namps-to-helicity.o \
+../onebodyvia1Ndensity/calcAmpVars.o \
+../onebodyvia1Ndensity/calculateAs.OQ3poles.o \
+../onebodyvia1Ndensity/calculateAs.OQ3nopoles.o \
+../onebodyvia1Ndensity/calculateAs.Delta.o \
+../onebodyvia1Ndensity/construct1NAmps.o \
+../onebodyvia1Ndensity/read1Ndensity.o \
+../onebodyvia1Ndensity/trafo1Namps-to-helicity.o \
 ../common-densities/gauleg.o \
 ../common-densities/gridGauleg.o \
 ../common-densities/makedensityfilename.o \
@@ -61,8 +60,9 @@ trafo1Namps-to-helicity.o \
 ../common-densities/outputtomath.o \
 ../common-densities/photonmomenta.o \
 ../common-densities/readinput-densities.o \
-../common-densities/outputroutine.o 
-
+../common-densities/outputroutine.o\
+readinput.onebody.PionPhotoProdThresh.o\
+main.onebodyvia1Ndensity.o 
 # Source files (.f) = Object files (.o) with .o -> .f
 SRCS = $(OBJS:.o=.f)
 
