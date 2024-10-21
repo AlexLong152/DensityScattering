@@ -7,21 +7,25 @@ UNAME := $(shell uname -s)
 
 # define the compilers and standard libraries for the current computer 
 
-     LIBSTD1 = -llapack
-ifeq ($(USER),hgrie)
-     LIBSTD2 = -L /usr/lib/x86_64-linux-gnu/hdf5/openmpi/ 
-else ifeq ($(USER),alex) # your username
-     LIBSTD2 =	 #whatever your path is
-     #     LIBSTD2 = -L /usr/lib/x86_64-linux-gnu/hdf5/openmpi/ 
-     LIBSTD3 = -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5
-     LIBSTD4 = -llapack -lgomp -ldl -lz -lsz
-else ifeq ($(USER),along) # your username
-     LIBSTD2 = -L /usr/lib/x86_64-linux-gnu/hdf5/openmpi/ 
-     LIBSTD3 = -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5
-     LIBSTD4 = -llapack -lgomp -ldl -lz -lsz
-endif	
-     LIBSTD3 = -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5
-     LIBSTD4 = -llapack -lgomp -ldl -lz -lsz
+LIBSTD1 = -llapack
+LIBSTD2 = -L /usr/lib/x86_64-linux-gnu/hdf5/openmpi/ 
+LIBSTD3 = -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5
+LIBSTD4 = -llapack -lgomp -ldl -lz -lsz
+
+#ifeq ($(USER),hgrie)
+#     LIBSTD2 = -L /usr/lib/x86_64-linux-gnu/hdf5/openmpi/ 
+#else ifeq ($(USER),alex) # your username
+#     LIBSTD2 =	 #whatever your path is
+#     #     LIBSTD2 = -L /usr/lib/x86_64-linux-gnu/hdf5/openmpi/ 
+#     LIBSTD3 = -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5
+#     LIBSTD4 = -llapack -lgomp -ldl -lz -lsz
+#else ifeq ($(USER),along) # your username
+#     LIBSTD2 = -L /usr/lib/x86_64-linux-gnu/hdf5/openmpi/ 
+#     LIBSTD3 = -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5
+#     LIBSTD4 = -llapack -lgomp -ldl -lz -lsz
+#endif	
+#     LIBSTD3 = -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5
+#     LIBSTD4 = -llapack -lgomp -ldl -lz -lsz
 
 LIBSTD5 = 
 LIBSTD6 = 
@@ -41,13 +45,7 @@ COMPILE_OPT2= -ffixed-line-length-0
 COMPILE_OPT1= -fPIC  -cpp  -g -O3 -ffpe-summary=none  -finit-integer=-1000 -finit-real=inf -fcheck=all    
 COMPILE_OPT2= -ffixed-line-length-0 -fopenmp
 
-ifeq ($(USER),hgrie)
-	COMPILE_OPT3= -I /usr/include/hdf5/openmpi/	
-else ifeq ($(USER),alex) # your username
-	COMPILE_OPT3= -I /usr/include/ -fallow-argument-mismatch #whatever your path is
-else ifeq ($(USER),along) # your username
-	COMPILE_OPT3= -I /usr/include/ -fallow-argument-mismatch #whatever your path is
-endif	
+COMPILE_OPT3= -I /usr/include/hdf5/openmpi/	
 
 COMPILE_OPT4= 
 COMPILE_OPT4= 
@@ -78,6 +76,7 @@ FOPT = $(COMPILE_OPT1) $(COMPILE_OPT2) $(COMPILE_OPT3) $(COMPILE_OPT4) \
       -DMAKELIBSTD7="'$(LIBSTD7)'" \
       -DMAKELIBSTD8="'$(LIBSTD8)'" \
       -DCOMPDATE="'$(COMPDATE)'"
+FOPT+=-fallow-argument-mismatch
 AR     = ar
 ARFLAGS= rv 
 RANLIB   = touch

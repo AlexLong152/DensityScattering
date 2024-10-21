@@ -138,9 +138,9 @@ c     real*8,intent(in)  :: px,py,pz,ppx,ppy,ppz
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     LOCAL VARIABLES:
       integer diagNumber
-      real*8 tmpVec(3)!, tmpVec2(3)
+c     real*8 qVec(3)!, qpVec(3)
       real*8 ppVec(3)
-      real*8 qVec(3)
+c     real*8 qVec(3)
       real*8 dl12by2
       complex*16 factorAsym!,factorBsym,factorB2,factorA2
       complex*16 factorAasy!,factorBasy
@@ -184,7 +184,7 @@ c      pVec=(/px,py,pz/)
        mPion=134.976d0
 
 c      subroutine calculateqsmass is available for kpVec calculation
-c      call calculateqsmass(pVec,ppVec,kVec,kpVec,thetacm,mPion,mNucl,verbosity)
+       call calculateqsmass(pVec,ppVec,kVec,kpVec,thetacm,mPion,mNucl,verbosity)
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Odelta0 2N contributions: NONE
@@ -195,10 +195,8 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Odelta2 2N contributions
 cccccccccccccccccccccccTrue
       diagNumber=1
-c     call getDiagmpi(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
-c     call getmpiEZsub(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
-c     call testOffset(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
-      call getDiagAB(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
+c     call getDiagAB(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,kpVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
+      call getDiagABfinite(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,kpVec,ppVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
       Kernel2B(diagNumber,:,:,:,:,:)=KernelA
 c     write(*,*) "In varsub-2Bkernel main: ppVecs=",ppVecs 
 
@@ -230,7 +228,8 @@ c     end do
       end
 
 
-      subroutine getDiagAB(Kerneltmp,pVec,uVec,ppVecA,kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
+      subroutine getDiagABfinite(Kerneltmp,pVec,uVec,ppVecA,kVec,kpVec,ppVec,
+     &    t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
 c     Diagram A and Diagram B actually have the same integration variable, so combine them
 c     and use only "one" diagram in the input file numDiagrams=1
 
@@ -242,11 +241,134 @@ c     Parameters-------------------------------------
 c     integer, intent(out) :: diagNumber
       real*8, intent(out) :: ppVecA(3)
       integer,intent(in) :: extQnumlimit
-      real*8, intent(in) :: pVec(3), kVec(3), uVec(3)
+      real*8, intent(in) :: pVec(3), kVec(3), uVec(3),kpVec(3)
       integer, intent(in) :: t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12, verbosity
 
 c     Internal variables
-      real*8 tmpVec(3), ppVec(3),ell(3), tmpVec2(3)!, r, theta, phi,
+      real*8 qVec(3), ppVec(3),ell(3), qpVec(3)!, r, theta, phi,
+      complex*16 factorAsym, factorAasy
+      complex*16 factorBsym, factorBasy
+      logical useTransform
+      real*8 Jacobian, prefactor
+      real*8 q0,kp0, vecsquare,qp0,omega
+
+      if (.not.(all(ppVecA.eq.0))) then
+          write(*,*) "ppVec assigned elsewhere, stopping"
+          write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: ppVecA=",ppVecA 
+          stop
+      end if
+
+      useTransform=.true.
+      if (useTransform) then
+c       uVec=pVec-ppVec+kVec/2!-> ppVec= pVec-uVec+kVec/2 -> jacobian on the integration gives a factor of -1
+        ppVec=pVec-uVec+kVec/2
+        Jacobian=-1.d0
+      end if
+
+      if (.not.useTransform) then
+          ppVec=uVec
+          Jacobian=1.d0
+      end if
+
+      qVec=pVec-ppVec+(kVec/2)!qVec=uVec with the substitution
+      qpVec=pVec-ppVec-(kVec/2)
+      omega=sqrt(vecsquare(kVec))
+
+c     if (DOT_PRODUCT(qVec-uVec,qVec-uVec).ge.1e-5) then
+c       write(*,*) "qVec!=uVec"
+c       write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: uVec=",uVec 
+c       write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: qVec=",qVec 
+c       stop
+c     end if
+
+      if (DOT_PRODUCT(qVec,qVec).le.0.001) then
+          write(*,*) "In 2Bkernel"
+          write(*,*) "DOT_PRODUCT(qVec,qVec).le.0.001 evaluated true, stopping"
+          stop
+      end if
+
+      prefactor=(-1)**(t12)*(2*Pi)**3/(HC)
+      prefactor=prefactor/(2*mpi0)
+
+      q0=omega+1/(2*Mnucleon) *(
+     &  vecsquare(pVec-kVec/2)-vecsquare(ppVec-kpVec/2))
+
+      qp0=1/(2*Mnucleon)*(vecsquare(pVec-kVec/2)-vecsquare(ppVec-kpVec/2))
+      q0=mpi0
+      qp0=0.d0
+      kp0=sqrt(mpi0**2+vecsquare(kpVec))
+
+c     factorBsym=+2.d0*(1.d0/(
+c    &        DOT_PRODUCT(qVec,qVec)))*
+c    &        (1.d0/(DOT_PRODUCT(qpVec,qpVec)+mpi2))
+
+
+      factorAsym=-(q0+kp0)/(q0**2-vecsquare(qVec)-mpi0**2)
+      factorBsym=((q0+kp0)/(q0**2-vecsquare(qVec)-mpi0**2))*(1.d0/(qp0**2 -vecsquare(qpVec)-mpi0**2))
+
+      factorAsym=factorAsym*prefactor
+      factorBsym=factorBsym*prefactor
+      factorAasy=factorAsym
+      factorBasy=factorBsym
+      
+c     write(*,*) "q0=", q0 
+c     write(*,*) "kp0=", kp0 
+c     write(*,*) "kpVec=", kpVec 
+c     write(*,*) "factorAsym=", factorAsym 
+c     write(*,*) "qVec=", qVec 
+c     write(*,*) ""
+      if ((t12 .eq. t12p) .and. (mt12 .eq. 0) .and.(mt12p .eq. 0)) then
+         if (s12p .eq. s12) then ! s12-s12p=0 => l12-l12p is even; spin symmetric part only
+
+            call CalcKernel2BAsym(Kerneltmp,
+     &           factorAsym,
+     &           s12p,s12,extQnumlimit,verbosity)
+
+            call CalcKernel2BBsymVec(Kerneltmp,
+     &           factorBsym,
+     &           qpVec, ! preceding is vector dotted with σ
+     &           qVec+qpVec, ! preceding is vector dotted with ε
+     &           s12p,s12,extQnumlimit,verbosity)
+         else                   ! s12 question: s12-s12p=±1 => l12-l12p is odd; spin anti-symmetric part only
+c     
+            call CalcKernel2BAasy(Kerneltmp,
+     &           factorAasy,
+     &           s12p,s12,extQnumlimit,verbosity)
+
+            call CalcKernel2BBasyVec(Kerneltmp,
+     &           factorBasy,
+     &           qpVec, ! preceding is vector dotted with σ
+     &           qVec+qpVec, ! preceding is vector dotted with ε
+     &           s12p,s12,extQnumlimit,verbosity)
+
+
+         end if                 ! s12 question
+      else                      ! t12!=t12p
+         continue
+c     diagrams (A/B) have no components with t12!=t12p. 
+      end if                    !t12 question
+      ppVecA=ppVec
+      Kerneltmp=Kerneltmp*Jacobian
+      end subroutine getDiagABfinite
+
+
+      subroutine getDiagAB(Kerneltmp,pVec,uVec,ppVecA,kVec,kpVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
+c     Diagram A and Diagram B actually have the same integration variable, so combine them
+c     and use only "one" diagram in the input file numDiagrams=1
+
+      implicit none
+
+      include '../common-densities/constants.def'
+c     Parameters-------------------------------------
+      complex*16,intent(out) :: Kerneltmp(1:extQnumlimit,0:1,-1:1,0:1,-1:1)
+c     integer, intent(out) :: diagNumber
+      real*8, intent(out) :: ppVecA(3)
+      integer,intent(in) :: extQnumlimit
+      real*8, intent(in) :: pVec(3), kVec(3), uVec(3),kpVec(3)
+      integer, intent(in) :: t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12, verbosity
+
+c     Internal variables
+      real*8 qVec(3), ppVec(3),ell(3), qpVec(3)!, r, theta, phi,
       complex*16 factorAsym, factorAasy
       complex*16 factorBsym, factorBasy
       logical useTransform
@@ -270,50 +392,36 @@ c       uVec=pVec-ppVec+kVec/2!-> ppVec= pVec-uVec+kVec/2 -> jacobian on the int
           Jacobian=1.d0
       end if
 
-      tmpVec=pVec-ppVec+(kVec/2)!tmpVec=uVec with the substitution
-      tmpVec2=pVec-ppVec-(kVec/2)
+      qVec=pVec-ppVec+(kVec/2)!qVec=uVec with the substitution
+      qpVec=pVec-ppVec-(kVec/2)
 
-c     if (DOT_PRODUCT(tmpVec-uVec,tmpVec-uVec).ge.1e-5) then
-c       write(*,*) "tmpVec!=uVec"
+c     if (DOT_PRODUCT(qVec-uVec,qVec-uVec).ge.1e-5) then
+c       write(*,*) "qVec!=uVec"
 c       write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: uVec=",uVec 
-c       write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: tmpVec=",tmpVec 
+c       write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: qVec=",qVec 
 c       stop
 c     end if
 
-      if (DOT_PRODUCT(tmpVec,tmpVec).le.0.001) then
+      if (DOT_PRODUCT(qVec,qVec).le.0.001) then
           write(*,*) "In 2Bkernel"
-          write(*,*) "DOT_PRODUCT(tmpVec,tmpVec).le.0.01 evaluated true, stopping"
+          write(*,*) "DOT_PRODUCT(qVec,qVec).le.0.01 evaluated true, stopping"
           stop
       end if
 
 c     For imlicit cancelation
-      factorAsym=-(-1)**(t12)*(1.d0/(DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
+      factorAsym=-(-1)**(t12)*(1.d0/(DOT_PRODUCT(qVec,qVec)))*(2*Pi)**3/HC
       factorBsym=+2*(-1)**(t12)*(1.d0/(
-     &        DOT_PRODUCT(tmpVec,tmpVec)))*
-     &        (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
+     &        DOT_PRODUCT(qVec,qVec)))*
+     &        (1.d0/(DOT_PRODUCT(qpVec,qpVec)+mpi2))
      &     *(2*Pi)**3/HC
 
-c     factorAsym=-(-1)**(t12)*(2*Pi)**3/HC
-
-c     factorBsym=+2*(-1)**(t12)*
-c    &        (1.d0/(DOT_PRODUCT(tmpVec2,tmpVec2)+mpi2))
-c    &     *(2*Pi)**3/HC
-
-c     write(*,*) "In varsub-2Bkernel: tmpVec=",tmpVec 
-c     write(*,*) "In varsub-2Bkernel: sqrt(DOT_PRODUCT(tmpVec,tmpVec))=",sqrt(DOT_PRODUCT(tmpVec,tmpVec)) 
-c     write(*,*) ""
-c     write(*,*) "In varsub-2Bkernel: uVec=",uVec 
-c     write(*,*) "In varsub-2Bkernel: sqrt(DOT_PRODUCT(uVec,uVec))=",sqrt(DOT_PRODUCT(uVec,uVec))
-c     write(*,*) ""
-c     write(*,*) "In varsub-2Bkernel: ppVec=",ppVec 
-c     write(*,*) "In varsub-2Bkernel: sqrt(DOT_PRODUCT(ppVec,ppVec))=",sqrt(DOT_PRODUCT(ppVec,ppVec))
-c     write(*,*) ""
-c     factorAsym=factorAsym*DOT_PRODUCT(uVec,uVec)!explicitly put the Jacobian r^2 here
-c     factorBsym=factorBsym*DOT_PRODUCT(uVec,uVec)
 
       factorAasy=factorAsym
       factorBasy=factorBsym
       
+c     write(*,*) "factorAsym=", factorAsym 
+c     write(*,*) "qVec=", qVec 
+
       if ((t12 .eq. t12p) .and. (mt12 .eq. 0) .and.(mt12p .eq. 0)) then
          if (s12p .eq. s12) then ! s12-s12p=0 => l12-l12p is even; spin symmetric part only
 
@@ -351,232 +459,11 @@ c     write(*,*) ""
       end subroutine getDiagAB
 
 
-      subroutine getDiagmpi(KernelA,pVec,uVec,ppVecA,kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
-      implicit none
 
-      include '../common-densities/constants.def'
-c     Parameters-------------------------------------
-      complex*16,intent(out) :: KernelA(1:extQnumlimit,0:1,-1:1,0:1,-1:1)
-c     integer, intent(out) :: diagNumber
-      real*8, intent(out) :: ppVecA(3)
-      integer,intent(in) :: extQnumlimit
-      real*8, intent(in) :: pVec(3), kVec(3), uVec(3)
-      integer, intent(in) :: t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12, verbosity
+      function vecsquare(vec)
+          implicit none
+          real*8 vec(3)
+          real*8 vecsquare
 
-c     Internal variables
-      real*8 tmpVec(3), ppVec(3)!, r, theta, phi
-      complex*16 factorAsym, factorAasy
-      logical useTransform
-      real*8 Jacobian
-
-      useTransform=.True.!For easy changes by the 2Bkernel "user", may want to change this in the final version for speed
-
-      if (.not.(all(ppVecA.eq.0))) then
-          write(*,*) "ppVec assigned elsewhere, stopping"
-          write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: ppVecA=",ppVecA 
-          stop
-      end if
-
-c     Use this block if you actually want to use the transformation
-      if (useTransform) then
-c         u=pVec-ppVec+kVec/2 -> ppVec= pVec-uVec+kVec/2 -> jacobian on the integration gives a factor of -1?
-c         -> tmpVec=uVec, denominator is just uVec
-          ppVec=pVec-uVec+(kVec/2)
-          Jacobian=1.d0
-      end if
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     This line below ppVec=uVec if you don't want to use the transformation
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-      if (.not.useTransform) then
-          ppVec=uVec
-          Jacobian=1.d0
-      end if
-
-
-      tmpVec=pVec-ppVec+(kVec/2)!=uVec in case of transform
-
-      if (useTransform.and.(DOT_PRODUCT(tmpVec-uVec,tmpVec-uVec).ge.1e-6)) then
-          write(*,*) "DOT_PRODUCT(tmpVec-uVec,tmpVec-uVec).ge.1e-6 evaluated true, stopping"
-          write(*,*) "uVec=",uVec 
-          write(*,*) "tmpVec=",tmpVec 
-          stop
-      end if
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-
-
-      factorAsym=-(-1)**(t12)*(1.d0/(mpi2+DOT_PRODUCT(tmpVec,tmpVec)))*(2*Pi)**3/HC
-      factorAasy=factorAsym
-      factorAsym=factorAsym*Jacobian
-      factorAasy=factorAasy*Jacobian
-      
-      if ((t12 .eq. t12p) .and. (mt12 .eq. 0) .and.(mt12p .eq. 0)) then
-         if (s12p .eq. s12) then ! s12-s12p=0 => l12-l12p is even; spin symmetric part only
-
-            call CalcKernel2BAsym(KernelA,
-     &           factorAsym,
-     &           s12p,s12,extQnumlimit,verbosity)
-         else                   ! s12 question: s12-s12p=±1 => l12-l12p is odd; spin anti-symmetric part only
-            call CalcKernel2BAasy(KernelA,
-     &           factorAasy,
-     &           s12p,s12,extQnumlimit,verbosity)
-         end if                 ! s12 question
-      else                      ! t12!=t12p
-         continue
-c     diagrams (A/B) have no components with t12!=t12p. 
-      end if                    !t12 question
-      ppVecA=ppVec
-
-      end subroutine getDiagmpi
-
-      subroutine testOffset(KernelA,pVec,uVec,ppVecA,kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
-      implicit none
-c     Tests if offsetting ppVec messes with the integration
-c     Does not actually do any transformation so the "useTransform" variable becomes "useOffset" 
-c     The idea is that a simple offset should not change the result of an integral if rho is const
-      include '../common-densities/constants.def'
-
-c     Parameters-------------------------------------
-      complex*16,intent(out) :: KernelA(1:extQnumlimit,0:1,-1:1,0:1,-1:1)
-c     integer, intent(out) :: diagNumber
-      real*8, intent(out) :: ppVecA(3)
-      integer,intent(in) :: extQnumlimit
-      real*8, intent(in) :: pVec(3), kVec(3), uVec(3)
-      integer, intent(in) :: t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12, verbosity
-
-c     Internal variables
-      real*8 tmpVec(3), ppVec(3)!, r, theta, phi
-      complex*16 factorAsym, factorAasy
-      logical useOffset
-      real*8 Jacobian
-c     For easy changes by the 2Bkernel "user", may want to change this in the final version for speed, since "if"
-c     statements are slow
-      useOffset=.True.
-      ppVec=uVec
-
-      if (.not.(all(ppVecA.eq.0))) then
-          write(*,*) "ppVec assigned elsewhere, stopping"
-          write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: ppVecA=",ppVecA 
-          stop
-      end if
-
-c     Use this block if you actually want to use the transformation
-      if (useOffset) then
-c         write(*,*) "In varsub-2Bkernel: kVec=",kVec 
-          tmpVec=ppVec+kVec
-          Jacobian=1.d0
-      else
-          tmpVec=ppVec
-          Jacobian=1.d0
-      end if
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     This line below ppVec=uVec if you don't want to use the transformation
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-
-      factorAsym=-(-1)**(t12)/
-     &    (mpi2+DOT_PRODUCT(tmpVec,tmpVec)+DOT_PRODUCT(pVec,pVec))
-     &      *(2*Pi)**3/HC
-      factorAasy=factorAsym
-
-      factorAsym=factorAsym*Jacobian
-      factorAasy=factorAasy*Jacobian
-      
-      if ((t12 .eq. t12p) .and. (mt12 .eq. 0) .and.(mt12p .eq. 0)) then
-         if (s12p .eq. s12) then ! s12-s12p=0 => l12-l12p is even; spin symmetric part only
-
-            call CalcKernel2BAsym(KernelA,
-     &           factorAsym,
-     &           s12p,s12,extQnumlimit,verbosity)
-         else                   ! s12 question: s12-s12p=±1 => l12-l12p is odd; spin anti-symmetric part only
-            call CalcKernel2BAasy(KernelA,
-     &           factorAasy,
-     &           s12p,s12,extQnumlimit,verbosity)
-         end if                 ! s12 question
-      else                      ! t12!=t12p
-         continue
-c     diagrams (A/B) have no components with t12!=t12p. 
-      end if                    !t12 question
-      ppVecA=ppVec
-
-      end subroutine
-
-      subroutine getmpiEZsub(KernelA,pVec,uVec,ppVecA,kVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
-
-      implicit none
-c     Uses the non-physical propogator mpi[ m_\pi^2 + (ppVec+kGamma/2)^2 + pVec^2]^(-1)
-      include '../common-densities/constants.def'
-c     Parameters-------------------------------------
-      complex*16,intent(out) :: KernelA(1:extQnumlimit,0:1,-1:1,0:1,-1:1)
-c     integer, intent(out) :: diagNumber
-      real*8, intent(out) :: ppVecA(3)
-      integer,intent(in) :: extQnumlimit
-      real*8, intent(in) :: pVec(3), kVec(3), uVec(3)
-      integer, intent(in) :: t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12, verbosity
-
-c     Internal variables
-      real*8 tmpVec(3), ppVec(3)!, r, theta, phi
-      complex*16 factorAsym, factorAasy
-      logical useTransform, useNegative
-      real*8 Jacobian
-c     For easy changes by the 2Bkernel "user", may want to change this in the final version for speed, since "if"
-c     statements are slow
-      useTransform=.True.
-      useNegative=.True.
-
-      if (.not.(all(ppVecA.eq.0))) then
-          write(*,*) "ppVec assigned elsewhere, stopping"
-          write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: ppVecA=",ppVecA 
-          stop
-      end if
-
-      if (useTransform) then
-c         uVec=ppVec+kVec/2 -> ppVec= uVec-kVec/2 
-          ppVec=uVec-kVec/2
-          Jacobian=1.d0
-c         So later when we set tmpVec=ppVec+kVec/2  then
-c         tmpVec=uVec-kVec/2+kVec/2=uVec
-      end if
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     This line below ppVec=uVec if you don't want to use the transformation
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-      if (.not.useTransform) then
-          ppVec=uVec
-          Jacobian=1.d0
-      end if
-
-      if (useNegative) then
-          ppVec=-1.d0*ppVec
-      end if
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-
-      tmpVec=ppVec+(kVec/2.d0)
-      factorAsym=-(-1)**(t12)*mpi*mpi*
-     &    (mpi+DOT_PRODUCT(tmpVec,tmpVec)+DOT_PRODUCT(pVec,pVec))**(-1.d0)
-     &      *(2*Pi)**3/HC
-      factorAasy=factorAsym
-
-      factorAsym=factorAsym*Jacobian
-      factorAasy=factorAasy*Jacobian
-      
-      if ((t12 .eq. t12p) .and. (mt12 .eq. 0) .and.(mt12p .eq. 0)) then
-         if (s12p .eq. s12) then ! s12-s12p=0 => l12-l12p is even; spin symmetric part only
-
-            call CalcKernel2BAsym(KernelA,
-     &           factorAsym,
-     &           s12p,s12,extQnumlimit,verbosity)
-         else                   ! s12 question: s12-s12p=±1 => l12-l12p is odd; spin anti-symmetric part only
-            call CalcKernel2BAasy(KernelA,
-     &           factorAasy,
-     &           s12p,s12,extQnumlimit,verbosity)
-         end if                 ! s12 question
-      else                      ! t12!=t12p
-         continue
-c     diagrams (A/B) have no components with t12!=t12p. 
-      end if                    !t12 question
-      ppVecA=ppVec
-
-      end subroutine
+          vecsquare=DOT_PRODUCT(vec,vec)
+      end function vecsquare

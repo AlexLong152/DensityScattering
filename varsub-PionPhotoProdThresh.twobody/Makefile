@@ -129,13 +129,13 @@ FFLAGS= -O3 -fopenmp -g -c -Wall -Wno-tabs -ffixed-line-length-0  \
 
 UNAME := $(shell echo $USER)
 
-ifeq ($(USER),hgrie)
-	FFLAGS += -I /usr/include/hdf5/openmpi/
-else ifeq ($(USER),alex) # your username
-	FFLAGS += -I /usr/include/ #whatever your path is
-else ifeq ($(USER),along) # your username
-	FFLAGS += -I /usr/include/ #whatever your path is
-endif
+FFLAGS += -I /usr/include/hdf5/openmpi/
+# ifeq ($(USER),hgrie)
+# else ifeq ($(USER),alex) # your username
+# 	FFLAGS += -I /usr/include/ #whatever your path is
+# else ifeq ($(USER),along) # your username
+# 	FFLAGS += -I /usr/include/ #whatever your path is
+# endif
 
 # library for density
      LIBSTD1 = -L../common-densities/varsub-density-modules -ldensity
@@ -149,15 +149,8 @@ endif
 
 LDFLAGS= $(LIBSTD1) $(LIBSTD2) $(LIBSTD3) $(LIBSTD4) $(LIBSTD5) $(LIBSTD6) $(LIBSTD7) $(LIBSTD8)
 
-ifeq ($(USER),hgrie)
-	LDFLAGS += -L /usr/lib/x86_64-linux-gnu/hdf5/openmpi/ 
-else ifeq ($(USER),alex) # your username
-#LDFLAGS += -L /usr/lib/  -I /usr/include/ #whatever your path is
-	LDFLAGS += -L /usr/lib/openmpi # -I /usr/include/ #whatever your path is
-else ifeq ($(USER),along) # your username
-#	LDFLAGS += -L /usr/lib/  -I /usr/include/ #whatever your path is
-#   LDFLAGS += -L /usr/lib/  -I /usr/include/ #whatever your path is
-endif
+LDFLAGS += -L /usr/lib/x86_64-linux-gnu/hdf5/openmpi/ 
+LDFLAGS += -L /usr/lib/openmpi # -I /usr/include/ #whatever your path is
 
 LIBS=  
 COMMAND= twobodyvia2Ndensity.PionPhotoProdThresh
