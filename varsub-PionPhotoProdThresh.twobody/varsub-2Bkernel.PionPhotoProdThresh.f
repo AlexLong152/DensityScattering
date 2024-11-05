@@ -72,39 +72,38 @@ c
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       subroutine Calc2Bspinisospintrans(Kernel2B,ppVecs,Mnucl,
-c     &     Comp2Bx,Comp2By,Comp2Bpx,Comp2Bpy, ! for STUMP, see below
      &     extQnumlimit,ml12,ml12p,
      &     t12,mt12,t12p,mt12p,l12,s12,
      &     l12p,s12p,thetacm,k,pVec,uVec,calctype,numDiagrams,verbosity)
-c     Alex Long 2024:
-c     pVec, is the  physical momenta, but uVec is the generic integration variable which may be transformed
+c     !Alex Long 2024:
+c     !pVec, is the  physical momenta, but uVec is the generic integration variable which may be transformed
 
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     twoSmax/twoMz dependence: none, only on quantum numbers of (12) subsystem
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     NOTE ON UNITS: hgrie Nov 2023
-c     Overall units here determine the units of the total twobody output ME Result().
-c             If kernel given in MeV^-n, then output ME will be given in MeV^(3-n). 
-c             Multiplying by powers of HC translates into output of final MEs "Result" into powers of fm.
-c             EXAMPLE: Compton has twobody kernel in MeV^-4 (n=4) ==> result ME in MeV^-1. To convert to fm, multiply by HC.
-c                      In Compton, that multiplication by HC isnot done in the fortran code, but later in the mathematica processing files.
-c             EXAMPLE: Pion Photoproduction kernel has units MeV^-2 if the output should be the twobody functions f_TL.
-c                      n=-2 => Results() output in MeV^1. But F_TL output in fm^-1, so divide here in kernel by HC to get fm^-1 units in Results().
-c
-c     (2π)³ is a factor of the twobody integration. TO INCLUDE IT OR NOT DEPENDS ON DEFINITIONS OF TWOBODY KERNELS!
-c             In Compton, we insert it so that onebody and twobody Result() immediately hve same size and can be added: ottal=onebody+twobody. 
-c             In pion photoproduction, it is part of the prefactor K2n of a diagram.
-c             ==> If you want the twobody Result() output to be F_TL, you must un-compensate it here by *(2*Pi)**3.
-c                 But if you want the twobody Result() output to be E_+ etc, so that you can simply add total=onebody+twobody,
-c                 then the prefactor K2n shouldNOT contain the 1/(2π)³, i.e. multiply NOT with *(2*Pi)**3/HC, but with
-c             K2n = sqrt(4*Pi*alpaEM)*gA*mpi**2/(16*Pi*fpi**3)*10**3 to get result() in the canonical units of 10^-3/mπplus.
-c      
-c     ==> Set your kernel up here so that your Result() has the desired units and factors of (2π)³. Do NOT make unit changes outside this file!
-c
+cc    NOTE ON UNITS: hgrie Nov 2023
+cc    Overall units here determine the units of the total twobody output ME Result().
+cc            If kernel given in MeV^-n, then output ME will be given in MeV^(3-n). 
+cc            Multiplying by powers of HC translates into output of final MEs "Result" into powers of fm.
+cc            EXAMPLE: Compton has twobody kernel in MeV^-4 (n=4) ==> result ME in MeV^-1. To convert to fm, multiply by HC.
+cc                     In Compton, that multiplication by HC isnot done in the fortran code, but later in the mathematica processing files.
+cc            EXAMPLE: Pion Photoproduction kernel has units MeV^-2 if the output should be the twobody functions f_TL.
+cc                     n=-2 => Results() output in MeV^1. But F_TL output in fm^-1, so divide here in kernel by HC to get fm^-1 units in Results().
+cc
+cc    (2π)³ is a factor of the twobody integration. TO INCLUDE IT OR NOT DEPENDS ON DEFINITIONS OF TWOBODY KERNELS!
+cc            In Compton, we insert it so that onebody and twobody Result() immediately hve same size and can be added: ottal=onebody+twobody. 
+cc            In pion photoproduction, it is part of the prefactor K2n of a diagram.
+cc            ==> If you want the twobody Result() output to be F_TL, you must un-compensate it here by *(2*Pi)**3.
+cc                But if you want the twobody Result() output to be E_+ etc, so that you can simply add total=onebody+twobody,
+cc                then the prefactor K2n shouldNOT contain the 1/(2π)³, i.e. multiply NOT with *(2*Pi)**3/HC, but with
+cc            K2n = sqrt(4*Pi*alpaEM)*gA*mpi**2/(16*Pi*fpi**3)*10**3 to get result() in the canonical units of 10^-3/mπplus.
+cc     
+cc    ==> Set your kernel up here so that your Result() has the desired units and factors of (2π)³. Do NOT make unit changes outside this file!
+cc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     CALLS:
-c     calculateqs: to calculate momenta
-c     CalcKernel2B...: to calculate kernel amplitudes. Much of the work is done in those routines via CalcKernel2B...
+cc    !CALLS:
+cc    calculateqs: to calculate momenta
+cc    CalcKernel2B...: to calculate kernel amplitudes. Much of the work is done in those routines via CalcKernel2B...
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       implicit none
@@ -113,7 +112,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       include '../common-densities/params.def'
       include '../common-densities/calctype.def'
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     OUTPUT VARIABLES:
+c     !OUTPUT VARIABLES:
       
       complex*16,intent(out) :: Kernel2B(1:numDiagrams,1:extQnumlimit,0:1,-1:1,0:1,-1:1) ! was Comp2Bxx/xy/yx/yy
       real*8, intent(out) :: ppVecs(1:numDiagrams,1:3)
@@ -132,15 +131,15 @@ c     INPUT VARIABLES:
       integer,intent(in) :: extQnumlimit, numDiagrams
       integer,intent(in) :: t12,mt12,t12p,mt12p,l12,l12p,s12,s12p, ml12,ml12p
       real*8, intent(in) :: pVec(3), uVec(3)
-c     real*8,intent(in)  :: px,py,pz,ppx,ppy,ppz
+c!     real*8,intent(in)  :: px,py,pz,ppx,ppy,ppz
                
       integer,intent(in) :: verbosity
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     LOCAL VARIABLES:
+c!     LOCAL VARIABLES:
       integer diagNumber
-c     real*8 qVec(3)!, qpVec(3)
+c!     real*8 qVec(3)!, qpVec(3)
       real*8 ppVec(3)
-c     real*8 qVec(3)
+c!     real*8 qVec(3)
       real*8 dl12by2
       complex*16 factorAsym!,factorBsym,factorB2,factorA2
       complex*16 factorAasy!,factorBasy
@@ -150,7 +149,7 @@ c     real*8 qVec(3)
       complex*16 Yl12(-5:5)
       complex*16 KernelA(1:extQnumlimit,0:1,-1:1,0:1,-1:1) !contribution just from diagram A
       integer diagNum
-c     
+c!     
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     
 c     Definitions of momenta repeated here for convenience
@@ -165,7 +164,6 @@ c
 c     XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX     
 c     
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-*************************************************************************************
 c     
 c     First a little initialization:
 c     
@@ -183,55 +181,38 @@ c      pVec=(/px,py,pz/)
        ppVec=uVec
        mPion=134.976d0
 
-c      subroutine calculateqsmass is available for kpVec calculation
+c      !subroutine calculateqsmass is available for kpVec calculation
        call calculateqsmass(pVec,ppVec,kVec,kpVec,thetacm,mPion,mNucl,verbosity)
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Odelta0 2N contributions: NONE
-c     <if they were nonzero, enter diagrams here>
+c     !<if they were nonzero, enter diagrams here>
       if (calctype.eq.Odelta0) return
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Odelta2 2N contributions
 cccccccccccccccccccccccTrue
       diagNumber=1
-c     call getDiagAB(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,kpVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
-      call getDiagABfinite(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,kpVec,ppVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
+      call getDiagAB(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,kpVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
+c     call getDiagABfinite(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,kpVec,ppVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
       Kernel2B(diagNumber,:,:,:,:,:)=KernelA
 c     write(*,*) "In varsub-2Bkernel main: ppVecs=",ppVecs 
 
-c     diagNumber=2
-c     Kernel2B(diagNumber,:,:,:,:,:)=0.d0
-c     ppVecs(diagNumber,:)=ppVecs(1,:)
-
-
 c     For higher order diagrams, leave in the functionality to add one order at a time
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     end Odelta2 2N contributions
-c     if (calctype.eq.Odelta2) return
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Odelta3 2N contributions: NONE
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     <if they were nonzero, enter diagrams here>
+c     !<if they were nonzero, enter diagrams here>
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c      
-c     if (verbosity.eq.1000) continue
-c     doing this check every time will be slow
-c     do diagNumber=1,numDiagrams
-c         if (all(ppVecs(diagNumber,:).eq.0.d0)) then
-c           write(*,*) "ppVecs(diagNumber,:)==(0,0,0)"
-c           write(*,*) "Likely forgot to assign ppVecs"
-c           stop
-c         end if
-c     end do
       end
 
 
       subroutine getDiagABfinite(Kerneltmp,pVec,uVec,ppVecA,kVec,kpVec,ppVec,
      &    t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
-c     Diagram A and Diagram B actually have the same integration variable, so combine them
-c     and use only "one" diagram in the input file numDiagrams=1
+c     !Diagram A and Diagram B actually have the same integration variable, so combine them
+c     !and use only "one" diagram in the input file numDiagrams=1
 
       implicit none
 
@@ -263,29 +244,23 @@ c     Internal variables
 c       uVec=pVec-ppVec+kVec/2!-> ppVec= pVec-uVec+kVec/2 -> jacobian on the integration gives a factor of -1
         ppVec=pVec-uVec+kVec/2
         Jacobian=-1.d0
-      end if
-
-      if (.not.useTransform) then
+      else 
           ppVec=uVec
           Jacobian=1.d0
       end if
 
+
       qVec=pVec-ppVec+(kVec/2)!qVec=uVec with the substitution
       qpVec=pVec-ppVec-(kVec/2)
-      omega=sqrt(vecsquare(kVec))
-
-c     if (DOT_PRODUCT(qVec-uVec,qVec-uVec).ge.1e-5) then
-c       write(*,*) "qVec!=uVec"
-c       write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: uVec=",uVec 
-c       write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: qVec=",qVec 
-c       stop
-c     end if
 
       if (DOT_PRODUCT(qVec,qVec).le.0.001) then
           write(*,*) "In 2Bkernel"
           write(*,*) "DOT_PRODUCT(qVec,qVec).le.0.001 evaluated true, stopping"
           stop
       end if
+
+
+      omega=sqrt(vecsquare(kVec))! omega=k0
 
       prefactor=(-1)**(t12)*(2*Pi)**3/(HC)
       prefactor=prefactor/(2*mpi0)
@@ -294,16 +269,16 @@ c     end if
      &  vecsquare(pVec-kVec/2)-vecsquare(ppVec-kpVec/2))
 
       qp0=1/(2*Mnucleon)*(vecsquare(pVec-kVec/2)-vecsquare(ppVec-kpVec/2))
-      q0=mpi0
-      qp0=0.d0
+c     q0=omega
+c     q0=mpi
+c     qp0=0
       kp0=sqrt(mpi0**2+vecsquare(kpVec))
 
-c     factorBsym=+2.d0*(1.d0/(
-c    &        DOT_PRODUCT(qVec,qVec)))*
-c    &        (1.d0/(DOT_PRODUCT(qpVec,qpVec)+mpi2))
 
+      factorAsym=(q0+kp0)/(q0**2-vecsquare(qVec)-mpi0**2)
+      factorBsym=((q0+kp0)/(q0**2-vecsquare(qVec)-mpi0**2))*(1.d0/(qp0**2 -vecsquare(qpVec)-mpi0**2))
 
-      factorAsym=-(q0+kp0)/(q0**2-vecsquare(qVec)-mpi0**2)
+      factorAsym=(q0+kp0)/(q0**2-vecsquare(qVec)-mpi0**2)
       factorBsym=((q0+kp0)/(q0**2-vecsquare(qVec)-mpi0**2))*(1.d0/(qp0**2 -vecsquare(qpVec)-mpi0**2))
 
       factorAsym=factorAsym*prefactor
@@ -311,12 +286,6 @@ c    &        (1.d0/(DOT_PRODUCT(qpVec,qpVec)+mpi2))
       factorAasy=factorAsym
       factorBasy=factorBsym
       
-c     write(*,*) "q0=", q0 
-c     write(*,*) "kp0=", kp0 
-c     write(*,*) "kpVec=", kpVec 
-c     write(*,*) "factorAsym=", factorAsym 
-c     write(*,*) "qVec=", qVec 
-c     write(*,*) ""
       if ((t12 .eq. t12p) .and. (mt12 .eq. 0) .and.(mt12p .eq. 0)) then
          if (s12p .eq. s12) then ! s12-s12p=0 => l12-l12p is even; spin symmetric part only
 
@@ -372,7 +341,7 @@ c     Internal variables
       complex*16 factorAsym, factorAasy
       complex*16 factorBsym, factorBasy
       logical useTransform
-      real*8 Jacobian
+      real*8 Jacobian, prefactor
 
       if (.not.(all(ppVecA.eq.0))) then
           write(*,*) "ppVec assigned elsewhere, stopping"
@@ -385,22 +354,13 @@ c     Internal variables
 c       uVec=pVec-ppVec+kVec/2!-> ppVec= pVec-uVec+kVec/2 -> jacobian on the integration gives a factor of -1
         ppVec=pVec-uVec+kVec/2
         Jacobian=-1.d0
-      end if
-
-      if (.not.useTransform) then
+      else
           ppVec=uVec
           Jacobian=1.d0
       end if
-
       qVec=pVec-ppVec+(kVec/2)!qVec=uVec with the substitution
       qpVec=pVec-ppVec-(kVec/2)
 
-c     if (DOT_PRODUCT(qVec-uVec,qVec-uVec).ge.1e-5) then
-c       write(*,*) "qVec!=uVec"
-c       write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: uVec=",uVec 
-c       write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: qVec=",qVec 
-c       stop
-c     end if
 
       if (DOT_PRODUCT(qVec,qVec).le.0.001) then
           write(*,*) "In 2Bkernel"
@@ -409,7 +369,7 @@ c     end if
       end if
 
 c     For imlicit cancelation
-      factorAsym=-(-1)**(t12)*(1.d0/(DOT_PRODUCT(qVec,qVec)))*(2*Pi)**3/HC
+      factorAsym=(-1)**(t12)*(1.d0/(DOT_PRODUCT(qVec,qVec)))*(2*Pi)**3/HC
       factorBsym=+2*(-1)**(t12)*(1.d0/(
      &        DOT_PRODUCT(qVec,qVec)))*
      &        (1.d0/(DOT_PRODUCT(qpVec,qpVec)+mpi2))
@@ -418,9 +378,6 @@ c     For imlicit cancelation
 
       factorAasy=factorAsym
       factorBasy=factorBsym
-      
-c     write(*,*) "factorAsym=", factorAsym 
-c     write(*,*) "qVec=", qVec 
 
       if ((t12 .eq. t12p) .and. (mt12 .eq. 0) .and.(mt12p .eq. 0)) then
          if (s12p .eq. s12) then ! s12-s12p=0 => l12-l12p is even; spin symmetric part only
