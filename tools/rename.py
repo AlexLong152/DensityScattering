@@ -1,19 +1,77 @@
 from os import listdir
 from os.path import isfile, join
 import os
-# adds prefix to files of given filetype
-prefix = "varsub-"
-filetype = ".f"
-onlyfiles = [f for f in listdir(".") if (isfile(join(".", f)) and
-                                         f[-len(filetype):] == ".f")]
-commands = []
-for f in onlyfiles:
-    if f[:len(prefix)] != prefix:  # to avoid accidently running this twice
-        command = "mv " + f + " varsub-" + f
-        commands.append(command)
-        print(command)
+from copy import copy
+from runfolderTwobody import generate2BodOutputName
 
-Q = input("Run these commands? [y/n]: ")
-if Q.lower() == "y":
-    for c in commands:
-        os.system(c)
+folder = r"/home/alexander/test"
+folder = r"/home/alexander/densities-6Li/chiralsmsN4LO+3nfN2LO-lambda550-SRG/twobody/550MeVout/"
+
+"""
+rewrite a new "newname" function for every use case
+in all likelyhood you'll have to run this a few times unless youre a god and can do it perfectly 
+every time
+"""
+
+
+def newname(f):
+    # rewrite me every time
+    return generate2BodOutputName(f)
+
+
+def replaceString(f):
+    return f.replace("output", "6Li")
+
+
+def endsIn(string, substring):
+    return string.endswith(substring)
+
+
+def skipFile(f):
+    # if skipFile returns true then the file isn't renamed
+    # return False
+    return endsIn(f, ".gz")
+
+
+def main():
+    onlyfiles = [f for f in listdir(folder) if (isfile(join(folder, f)))]
+    moveFolder = input(
+        "Move renamed filed into a new folder when done? [y/n]: "
+    ).lower()
+    moveFolder = True if moveFolder == "y" else False
+
+    if moveFolder:
+        newfolder = input("Name new folder without slashes: ")
+        newfolder = r"/" + newfolder + r"/"
+
+    else:
+        newfolder = ""
+
+    commands = []
+    for f in onlyfiles:
+        if not skipFile(f):
+            sourceFile = folder + r"/" + f
+            # newfile = (
+            #     folder + newname(f)
+            #     if moveFolder is False
+            #     else
+            # )
+            newfile = folder + newfolder + newname(f)
+            command = f"mv {sourceFile} {newfile}"
+            command = command.replace(r"//", r"/")
+            print(command)
+            tmp = copy(command)
+            for x in tmp.split():
+                print(x)
+            print("")
+            commands.append(command)
+
+    Q = input("Run these commands? [y/n]: ")
+    if Q.lower() == "y":
+        os.system("mkdir " + folder + newfolder)
+        for c in commands:
+            os.system(str(c))
+
+
+if __name__ == "__main__":
+    main()
