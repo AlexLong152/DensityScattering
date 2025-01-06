@@ -2,25 +2,26 @@ from os import listdir
 from os.path import isfile, join
 import os
 from copy import copy
-from runfolderTwobody import generate2BodOutputName
 
-folder = r"/home/alexander/test"
-folder = r"/home/alexander/densities-6Li/chiralsmsN4LO+3nfN2LO-lambda550-SRG/twobody/550MeVout/"
-
+folder = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/chiralsmsN4LO+3nfN2LO-lambda400/"
 """
 rewrite a new "newname" function for every use case
 in all likelyhood you'll have to run this a few times unless youre a god and can do it perfectly 
 every time
 """
 
+if folder[-1] != r"/":
+    folder += r"/"
+
 
 def newname(f):
     # rewrite me every time
-    return generate2BodOutputName(f)
+    f = f.replace("onebodyonebody", "onebody")
+    return f
 
 
-def replaceString(f):
-    return f.replace("output", "6Li")
+# def replaceString(f):
+#     return f.replace("output", "6Li")
 
 
 def endsIn(string, substring):
