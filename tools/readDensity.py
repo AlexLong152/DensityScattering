@@ -68,14 +68,17 @@ def main():
 def getQuantNums(filename):
     """
     Reads in quantum numbers as real numbers from filename
+
+    output values are in the order:
+    out[extNum, mzp, mz]
     """
     with open(filename, "r") as f:
         contents = f.read()
         lines = np.array(contents.splitlines())
         indx = -1
-        for l in range(len(lines)):
-            if "(" in lines[l]:
-                indx = l
+        for i in range(len(lines)):
+            if "(" in lines[i]:
+                indx = i
                 break
         if indx == -1:
             raise BadDataError(f"Bad file {filename}")

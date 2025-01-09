@@ -1,15 +1,6 @@
-import os
-import re
-import sys
-import glob
+from copy import copy
 import numpy as np
 import readDensity as rd
-
-folder = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/chiralsmsN4LO+3nfN2LO-lambda550/"
-folder1N = folder + r"onebody/"
-folder2N = folder + r"twobody/"
-energy = 60
-angle = 55
 
 ########################
 # Constants
@@ -35,69 +26,99 @@ deltaAlphaE1n = centralneutronalphaE1 - BKMNeutronalphaE1  # = 11.55 - 12.52 = -
 deltaBetaM1p = centralprotonbetaM1 - BKMProtonbetaM1  # = 3.15 - 1.25 = 1.90
 deltaBetaM1n = centralneutronbetaM1 - BKMNeutronbetaM1  # = 3.65 - 1.25 = 2.40
 
+alphap = -1.87
+alphan = -0.97
+betap = 1.9
+betan = 2.4
+
 
 def main():
-    twobody_file = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/chiralsmsN4LO+3nfN2LO-lambda550/twobody/twobody-6Li.060MeV-075deg.dens-chiralsmsN4LO+3nfN2LO-lambda550-lambdaSRG1.880setNtotmax06omegaH24.Odelta2-j12max=2-.denshash=08cbddd96d0928d56b11000bf420a33e22d9200bf4f68972a75d8f7b57d60b4c.v2.0.dat"
+    twobody_file = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/chiralsmsN4LO+3nfN2LO-lambda550/twobody/twobody-6Li.060MeV-075deg.dens-chiralsmsN4LO+3nfN2LO-lambda550-lambdaSRG1.880setNtotmax14omegaH24.Odelta2-j12max=2-.denshash=19f5bc14eff49c008d12dbb0bfd3d63a7c03ee4999ccc3407af828479f37a2cb.v2.0.dat"
 
-    onebody_file = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/newfiles/onebody-6Li.060MeV-075deg.dens-chiralsmsN4LO+3nfN2LO-lambda550-lambdaSRG2.236setNtotmax14omegaH24.Odelta3-.denshash=35dc0cfe7cc3560fe2da9cd9603584f51bd0644e6f9914c4146d1d8b99deafc7.v2.0.dat"
-    base_dir = os.path.dirname(os.path.dirname(twobody_file))
-
-    Snucl = 1
-
-    # Parse twobody filename
-    params = parse_twobody_filename(twobody_file)
-    nucleus = params["nucleus"]
-    energy_str = params["energy"]
-    angle_str = params["angle"]
-    interaction = params["interaction"]
+    # Odelta3 onebody file
+    # VaryAXX files inferred from onebody file string
+    onebody_file = "/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/newfiles/lambda550/onebody-6Li.060MeV-075deg.dens-chiralsmsN4LO+3nfN2LO-lambda550-lambdaSRG1.880setNtotmax14omegaH24.Odelta3-.denshash=53cdbc7a4128c4b6b4c00f980eaafb7abca39033fdf70f90d4054a2534774285.v2.0.dat"
+    Z, N, spin = getNuc(onebody_file)
 
     # Construct corresponding onebody and varyA filenames
-    onebody_file, varyA_files = construct_onebody_filenames(
-        base_dir, nucleus, energy_str, angle_str, interaction
-    )
-
+    varyA_files = getVaryAFiles(onebody_file, Z, N)
     # Load amplitudes
-    onebody_data, twobody_data, varyA_data = load_amplitudes(
+
+    onebody_data, twobody_data, varyA_data = loadAmplitudes(
         onebody_file, twobody_file, varyA_files
     )
 
-    # Compute total amplitude
-    total = compute_total(onebody_data, twobody_data, varyA_data)
-
-    # Print shape and a sample element
-    print("total shape:", total.shape)
-    print("Sample total amplitude element [0,0,0]:", total[0, 0, 0])
-    omega = float(energy_str[:3])
-    crossSection = compute_cross_section(total, omega, Snucl, M6Li)
-    print("crossSection=", crossSection, "micro Barn")
-    print("Result should be on the order of 150 nanobarn=0.15 microbarn")
-
-
-def parse_twobody_filename(twobody_file):
+    # print("varyA_data=", varyA_data)
+    onebod = onebody_data["MatVals"]
+    twobod = twobody_data["MatVals"]
     """
-    Adjusted regex to handle the denshash part.
-    Example filename (from user):
-    twobody-6Li.060MeV-055deg.dens-chiralsmsN4LO+3nfN2LO-lambda550-lambdaSRG1.880setNtotmax14omegaH20.Odelta2-j12max=2-.denshash=...v2.0.dat
+    print("Path to onebody file:\n", onebody_file, sep="")
+    print("onebod=\n", onebod.flatten())
+    print("\n")
+
+    print("Path to twobody file:\n", twobody_file, sep="")
+    print("twobod=\n", twobod.flatten())
+    print("\n")
+
+    # for key, _ in varyA_data.items():
+    #     print(f"Path to {key} file:\n", varyA_data[key]["name"], sep="")
+    #     print(f"{key} data:\n", varyA_data[key]["MatVals"].flatten())
+    #     print("\n")
+
+    key = "VaryA1n"
+    print(f"Path to {key} file:\n", varyA_data[key]["name"], sep="")
+    print(f"{key} data:\n", varyA_data[key]["MatVals"].flatten())
+    print("\n")
     """
-    name = os.path.basename(twobody_file)
-    pattern = (
-        r"^twobody-(?P<nucleus>\w+)\.(?P<energy>\d+MeV)-(?P<angle>\d+deg)\.dens-"
-        r"(?P<interaction>.+?)\.Odelta2-j12max=2-\.denshash=.*\.v2\.0\.dat$"
-    )
+    energy = onebody_data["omega"]  # in MeV
+    energy_twobod = twobody_data["omega"]  # in MeV
 
-    match = re.match(pattern, name)
-    if not match:
-        raise ValueError("twobody filename doesn't match expected pattern")
-    return match.groupdict()
+    theta = onebody_data["theta"]  # in MeV
+    theta_twobod = twobody_data["theta"]  # in MeV
+    assert theta == theta_twobod
+    assert energy == energy_twobod
+
+    matrixValues = computeMatrix(onebody_data, twobody_data, varyA_data)
+    crossSection = computeCrossSection(matrixValues, energy, spin, M6Li)
+
+    # print("Mathematica friendly output of matrix values")
+    # printMathematica(matrixValues)
+
+    print(f"At {theta} degrees, {energy} MeV")
+    print("dσ/dΩ=", crossSection, "μBarn")
 
 
-def construct_onebody_filenames(onebodyname, Odelta="Odelta3"):
+def getVaryAFiles(onebody_file, Z, N):
+    file = copy(onebody_file)
+    num = Z + N
+    # file = onebody_file.split(r"/")[-1]
+    out = []
+    for n in ["n", "p"]:
+        for i in range(1, num + 1):
+            varyStr = "VaryA" + str(i) + n
+            varyFile = file.replace("Odelta3", varyStr)
+            out.append(varyFile)
+
+    return out
+
+
+def printMathematica(x):
     """
-    Construct onebody filenames (Odelta2 and VaryA files).
+    prints an array x in the form that mathematica can read in
     """
+    y = x.flatten()
+    formatted_elements = [
+        f"{z.real:.10f} + {z.imag:.10f} I"
+        if z.imag >= 0
+        else f"{z.real:.10f} - {-z.imag:.10f} I"
+        for z in y
+    ]
+    mathematica_output = "{" + ", ".join(formatted_elements) + "}"
+    print(mathematica_output)
+    print("")
 
 
-def load_amplitudes(onebody_file, twobody_file, varyA_files):
+def loadAmplitudes(onebody_file, twobody_file, varyA_files):
     """
     Load amplitudes using getQuantNums for onebody, twobody, and varyA files.
     """
@@ -105,13 +126,22 @@ def load_amplitudes(onebody_file, twobody_file, varyA_files):
     twobody_data = rd.getQuantNums(twobody_file)
 
     varyA_data = {}
-    for key, fname in varyA_files.items():
+    for fname in varyA_files:
+        key = getVaryStrFromName(fname)
         varyA_data[key] = rd.getQuantNums(fname)
 
     return onebody_data, twobody_data, varyA_data
 
 
-def compute_total(onebody_data, twobody_data, varyA_data):
+def getVaryStrFromName(file):
+    file = copy(file)
+    file = file.split(r"/")[-1]
+    tmp = file.split("omegaH")[-1]
+    assert "Vary" in tmp
+    return tmp[3:10]
+
+
+def computeMatrix(onebody_data, twobody_data, varyA_data):
     """
     Compute total as per the given formula (for scalar polarisabilities only):
 
@@ -133,46 +163,43 @@ def compute_total(onebody_data, twobody_data, varyA_data):
 
     omega = onebody_data["omega"]  # in MeV
     theta_deg = onebody_data["theta"]  # in degrees
-    theta_rad = np.deg2rad(theta_deg)
+    theta_rad = theta_deg * np.pi / 180
 
     cos_theta = np.cos(theta_rad)
 
-    # Extract varyA arrays we need:
-    # varyA[proton,1] = varyA_data[(1,'p')]["MatVals"]
-    # varyA[proton,2] = varyA_data[(2,'p')]["MatVals"]
-    # varyA[neutron,1] = varyA_data[(1,'n')]["MatVals"]
-    # varyA[neutron,2] = varyA_data[(2,'n')]["MatVals"]
+    varyA_1p = varyA_data["VaryA1p"]["MatVals"]
+    varyA_2p = varyA_data["VaryA2p"]["MatVals"]
+    varyA_1n = varyA_data["VaryA1n"]["MatVals"]
+    varyA_2n = varyA_data["VaryA2n"]["MatVals"]
+    # manual data insert from Greisshammer
+    # 550MeV at 75 degrees, 60MeV
 
-    varyA_p1 = varyA_data[(1, "p")]["MatVals"]
-    varyA_p2 = varyA_data[(2, "p")]["MatVals"]
-    varyA_n1 = varyA_data[(1, "n")]["MatVals"]
-    varyA_n2 = varyA_data[(2, "n")]["MatVals"]
+    omega = 60
+    theta_deg = 75
+    theta_rad = theta_deg * np.pi / 180
+    cos_theta = np.cos(theta_rad)
 
-    # Construct the additional term:
-    factor = (
-        (10 ** (-4))
-        * (omega**2)
-        * (MeVtofm**3)
-        * (
-            (deltaAlphaE1p + cos_theta * deltaBetaM1p) * varyA_p1
-            + (-deltaBetaM1p) * varyA_p2
-            + (deltaAlphaE1n + cos_theta * deltaBetaM1n) * varyA_n1
-            + (-deltaBetaM1n) * varyA_n2
-        )
-    )
+    # varyStrs = ["VaryA1p", "VaryA2p", "VaryA1n", "VaryA2n"]
+    # for i, strV in enumerate(varyStrs):
+    #     print(varyA_data[strV]["name"])
+    #     print(vals[i].flatten())
+    #     print("\n")
 
-    total = onebody + twobody + factor
-
+    tmp1 = (alphap + cos_theta * betap) * varyA_1p - betap * varyA_2p
+    tmp2 = (alphan + cos_theta * betan) * varyA_1n - betan * varyA_2n
+    polarizability = (omega**2) * (MeVtofm**3) * (10**-4) * (tmp1 + tmp2)
+    total = onebody + twobody + polarizability
+    total = total / MeVtofm
     return total
 
 
-def compute_cross_section(total, omega, Snucl, Mnucl):
+def computeCrossSection(matrix, omega, Snucl, Mnucl):
     """
-    Compute the cross section based on the provided amplitude 'total'.
+    Compute the cross section based on the provided amplitude 'total' in units of microbarn
 
     Parameters:
     -----------
-    total : np.ndarray
+    matrix : np.ndarray
         The total amplitude array. Assumed shape: (9, 3, 3) for λf,λi ∈ {-1,1,2} and Mf,Mi ∈ {-1,0,1}.
         Here:
         - The first dimension: all (λf, λi) combinations. (3 polarizations each → 3*3=9)
@@ -201,13 +228,12 @@ def compute_cross_section(total, omega, Snucl, Mnucl):
     # Wnucl(ω) = ω + sqrt(Mnucl² + ω²)
     Wnucl_omega = omega + np.sqrt(Mnucl**2 + omega**2)
 
-    # sum over all Mf, Mi, λf, λi
-    # total has dimensions (9, 3, 3)
-    # sum |total|^2 over all indices
-    sum_amp_sq = np.sum(np.abs(total) ** 2)
+    mat_flat = matrix.flatten()
+    # total = np.sum(mat_flat)
+    # sum_amp_sq = np.float64(total * total.conj())
+    sum_amp_sq = np.sum(mat_flat * mat_flat.conj())
+    sum_amp_sq = sum_amp_sq.real
 
-    # Formula from the snippet:
-    # crosssection = fineStructure^2 * 10^7 * (1 / [2*(2Snucl+1)]) * (Mnucl/Wnucl(ω))^2 * sum(|total|^2)
     factor = (
         (fineStructure**2)
         * (10**7)
@@ -215,8 +241,23 @@ def compute_cross_section(total, omega, Snucl, Mnucl):
         * ((Mnucl / Wnucl_omega) ** 2)
     )
     cross_section = factor * sum_amp_sq
-
     return cross_section
+
+
+def getNuc(filename):
+    file = filename.split(r"/")[-1]
+    prefix = file[:30]
+    if "6Li" in prefix:
+        Z = 3
+        N = 3
+        S = 1
+    elif "3He" in prefix:
+        Z = 2
+        N = 1
+        S = 0.5
+    else:
+        raise ValueError("Something went wrong identifying nucleus")
+    return Z, N, S
 
 
 if __name__ == "__main__":
