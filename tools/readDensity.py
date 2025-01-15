@@ -65,42 +65,60 @@ def main():
 #     raise ValueError("Value not found")
 
 
-def getQuantNums(filename):
+def getQuantNums(filename, returnMat=True):
     """
     Reads in quantum numbers as real numbers from filename
 
     output values are in the order:
     out[extNum, mzp, mz]
     """
-    with open(filename, "r") as f:
-        contents = f.read()
-        lines = np.array(contents.splitlines())
-        indx = -1
-        for i in range(len(lines)):
-            if "(" in lines[i]:
-                indx = i
-                break
-        if indx == -1:
-            raise BadDataError(f"Bad file {filename}")
-
-        # print("filename=", filename)
-        lines = lines[indx:]
-        lines = "".join(lines)
-        lines = lines.split("=")
-        # print("lines[0]=", lines[0])
-        lines = lines[0]
-        lines = lines.replace("(", "")
-        lines = lines.split(")")
-        lines = np.array([x.strip() for x in lines if x.strip() != ""])
-        vals = np.zeros(len(lines), dtype=np.complex128)
-        for i in range(len(vals)):
-            tmp = lines[i].split(",")
-            vals[i] = float(tmp[0]) + 1j * float(tmp[1])
     out = {}
+    if returnMat:
+        with open(filename, "r") as f:
+            contents = f.read()
+            lines = np.array(contents.splitlines())
+            indx = -1
+            for i in range(len(lines)):
+                if "(" in lines[i]:
+                    indx = i
+                    break
+            if indx == -1:
+                raise BadDataError(f"Bad file {filename}")
+
+            # print("filename=", filename)
+            lines = lines[indx:]
+            lines = "".join(lines)
+            lines = lines.split("=")
+            # print("lines[0]=", lines[0])
+            lines = lines[0]
+            lines = lines.replace("(", "")
+            lines = lines.split(")")
+            lines = np.array([x.strip() for x in lines if x.strip() != ""])
+            vals = np.zeros(len(lines), dtype=np.complex128)
+            for i in range(len(vals)):
+                tmp = lines[i].split(",")
+                vals[i] = float(tmp[0]) + 1j * float(tmp[1])
+        out["MatVals"] = vals2matrix(filename, vals)
+
     out["name"] = filename
-    out["MatVals"] = vals2matrix(filename, vals)
-    out["theta"] = getTheta(filename)
+    out["file"] = filename
+
+    out["hash"] = getHash(filename)
+
     out["omega"] = getOmega(filename)
+    out["energy"] = getOmega(filename)
+
+    out["theta"] = getTheta(filename)
+    out["angle"] = getTheta(filename)
+
+    out["Ntotmax"] = getNtotmax(filename)
+    out["omegaH"] = getOmegaH(filename)
+    out["lambda"] = getLambda(filename)
+    out["lambdaCut"] = getLambda(filename)
+    out["lambdaSRG"] = getLambdaSRG(filename)
+    out["numBodies"] = getNumBodies(filename)
+    out["Odelta"] = getOdelta(filename)
+
     # print("len(vals)=", len(vals))
     # print(np.shape(out["MatVals"]))
     return out
@@ -148,12 +166,38 @@ def vals2matrix(filename, vals):
     return out
 
 
+def getStringbtwn(myString, prefix, suffix):
+    myString = copy(myString)
+    myString = " " + myString
+    myString = myString.split(prefix)[1]
+    myString = myString.split(suffix)[0]
+    return myString
+
+
+def getOdelta(filename):
+    filename = copy(filename)
+    filename = filename.split(r"/")[-1]
+    btwn = getStringbtwn(filename, "omegaH", "-.")
+    return btwn[3:]
+
+
 def getOmega(filename):
     filename = copy(filename)
     filename = filename.split(r"/")[-1]
     omega = filename.split("MeV")[0][-3:]
     omega = int(omega)
     return omega
+
+
+def getNumBodies(filename):
+    filename = copy(filename)
+    filename = filename.split(r"/")[-1]
+    if "twobody" in filename:
+        return 1
+    elif "onebody" in filename:
+        return 2
+    else:
+        raise ValueError(f"Num bodies not found for {filename}")
 
 
 def getTheta(filename):
@@ -170,7 +214,8 @@ def getNtotmax(filename):
     """
     filename = copy(filename)
     filename = filename.split(r"/")[-1]
-    Ntotmax = filename.split("setNtotmax")[-1][:3]
+
+    Ntotmax = getStringbtwn(filename, "setNtotmax", "omegaH")
     Ntotmax = int(Ntotmax)
     return Ntotmax
 
@@ -181,6 +226,33 @@ def getOmegaH(filename):
     omegaH = filename.split("omegaH")[-1][:2]
     omegaH = int(omegaH)
     return omegaH
+
+
+def getLambdaSRG(filename):
+    filename = copy(filename)
+    filename = filename.split(r"/")[-1]
+    lambdaSRG = filename.split("lambdaSRG")[1]
+    lambdaSRG = lambdaSRG[:5]
+    return float(lambdaSRG)
+
+
+def getLambda(filename):
+    filename = copy(filename)
+    filename = filename.split(r"/")[-1]
+    lambdaVal = filename.split("lambda")[1]
+    lambdaVal = lambdaVal[:-1]
+    return int(lambdaVal)
+
+
+def getHash(filename):
+    filename = copy(filename)
+    filename = filename.split(r"/")[-1]
+    if "denshash" in filename:
+        hash = filename.split("denshash=")[-1]
+        hash = hash.split(".v2")[0]
+        return hash
+    else:
+        return ""
 
 
 if __name__ == "__main__":
