@@ -20,6 +20,7 @@ def main():
     # Adjust this selection as needed
     # os.system(f"rm {workdir}//densities_table.h5")
     densdf = access.database(workdir=workdir, webbase=beta_webbase)
+    # densdf = access.database(workdir=workdir, webbase=webbase)
     df = densdf.pddf
     df = df.reset_index()
     tableCheck(df)
@@ -29,93 +30,55 @@ def main():
     srgVal = 1.880
     # srgVal = 2.236
 
-    select = (
-        (df["N"] == 3)
-        & (df["Z"] == 3)
-        & (df["omega"] > omega - eps)
-        & (df["omega"] < omega + eps)
-        & (df[srg] > srgVal - eps)
-        & (df[srg] < srgVal + eps)
-        & (df["kind"] == "one")
-        & (df["theta"] == 90)
-        & (df["LambdaNN"] == 400)
-        & (df["Nmax"] == 14)
-        & (df["OmegaHO"] == 18)
-    )
-
-    df = df[select]
-
-    dlNames = []
+    LambdaNNs = np.array([400, 550])
+    thetas = np.array([40, 55, 75, 90, 110, 125, 145, 159])
+    Nmaxs = np.array([6, 8, 10, 12, 14])
+    omegaHOs = np.array([10, 12, 14, 16, 18, 20, 22, 24])
+    kinds = np.array(["one", "two"])
+    j = 0
     i = 0
-    for _, row in df.iterrows():
-        dlName = buildFilename(row)
-        dlNames.append(dlName)
-        print(f"{i}. {dlName}")
-        i += 1
-    length = len(dlNames)
+    for kind in kinds:
+        for theta in thetas:
+            for LambdaNN in LambdaNNs:
+                for Nmax in Nmaxs:
+                    for omegaHO in omegaHOs:
+                        select = (
+                            (df["N"] == 3)
+                            & (df["Z"] == 3)
+                            & (df["omega"] > omega - eps)
+                            & (df["omega"] < omega + eps)
+                            & (df[srg] > srgVal - eps)
+                            & (df[srg] < srgVal + eps)
+                            & (df["LambdaNN"] == LambdaNN)
+                            & (df["kind"] == kind)
+                            & (df["OmegaHO"] == omegaHO)
+                            & (df["Nmax"] == Nmax)
+                            & (df["theta"] == theta)
+                        )
 
-    yn = input(f"Download these {length} files? (y/n): ").lower()
-    yn = True if yn == "y" else False
-    if not yn:
-        return
+                        dfTmp = df[select]
+                        if len(dfTmp) == 0:
+                            print(
+                                "kind='",
+                                kind,
+                                "', lambdaSRGNN=",
+                                srgVal,
+                                ", theta=",
+                                theta,
+                                ", LambdaNN=",
+                                LambdaNN,
+                                ", Nmax=",
+                                Nmax,
+                                ", OmegaHO=",
+                                omegaHO,
+                                sep="",
+                            )
+                            j += 1
+                        else:
+                            i += 1
 
-    slash = r"/"
-    i = 0
-    errorout = []
-
-    for _, row in df.iterrows():
-        nucName = "densities-" + getName(row["Z"], row["N"])
-        bodyFolder = "2Ndensities" if row["kind"] == "two" else "1Ndensities"
-        energy = str(int(np.round(row["omega"])))
-        srg = str(srgVal)
-
-        folder = workdir
-        folder += slash + nucName
-        folder += slash + bodyFolder
-        folder += slash + energy + "MeV"
-        folder += slash + "lambda" + str(int(row["LambdaNN"]))
-        folder += slash + "lambdaSRG" + srg
-
-        folder = folder.replace(r"//", r"/")
-
-        if not os.path.isdir(folder):
-            print("Directory named\n" + folder + "\nDoes not exist, creating one now")
-            os.makedirs(folder)
-
-        fullPath = folder + slash + dlNames[i]
-        folder = folder.replace(r"//", r"/")
-        if not os.path.exists(fullPath):
-            try:
-                label = {"hashname": row["hashname"], "kind": row["kind"]}
-                hashname, _ = densdf.get_file(**label)
-
-                assert os.path.isfile(hashname)
-                os.replace(hashname, fullPath)
-
-                print("Downloaded file to:\n" + fullPath)
-                print("")
-            except HTTPError as err:
-                name = dlNames[i]
-                hashname = row["hashname"]
-                errorout.append([name, err, hashname])
-
-                print(50 * "#")
-                print(f"HTTP error was raised for {name} ")
-                print(f"Error is {err}")
-                print(50 * "#")
-                print("")
-
-        i += 1
-
-    if len(errorout) > 0:
-        print("Errors raised when attempting to download the following files")
-        for name, err, hashname in errorout:
-            print("Error created for")
-            print(f"name={name}")
-            print(f"hash={hashname}")
-            print("Gave error", err)
-            print("")
-            print("")
+    print(j, "missing files")
+    print(i, "found files")
 
 
 def getName(Z, N):
