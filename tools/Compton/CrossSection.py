@@ -52,7 +52,7 @@ def main():
     print("dσ/dΩ=", dSigmadOmega["cc"], "μBarn")
 
 
-def crossSection(onebody_file, twobody_file):
+def crossSection(onebody_file, twobody_file, delta=0):
     """
     Calculates the differential cross section given two output files
     onebody_file is expected to be the Odelta version. The varyA file names are then automatically
@@ -80,29 +80,6 @@ def crossSection(onebody_file, twobody_file):
         onebody_file, twobody_file, varyA_files
     )
 
-    # print("varyA_data=", varyA_data)
-    """
-    onebod = onebody_data["MatVals"]
-    twobod = twobody_data["MatVals"]
-
-    print("Path to onebody file:\n", onebody_file, sep="")
-    print("onebod=\n", onebod.flatten())
-    print("\n")
-
-    print("Path to twobody file:\n", twobody_file, sep="")
-    print("twobod=\n", twobod.flatten())
-    print("\n")
-
-    # for key, _ in varyA_data.items():
-    #     print(f"Path to {key} file:\n", varyA_data[key]["name"], sep="")
-    #     print(f"{key} data:\n", varyA_data[key]["MatVals"].flatten())
-    #     print("\n")
-
-    key = "VaryA1n"
-    print(f"Path to {key} file:\n", varyA_data[key]["name"], sep="")
-    print(f"{key} data:\n", varyA_data[key]["MatVals"].flatten())
-    print("\n")
-    """
     energy = onebody_data["omega"]  # in MeV
     energy_twobod = twobody_data["omega"]  # in MeV
 
@@ -111,7 +88,7 @@ def crossSection(onebody_file, twobody_file):
     assert theta == theta_twobod
     assert energy == energy_twobod
 
-    matrixValues = computeMatrix(onebody_data, twobody_data, varyA_data)
+    matrixValues = computeMatrix(onebody_data, twobody_data, varyA_data, delta=delta)
     dSigmadOmega = computeCrossSection(matrixValues, energy, spin, M6Li)
 
     returnObject = {}
@@ -198,7 +175,7 @@ def getVaryStrFromName(file):
     return tmp[3:10]
 
 
-def computeMatrix(onebody_data, twobody_data, varyA_data):
+def computeMatrix(onebody_data, twobody_data, varyA_data, delta=0):
     """
     Compute total as per the given formula (for scalar polarisabilities only):
 
@@ -241,9 +218,13 @@ def computeMatrix(onebody_data, twobody_data, varyA_data):
     #     print(varyA_data[strV]["name"])
     #     print(vals[i].flatten())
     #     print("\n")
+    alphap_tmp = alphap + delta
+    alphan_tmp = alphan + delta
+    betap_tmp = betap + delta
+    betan_tmp = betan + delta
 
-    tmp1 = (alphap + cos_theta * betap) * varyA_1p - betap * varyA_2p
-    tmp2 = (alphan + cos_theta * betan) * varyA_1n - betan * varyA_2n
+    tmp1 = (alphap_tmp + cos_theta * betap_tmp) * varyA_1p - betap_tmp * varyA_2p
+    tmp2 = (alphan_tmp + cos_theta * betan_tmp) * varyA_1n - betan_tmp * varyA_2n
     polarizability = (omega**2) * (MeVtofm**3) * (10**-4) * (tmp1 + tmp2)
     total = onebody + twobody + polarizability
     total = total / MeVtofm
