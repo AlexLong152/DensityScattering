@@ -205,13 +205,6 @@ def computeMatrix(onebody_data, twobody_data, varyA_data, delta=0):
     varyA_2p = varyA_data["VaryA2p"]["MatVals"]
     varyA_1n = varyA_data["VaryA1n"]["MatVals"]
     varyA_2n = varyA_data["VaryA2n"]["MatVals"]
-    # manual data insert from Greisshammer
-    # 550MeV at 75 degrees, 60MeV
-
-    omega = 60
-    theta_deg = 75
-    theta_rad = theta_deg * np.pi / 180
-    cos_theta = np.cos(theta_rad)
 
     # varyStrs = ["VaryA1p", "VaryA2p", "VaryA1n", "VaryA2n"]
     # for i, strV in enumerate(varyStrs):
