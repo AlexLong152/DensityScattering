@@ -15,6 +15,11 @@ rcParams["font.family"] = "serif"
 
 
 def main():
+    Ntotmaxplot()
+    # omegaH_plot()
+
+
+def Ntotmaxplot():
     twobody_dir = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/chiralsmsN4LO+3nfN2LO-lambda550/twobody/"
     onebody_dir = twobody_dir + r"../onebody/"
     savefolder = twobody_dir + r"../results/"
@@ -24,35 +29,36 @@ def main():
     energy = 60
     lambdaSRG = 1.880
     lambdaCut = 550
-    omegaH = 14
-    Ntotmax = 14
+    omegaH = 16
+    # Ntotmax = 14
+    Ntotmaxs = [6, 8, 10, 12, 14]
     thetas = np.array([0, 40, 55, 75, 90, 110, 125, 145, 159, 180])
-    markers = ["x", ",", "o"]
+    markers = ["x", ",", "o", "v", "1", "*", "D"]
 
-    outfile = title + "\n"
-    outfile += "      -2,    0    2" + "\n"
+    varStr = "Ntotmax"
+    varIterable = Ntotmaxs
     total = []
-    Deltas = [-2, 0, 2]
-    for i, delta in enumerate(Deltas):
+    for i, var in enumerate(varIterable):
         ys = []
         for theta in thetas:
+            # need to change variable manually
             ccVal = ccForDict(
                 onebody_dir,
                 twobody_dir,
-                delta=delta,
                 energy=energy,
                 angle=theta,
                 lambdaCut=lambdaCut,
                 lambdaSRG=lambdaSRG,
-                Ntotmax=Ntotmax,
+                Ntotmax=var,
                 omegaH=omegaH,
             )
             ys.append(ccVal)
         total.append(ys)
-        plt.scatter(thetas, ys, label=r"$\Delta=" + str(delta) + "$", marker=markers[i])
+        labelStr = varStr + "=" + str(var)
+        plt.scatter(thetas, ys, label=labelStr, marker=markers[i])
     plt.legend()
     title = "6Li Compton Scattering " + title
-    title += f"\nNtotmax={Ntotmax}, omegaH={omegaH}, lambdaSRG={lambdaSRG}"
+    title += f"\nomegaH={omegaH}, lambdaSRG={lambdaSRG}"
     plt.title(title)
     plt.xlabel(r"$\theta$")
     plt.ylabel(r"$d \sigma/ d \Omega\;\; [\mu \mathrm{b}\;\mathrm{ sr^{-1}} ]$")
@@ -61,15 +67,83 @@ def main():
     array_out = array_to_table(
         np.array(total).T,
         [str(theta) for theta in thetas],
-        [str(x) for x in Deltas],
+        [str(x) for x in varIterable],
     )
     out = title
     # out += f"\nNtotmax={Ntotmax}, omegaH={omegaH}"
-    out += "\nChange of delta in the columns, theta values by rows\n" + str(array_out)
+    out += f"\nChange of {varStr} in the columns, theta values by rows\n" + str(
+        array_out
+    )
     print(out)
     fileName = title.replace(" ", "-")
     fileName = fileName.replace(",", "")
     fileName = fileName.replace("Scattering-", "")
+    fileName = fileName + "omegaH=" + str(omegaH)
+    fileName = varStr + "_vary_" + fileName
+    print("fileName=", fileName)
+    save_string_to_file(savefolder + r"/" + fileName + ".txt", out)
+
+
+def omegaH_plot():
+    twobody_dir = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/chiralsmsN4LO+3nfN2LO-lambda550/twobody/"
+    onebody_dir = twobody_dir + r"../onebody/"
+    savefolder = twobody_dir + r"../results/"
+    tmp = np.array(twobody_dir.split(r"/"))
+    title = tmp[-3]
+
+    energy = 60
+    lambdaSRG = 1.880
+    lambdaCut = 550
+    omegaHs = [12, 14, 16, 18, 20, 22, 24]
+    Ntotmax = 14
+    thetas = np.array([0, 40, 55, 75, 90, 110, 125, 145, 159, 180])
+    markers = ["x", ",", "o", "v", "1", "*", "D"]
+
+    varStr = "omegaH"
+    varIterable = omegaHs
+    total = []
+    for i, var in enumerate(varIterable):
+        ys = []
+        for theta in thetas:
+            # need to change variable manually
+            ccVal = ccForDict(
+                onebody_dir,
+                twobody_dir,
+                energy=energy,
+                angle=theta,
+                lambdaCut=lambdaCut,
+                lambdaSRG=lambdaSRG,
+                Ntotmax=Ntotmax,
+                omegaH=var,
+            )
+            ys.append(ccVal)
+        total.append(ys)
+        labelStr = varStr + "=" + str(var)
+        plt.scatter(thetas, ys, label=labelStr, marker=markers[i])
+    plt.legend()
+    title = "6Li Compton Scattering " + title
+    title += f"\nNtotmax={Ntotmax}, lambdaSRG={lambdaSRG}"
+    plt.title(title)
+    plt.xlabel(r"$\theta$")
+    plt.ylabel(r"$d \sigma/ d \Omega\;\; [\mu \mathrm{b}\;\mathrm{ sr^{-1}} ]$")
+    plt.show()
+
+    array_out = array_to_table(
+        np.array(total).T,
+        [str(theta) for theta in thetas],
+        [str(x) for x in varIterable],
+    )
+    out = title
+    # out += f"\nNtotmax={Ntotmax}, omegaH={omegaH}"
+    out += f"\nChange of {varStr} in the columns, theta values by rows\n" + str(
+        array_out
+    )
+    print(out)
+    fileName = title.replace(" ", "-")
+    fileName = fileName.replace(",", "")
+    fileName = fileName.replace("Scattering-", "")
+    fileName = varStr + "_vary_" + fileName
+    print("fileName=", fileName)
     save_string_to_file(savefolder + r"/" + fileName + ".txt", out)
 
 

@@ -33,6 +33,29 @@ def fitFunc(x, b, c, d):
 
 
 def main():
+    varyOmegaHPlot()
+
+
+def varyNtotmaxPlot():
+    twobody_dir = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/chiralsmsN4LO+3nfN2LO-lambda550/twobody/"
+    onebody_dir = twobody_dir + r"../onebody/"
+
+    energy = 60
+    angle = 159
+    lambdaSRG = 1.880
+    Ntotmax = 14
+    lambdaCut = 550
+    # omegaH = 24
+    omegaHs = [14, 18, 22]
+    angle = None
+    paramToPlot = "angle"
+
+    assert str(lambdaCut) in twobody_dir
+    assert str(lambdaCut) in onebody_dir
+    # plt.figure()
+
+
+def varyOmegaHPlot():
     twobody_dir = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/chiralsmsN4LO+3nfN2LO-lambda550/twobody/"
     onebody_dir = twobody_dir + r"../onebody/"
 
