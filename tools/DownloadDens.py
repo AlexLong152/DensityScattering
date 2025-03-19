@@ -22,25 +22,32 @@ def main():
     densdf = access.database(workdir=workdir, webbase=beta_webbase)
     df = densdf.pddf
     df = df.reset_index()
-    tableCheck(df)
-    eps = 0.0001
+    # tableCheck(df)
+    eps = 2.0
+    epsSRG = 0.1
+    thetaEps = 1.0
     omega = 60
     srg = "lambdaSRGNN"
-    srgVal = 1.880
-    # srgVal = 2.236
+    srgVal = 1.88
 
+    # thetas = np.array([40, 55, 75, 90, 110, 125, 145, 159])
+    # theta_mask = np.any(
+    #     np.abs(df["theta"].values[:, None] - thetas[None, :]) < thetaEps, axis=1
+    # )
     select = (
         (df["N"] == 3)
         & (df["Z"] == 3)
         & (df["omega"] > omega - eps)
         & (df["omega"] < omega + eps)
-        & (df[srg] > srgVal - eps)
-        & (df[srg] < srgVal + eps)
+        & (df[srg] > srgVal - epsSRG)
+        & (df[srg] < srgVal + epsSRG)
         & (df["kind"] == "one")
-        & (df["theta"] == 90)
-        & (df["LambdaNN"] == 400)
-        & (df["Nmax"] == 14)
-        & (df["OmegaHO"] == 18)
+        # & (df["theta"] > theta - eps)
+        # & (df["theta"] < theta + eps)
+        # & theta_mask
+        & (df["LambdaNN"] == 550)
+        # & (df["Nmax"] == 14)
+        # & (df["OmegaHO"] == 18)
     )
 
     df = df[select]
@@ -67,7 +74,7 @@ def main():
         nucName = "densities-" + getName(row["Z"], row["N"])
         bodyFolder = "2Ndensities" if row["kind"] == "two" else "1Ndensities"
         energy = str(int(np.round(row["omega"])))
-        srg = str(srgVal)
+        srg = str(row["lambdaSRGNN"])
 
         folder = workdir
         folder += slash + nucName

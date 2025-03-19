@@ -32,7 +32,9 @@ def main():
     outfile = title + "\n"
     outfile += "      -2,    0    2" + "\n"
     total = []
-    Deltas = [-2, 0, 2]
+    Deltas = [-1, 0, 1]
+    # Deltas = [[1, -1], [0, 0], [2, -2]]#uncomment this to plot difference instead
+    isIterable = {True: r"$\alpha+\beta=", False: r"$\alpha-\beta="}
     for i, delta in enumerate(Deltas):
         ys = []
         for theta in thetas:
@@ -49,10 +51,26 @@ def main():
             )
             ys.append(ccVal)
         total.append(ys)
-        plt.scatter(thetas, ys, label=r"$\Delta=" + str(delta) + "$", marker=markers[i])
+        alphaBetaStr = isIterable[not isinstance(Deltas[0], list)]
+        if isinstance(delta, int):
+            plt.scatter(
+                thetas,
+                ys,
+                label=alphaBetaStr + str(2 * delta) + "$",
+                marker=markers[i],
+            )
+        else:
+            plt.scatter(
+                thetas,
+                ys,
+                label=alphaBetaStr + str(np.sum([abs(x) for x in delta])) + "$",
+                marker=markers[i],
+            )
     plt.legend()
-    title = "6Li Compton Scattering " + title
-    title += f"\nNtotmax={Ntotmax}, omegaH={omegaH}, lambdaSRG={lambdaSRG}"
+    title = (
+        "6Li Compton Scattering " + r"varying " + alphaBetaStr + "$\n" + title + "\n"
+    )
+    title += f"Ntotmax={Ntotmax}, omegaH={omegaH}, lambdaSRG={lambdaSRG}"
     plt.title(title)
     plt.xlabel(r"$\theta$")
     plt.ylabel(r"$d \sigma/ d \Omega\;\; [\mu \mathrm{b}\;\mathrm{ sr^{-1}} ]$")
@@ -64,12 +82,16 @@ def main():
         [str(x) for x in Deltas],
     )
     out = title
-    # out += f"\nNtotmax={Ntotmax}, omegaH={omegaH}"
     out += "\nChange of delta in the columns, theta values by rows\n" + str(array_out)
     print(out)
     fileName = title.replace(" ", "-")
     fileName = fileName.replace(",", "")
+    fileName = fileName.replace("\n", "")
+    fileName = fileName.replace("$", "")
+    fileName = fileName.replace("\\", "")
+    fileName = fileName.replace("beta=", "beta")
     fileName = fileName.replace("Scattering-", "")
+    print("fileName=", fileName)
     save_string_to_file(savefolder + r"/" + fileName + ".txt", out)
 
 
@@ -90,10 +112,10 @@ def array_to_table(array, row_labels, col_labels):
         raise ValueError("Input array must be 2-dimensional")
 
     # Check if the number of labels matches the dimensions of the array.
-    if len(row_labels) != array.shape[0]:
-        raise ValueError(
-            "The number of row labels must match the number of rows in the array"
-        )
+    # if len(row_labels) != array.shape[0]:
+    #     raise ValueError(
+    #         "The number of row labels must match the number of rows in the array"
+    #     )
     if len(col_labels) != array.shape[1]:
         raise ValueError(
             "The number of column labels must match the number of columns in the array"

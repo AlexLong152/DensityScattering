@@ -1,0 +1,14 @@
+omega for M3He = 131.88
+theta for M3He = 59.98
+
+
+omega for M4He = 132.62
+theta for M4He = 59.99
+
+
+omega for M3H = 132.28
+theta for M3H = 59.99
+
+
+omega for M6Li = 133.39
+theta for M6Li = 60.0

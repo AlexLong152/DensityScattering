@@ -213,10 +213,17 @@ def computeMatrix(onebody_data, twobody_data, varyA_data, delta=0):
     #     print(varyA_data[strV]["name"])
     #     print(vals[i].flatten())
     #     print("\n")
-    alphap_tmp = alphap + delta
-    alphan_tmp = alphan + delta
-    betap_tmp = betap + delta
-    betan_tmp = betan + delta
+    if isinstance(delta, (int, float)):
+        alphap_tmp = alphap + delta
+        alphan_tmp = alphan + delta
+        betap_tmp = betap + delta
+        betan_tmp = betan + delta
+    else:
+        deltap, deltan = delta
+        alphap_tmp = alphap + deltap
+        alphan_tmp = alphan + deltan
+        betap_tmp = betap + deltap
+        betan_tmp = betan + deltan
 
     tmp1 = (alphap_tmp + cos_theta * betap_tmp) * varyA_1p - betap_tmp * varyA_2p
     tmp2 = (alphan_tmp + cos_theta * betan_tmp) * varyA_1n - betan_tmp * varyA_2n
@@ -353,9 +360,12 @@ def ccForDict(onebody_dir, twobody_dir, Odeltaonebod="Odelta3", delta=0, **kwarg
         if params_match_free(info, kwargs):
             twobody_info.append((f, info))
             matched_twobody.append(f)
-    # print("matched_twobody=", matched_twobody)
-    # assert len(matched_onebody) > 0
-    # assert len(matched_twobody) > 0
+    # if kwargs["theta"] == 55 and kwargs["Ntotmax"] == 12:
+    #     print("In CrossSection.py ccForDict debug")
+    #     print("onebody_dir=", onebody_dir)
+    #     print("twobody_dir=", twobody_dir)
+    #     print("matched_onebody=", matched_onebody)
+    #     print("matched_twobody=", matched_twobody)
     if len(matched_twobody) == 0 or len(matched_onebody) == 0:
         return None
     one = matched_onebody[0]
