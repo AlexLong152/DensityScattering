@@ -564,6 +564,8 @@ c         for Mzp=0, run only over Mz>=0 -- that's still 2 more than necessary, 
             end if              ! verbosity   
 ccccccccccccccccccccccccccccccc
 c     Now the actual sumation over quantum numbers
+            write(*,*) "Beep boop in main in onebodyvia oneN"
+            stop
             if (verbosity.ge.3) then ! provide a header for table
                write(*,*) "   rindx:    twoMzp, twoMz, twomt1Np, twomt1N, twom1Np, twom1N, L1N, ML1N:   ρ1(rindx)"
             end if              ! verbosity

@@ -10,7 +10,9 @@ pd.set_option("display.max_colwidth", None)
 
 workdir = os.environ["HOME"] + r"/OneDrive/"
 beta_webbase = "https://just-object.fz-juelich.de:8080/v1/AUTH_1715b19bd3304fb4bb04f4beccea0cf2/densitystore-beta/"
-webbase = "https://just-object.fz-juelich.de:8080/v1/AUTH_1715b19bd3304fb4bb04f4beccea0cf2/densitystore/"
+beta_webbase = "https://just-object.fz-juelich.de:9000/jikp03/densitystore-beta/"
+
+# webbase = "https://just-object.fz-juelich.de:8080/v1/AUTH_1715b19bd3304fb4bb04f4beccea0cf2/densitystore/"
 
 filename = "_KIND_body-_NUC_._ENERGY_MeV-_ANGLE_deg.dens-_MODENN__ORDERNN__TNFORDER_-lambda_LAMBDANN_-lambdaSRG_LAMBDASRGNN_setNtotmax_NTOMAXVAL_omegaH_OMEGAHVAL_.denshash=_HASHNAME_.v2.0.h5"
 
@@ -22,27 +24,22 @@ def main():
     densdf = access.database(workdir=workdir, webbase=beta_webbase)
     df = densdf.pddf
     df = df.reset_index()
-    tableCheck(df)
-    eps = 0.0001
-    omega = 60
-    srg = "lambdaSRGNN"
-    srgVal = 1.880
-    # srgVal = 2.236
+    # tableCheck(df)
+    ts1 = pd.Timestamp("2025-04-26 1:00:00")
 
     select = (
-        (df["N"] == 3)
-        & (df["Z"] == 3)
-        & (df["omega"] > omega - eps)
-        & (df["omega"] < omega + eps)
-        & (df[srg] > srgVal - eps)
-        & (df[srg] < srgVal + eps)
-        & (df["kind"] == "one")
-        & (df["theta"] == 90)
-        & (df["LambdaNN"] == 400)
-        & (df["Nmax"] == 14)
-        & (df["OmegaHO"] == 18)
-    )
-
+      (df["N"] == 3)
+    & (df["LambdaNN"]>10)
+    & (df["Z"] == 3)
+    & (df["addtime"] < ts1)
+    & (df["omega"]<60.1)
+    & (df["omega"]>59.9)
+    & (df["theta"]==40)
+    & (df["LambdaNN"]==400)
+    & (df["Nmax"]==10.0)
+    & (df["OmegaHO"]==16.0)
+    #& (df["lambdaSRGNN"]==1.880)
+)
     df = df[select]
 
     dlNames = []
@@ -63,18 +60,28 @@ def main():
     i = 0
     errorout = []
 
+    nuc = getName(row["Z"], row["N"])
+    if nuc == "4He" or nuc == "6Li":
+        yn = input(
+            "Place these files into seperate folders based on lambda/lambdaSRG? (y/n): "
+        ).lower()
+        splitFolder = True if yn == "y" else False
+    else:
+        splitFolder = False
+
     for _, row in df.iterrows():
         nucName = "densities-" + getName(row["Z"], row["N"])
         bodyFolder = "2Ndensities" if row["kind"] == "two" else "1Ndensities"
         energy = str(int(np.round(row["omega"])))
-        srg = str(srgVal)
+        srg = str(row["lambdaSRGNN"])
 
         folder = workdir
         folder += slash + nucName
         folder += slash + bodyFolder
         folder += slash + energy + "MeV"
-        folder += slash + "lambda" + str(int(row["LambdaNN"]))
-        folder += slash + "lambdaSRG" + srg
+        if splitFolder:
+            folder += slash + "lambda" + str(int(row["LambdaNN"]))
+            folder += slash + "lambdaSRG" + srg
 
         folder = folder.replace(r"//", r"/")
 
@@ -104,6 +111,8 @@ def main():
                 print(f"Error is {err}")
                 print(50 * "#")
                 print("")
+        else:
+            print(f"File already exists with name:\n{fullPath}\n")
 
         i += 1
 
@@ -125,8 +134,10 @@ def getName(Z, N):
         return "4He"
     if Z == 2 and N == 1:
         return "3He"
+    if Z == 1 and N == 2:
+        return "3H"
 
-    raise ValueError("Implement me")
+    raise ValueError(f"Implement me for Z={Z}, N={N}")
 
 
 def buildFilename(row):

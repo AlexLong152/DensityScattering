@@ -35,6 +35,8 @@ c
         real*8 Pi
         complex*16 ci,c0
 c
+c    Identity matrix and Pauli matrices for spin-1/2 operators
+c
         real*8 M6Li,M4He,M3He,Md,Mproton,Mneutron,Mnucleon,Binding
 	real*8 mpi,mpi0,HC,fpi,ga,kappap,kappan,ep,en,alphaem
         real*8 muv,mup,mun
@@ -100,9 +102,5 @@ c     Judith's improved parameter set, version II.
 c     This is the "preferred" one, used in e²δ² fit of Compton review.
       PARAMETER (b1 = 5.0d0, gpind = 1.425d0)
       PARAMETER (Mdelta=1232.0, delta = Mdelta-Mnucleon)
-      
 
-
-
-
-
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc

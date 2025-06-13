@@ -70,7 +70,7 @@ c
 
       real*8,intent(in) :: omega, theta        ! energy (in MeV) and angle (in rad) of input file. Is input to subroutine
                                 ! to check that they match what's available in 2Ndensity file. 
-      real*8,parameter :: eps=1.d-1 ! a "small parameter" to compare omega and theta to be numerically identical
+      real*8,parameter :: eps=1.d0 ! a "small parameter" to compare omega and theta to be numerically identical
       
       integer,intent(in) :: Anucl
       integer,intent(in) :: twoSnucl
@@ -121,10 +121,10 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       write(*,*) "*********************** 2N DENSITY MATRIX PARAMETERS ***************************"
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     if densityFileName contains hashtag of 64 characters (marked by "hash="), then isolate it
-      
+            
       if (index(densityFileName,'hash=').ne.0.) then
          dummy = densityFileName(INDEX(densityFileName,'hash=')+5:)
-         hashtag = dummy(:INDEX(dummy,'-'))
+         hashtag = dummy(:INDEX(dummy,'.'))
          if (len(hashtag).ne.64) then
             write(*,*) "ERROR: Presumed hash ",hashtag," is NOT 64 characters long. -- Exiting."
             stop
@@ -162,8 +162,9 @@ c     print hashtag and rownumber information to stdout, if it exists
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     find the unique filename from the hashtag via the python script and write to stdout
 c     wait for up to 15 seconds for a reply from the script. If no reply, proceed without
-         call EXECUTE_COMMAND_LINE("python ../common-densities/find_uniquefilename_from_hashtag.py "//
-     &        hashtag//" > "//hashtag, WAIT=.True.,EXITSTAT=test)
+
+c          call EXECUTE_COMMAND_LINE("../venv/bin/python3 ../common-densities/find_uniquefilename_from_hashtag.py "//'"'//
+c      &        "'"//hashtag//" > "//hashtag//'"', WAIT=.True.,EXITSTAT=test)
 c     The following doulc be used to implement a timeout after 15 seconds -- you will need to set WATI=.False. above.
 c     However, the python process continues in the background and would have to be killed separately, even after fortran has ended.
 c     Is something like this is needed, it may be better to implement it via a timeout in the python script,
@@ -542,7 +543,7 @@ c
 
       real*8,intent(in) :: omega, theta        ! energy (in MeV) and angle (in rad) of input file. Is input to subroutine
                                 ! to check that they match what's available in 2Ndensity file. 
-      real*8,parameter :: eps=1.d-1 ! a "small parameter" to compare omega and theta to be numerically identical
+      real*8,parameter :: eps=1.d0 ! a "small parameter" to compare omega and theta to be numerically identical
       
       integer,intent(in) :: Anucl
       integer,intent(in) :: twoSnucl
@@ -593,10 +594,10 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       write(*,*) "*********************** 2N DENSITY MATRIX PARAMETERS ***************************"
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     if densityFileName contains hashtag of 64 characters (marked by "hash="), then isolate it
-      
+      write(*,*) "densityFileName=", densityFileName 
       if (index(densityFileName,'hash=').ne.0.) then
          dummy = densityFileName(INDEX(densityFileName,'hash=')+5:)
-         hashtag = dummy(:INDEX(dummy,'-'))
+         hashtag = dummy(:INDEX(dummy,'.'))
          if (len(hashtag).ne.64) then
             write(*,*) "ERROR: Presumed hash ",hashtag," is NOT 64 characters long. -- Exiting."
             stop
@@ -634,8 +635,8 @@ c     print hashtag and rownumber information to stdout, if it exists
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     find the unique filename from the hashtag via the python script and write to stdout
 c     wait for up to 15 seconds for a reply from the script. If no reply, proceed without
-         call EXECUTE_COMMAND_LINE("python ../common-densities/find_uniquefilename_from_hashtag.py "//
-     &        hashtag//" > "//hashtag, WAIT=.True.,EXITSTAT=test)
+c          call EXECUTE_COMMAND_LINE("../venv/bin/python3 ../common-densities/find_uniquefilename_from_hashtag.py "//
+c      &        "'"//hashtag//" > "//hashtag, WAIT=.True.,EXITSTAT=test)
 c     The following doulc be used to implement a timeout after 15 seconds -- you will need to set WATI=.False. above.
 c     However, the python process continues in the background and would have to be killed separately, even after fortran has ended.
 c     Is something like this is needed, it may be better to implement it via a timeout in the python script,

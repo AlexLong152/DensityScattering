@@ -450,7 +450,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
      
       write (*,*) '*** Wrote output to file: ',TRIM(outfile)
       
-      write(*,*) "Remember to change the value of the energy to match the density "
+      ! write(*,*) "Remember to change the value of the energy to match the density "
       stop
       
 c20   format(' ',A,I6,A,8I8,A,E24.15,SP,E25.15," I")

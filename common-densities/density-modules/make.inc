@@ -8,25 +8,9 @@ UNAME := $(shell uname -s)
 # define the compilers and standard libraries for the current computer 
 
 LIBSTD1 = -llapack
-LIBSTD2 = -L /usr/lib/x86_64-linux-gnu/hdf5/openmpi/ 
+LIBSTD2 = -L/usr/local/hdf5/openmpi/lib -Wl,-rpath,/usr/local/hdf5/openmpi/lib
 LIBSTD3 = -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5
 LIBSTD4 = -llapack -lgomp -ldl -lz -lsz
-
-#ifeq ($(USER),hgrie)
-#     LIBSTD2 = -L /usr/lib/x86_64-linux-gnu/hdf5/openmpi/ 
-#else ifeq ($(USER),alex) # your username
-#     LIBSTD2 =	 #whatever your path is
-#     #     LIBSTD2 = -L /usr/lib/x86_64-linux-gnu/hdf5/openmpi/ 
-#     LIBSTD3 = -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5
-#     LIBSTD4 = -llapack -lgomp -ldl -lz -lsz
-#else ifeq ($(USER),along) # your username
-#     LIBSTD2 = -L /usr/lib/x86_64-linux-gnu/hdf5/openmpi/ 
-#     LIBSTD3 = -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5
-#     LIBSTD4 = -llapack -lgomp -ldl -lz -lsz
-#endif	
-#     LIBSTD3 = -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5
-#     LIBSTD4 = -llapack -lgomp -ldl -lz -lsz
-
 LIBSTD5 = 
 LIBSTD6 = 
 LIBSTD7 = 
@@ -45,8 +29,7 @@ COMPILE_OPT2= -ffixed-line-length-0
 COMPILE_OPT1= -fPIC  -cpp  -g -O3 -ffpe-summary=none  -finit-integer=-1000 -finit-real=inf -fcheck=all    
 COMPILE_OPT2= -ffixed-line-length-0 -fopenmp
 
-COMPILE_OPT3= -I /usr/include/hdf5/openmpi/	
-
+COMPILE_OPT3 = -I/usr/local/hdf5/openmpi/include -fallow-argument-mismatch
 COMPILE_OPT4= 
 COMPILE_OPT4= 
 COMPILE_OPT5= 
@@ -76,7 +59,6 @@ FOPT = $(COMPILE_OPT1) $(COMPILE_OPT2) $(COMPILE_OPT3) $(COMPILE_OPT4) \
       -DMAKELIBSTD7="'$(LIBSTD7)'" \
       -DMAKELIBSTD8="'$(LIBSTD8)'" \
       -DCOMPDATE="'$(COMPDATE)'"
-FOPT+=-fallow-argument-mismatch
 AR     = ar
 ARFLAGS= rv 
 RANLIB   = touch

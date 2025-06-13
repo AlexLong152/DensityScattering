@@ -63,7 +63,7 @@ LOGICAL,PARAMETER :: master=.true.
   ! first printout version running
   IF(master) THEN
    WRITE(*,*) 'ComptonDensity version: ',VERREV
-   WRITE(*,*) 'Date                  : ',VERDATE
+   ! WRITE(*,*) 'Date                  : ',VERDATE
   END IF
 
   ! print the machine precision  on master 

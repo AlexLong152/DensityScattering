@@ -6,6 +6,8 @@
 from copy import copy
 import numpy as np
 import sys
+from os.path import isfile, join
+from os import listdir
 
 sys.path.insert(1, "..")
 import readDensity as rd
@@ -52,7 +54,7 @@ def main():
     print("dσ/dΩ=", dSigmadOmega["cc"], "μBarn")
 
 
-def crossSection(onebody_file, twobody_file):
+def crossSection(onebody_file, twobody_file, delta=0):
     """
     Calculates the differential cross section given two output files
     onebody_file is expected to be the Odelta version. The varyA file names are then automatically
@@ -80,29 +82,6 @@ def crossSection(onebody_file, twobody_file):
         onebody_file, twobody_file, varyA_files
     )
 
-    # print("varyA_data=", varyA_data)
-    """
-    onebod = onebody_data["MatVals"]
-    twobod = twobody_data["MatVals"]
-
-    print("Path to onebody file:\n", onebody_file, sep="")
-    print("onebod=\n", onebod.flatten())
-    print("\n")
-
-    print("Path to twobody file:\n", twobody_file, sep="")
-    print("twobod=\n", twobod.flatten())
-    print("\n")
-
-    # for key, _ in varyA_data.items():
-    #     print(f"Path to {key} file:\n", varyA_data[key]["name"], sep="")
-    #     print(f"{key} data:\n", varyA_data[key]["MatVals"].flatten())
-    #     print("\n")
-
-    key = "VaryA1n"
-    print(f"Path to {key} file:\n", varyA_data[key]["name"], sep="")
-    print(f"{key} data:\n", varyA_data[key]["MatVals"].flatten())
-    print("\n")
-    """
     energy = onebody_data["omega"]  # in MeV
     energy_twobod = twobody_data["omega"]  # in MeV
 
@@ -111,7 +90,7 @@ def crossSection(onebody_file, twobody_file):
     assert theta == theta_twobod
     assert energy == energy_twobod
 
-    matrixValues = computeMatrix(onebody_data, twobody_data, varyA_data)
+    matrixValues = computeMatrix(onebody_data, twobody_data, varyA_data, delta=delta)
     dSigmadOmega = computeCrossSection(matrixValues, energy, spin, M6Li)
 
     returnObject = {}
@@ -198,7 +177,7 @@ def getVaryStrFromName(file):
     return tmp[3:10]
 
 
-def computeMatrix(onebody_data, twobody_data, varyA_data):
+def computeMatrix(onebody_data, twobody_data, varyA_data, delta=0):
     """
     Compute total as per the given formula (for scalar polarisabilities only):
 
@@ -228,22 +207,26 @@ def computeMatrix(onebody_data, twobody_data, varyA_data):
     varyA_2p = varyA_data["VaryA2p"]["MatVals"]
     varyA_1n = varyA_data["VaryA1n"]["MatVals"]
     varyA_2n = varyA_data["VaryA2n"]["MatVals"]
-    # manual data insert from Greisshammer
-    # 550MeV at 75 degrees, 60MeV
-
-    omega = 60
-    theta_deg = 75
-    theta_rad = theta_deg * np.pi / 180
-    cos_theta = np.cos(theta_rad)
 
     # varyStrs = ["VaryA1p", "VaryA2p", "VaryA1n", "VaryA2n"]
     # for i, strV in enumerate(varyStrs):
     #     print(varyA_data[strV]["name"])
     #     print(vals[i].flatten())
     #     print("\n")
+    if isinstance(delta, (int, float)):
+        alphap_tmp = alphap + delta
+        alphan_tmp = alphan + delta
+        betap_tmp = betap + delta
+        betan_tmp = betan + delta
+    else:
+        deltap, deltan = delta
+        alphap_tmp = alphap + deltap
+        alphan_tmp = alphan + deltan
+        betap_tmp = betap + deltap
+        betan_tmp = betan + deltan
 
-    tmp1 = (alphap + cos_theta * betap) * varyA_1p - betap * varyA_2p
-    tmp2 = (alphan + cos_theta * betan) * varyA_1n - betan * varyA_2n
+    tmp1 = (alphap_tmp + cos_theta * betap_tmp) * varyA_1p - betap_tmp * varyA_2p
+    tmp2 = (alphan_tmp + cos_theta * betan_tmp) * varyA_1n - betan_tmp * varyA_2n
     polarizability = (omega**2) * (MeVtofm**3) * (10**-4) * (tmp1 + tmp2)
     total = onebody + twobody + polarizability
     total = total / MeVtofm
@@ -317,6 +300,149 @@ def getNuc(filename):
     else:
         raise ValueError("Something went wrong identifying nucleus")
     return (Z, N, S, name)
+
+
+def ccForDict(onebody_dir, twobody_dir, Odeltaonebod="Odelta3", delta=0, **kwargs):
+    """
+    Given a set of parameters in kwargs and the directories the output files are in
+    returns the cross section for the given parameters, for example:
+
+    ccVal = ccForDict(
+        onebody_dir,
+        twobody_dir,
+        delta=delta,
+        energy=energy,
+        angle=theta,
+        lambdaCut=lambdaCut,
+        lambdaSRG=lambdaSRG,
+        Ntotmax=Ntotmax,
+        omegaH=omegaH,
+    )
+
+    Parameters
+    ----------
+    onebody_dir: str
+        the onebody directory
+    twobody_dir: str
+        the twobody directory
+    Odeltaonebod: str,optional
+        "Odelta3" or "Odelta2"
+    delta: float or int
+        the value to shift the polarizabilities
+    Returns
+    -------
+    ccVal: float
+        the cross section
+
+    """
+    kwargs["theta"] = kwargs["angle"]
+    # 1. Gather all one-body and two-body files
+    onebody_files = [f for f in listdir(onebody_dir) if isfile(join(onebody_dir, f))]
+    twobody_files = [f for f in listdir(twobody_dir) if isfile(join(twobody_dir, f))]
+
+    # 2. Extract parameter dictionaries (WITHOUT reading in the matrix) for each file
+    onebody_info = []
+    matched_onebody = []
+
+    for f in onebody_files:
+        # print("f=", f)
+        if Odeltaonebod in f:
+            # returnMat=False so that we skip reading the actual matrix
+            info = rd.getQuantNums(join(onebody_dir, f), returnMat=False)
+            if params_match_free(info, kwargs):
+                onebody_info.append((f, info))
+                matched_onebody.append(f)
+    # print("matched_onebody=", matched_onebody)
+    twobody_info = []
+    matched_twobody = []
+    for f in twobody_files:
+        info = rd.getQuantNums(join(twobody_dir, f), returnMat=False)
+        if params_match_free(info, kwargs):
+            twobody_info.append((f, info))
+            matched_twobody.append(f)
+    # if kwargs["theta"] == 55 and kwargs["Ntotmax"] == 12:
+    #     print("In CrossSection.py ccForDict debug")
+    #     print("onebody_dir=", onebody_dir)
+    #     print("twobody_dir=", twobody_dir)
+    #     print("matched_onebody=", matched_onebody)
+    #     print("matched_twobody=", matched_twobody)
+    if len(matched_twobody) == 0 or len(matched_onebody) == 0:
+        return None
+    one = matched_onebody[0]
+    two = matched_twobody[0]
+    onebod = rd.getQuantNums(onebody_dir + one, returnMat=True)
+    twobod = rd.getQuantNums(twobody_dir + two, returnMat=False)
+    ccVal = crossSection(onebod["file"], twobod["file"], delta=delta)["cc"]
+    return ccVal
+
+
+def params_match_free(dictA, dictB):
+    """
+    Returns True if the relevant parameters match in both dicts.
+    You can compare as many or as few fields as you need.
+    """
+    # For example, compare lambdaSRG, Ntotmax, omegaH, etc.
+    # If you have other constraints (energy, angle, lambdaCut, etc.)
+    # you can incorporate them here or pass them in **kwargs.
+    # print("paramToPlot=", paramToPlot)
+    keys_to_compare = [
+        "lambdaSRG",
+        "Ntotmax",
+        "omegaH",
+        "lambdaCut",
+        "angle",
+        "energy",
+    ]  # example fields
+    eps = 1.0
+    for key in keys_to_compare:
+        # If a key doesn't exist or the values differ, return False
+        if key not in dictA or key not in dictB:
+            return False
+        if key != "theta":
+            if dictA[key] != dictB[key]:
+                # print(dictA[key], dictB[key])
+                return False
+        else:
+            if abs(dictA["theta"] - dictB["theta"]) > eps:
+                return False
+
+    # If all checks pass, they match
+    return True
+
+
+def params_match(dictA, dictB, paramToPlot):
+    """
+    Returns True if the relevant parameters match in both dicts.
+    You can compare as many or as few fields as you need.
+    """
+    # For example, compare lambdaSRG, Ntotmax, omegaH, etc.
+    # If you have other constraints (energy, angle, lambdaCut, etc.)
+    # you can incorporate them here or pass them in **kwargs.
+    # print("paramToPlot=", paramToPlot)
+    keys_to_compare = [
+        "lambdaSRG",
+        "Ntotmax",
+        "omegaH",
+        "lambdaCut",
+        "angle",
+        "energy",
+    ]  # example fields
+    eps = 1.0
+    keys_to_compare.remove(paramToPlot)
+    for key in keys_to_compare:
+        # If a key doesn't exist or the values differ, return False
+        if key not in dictA or key not in dictB:
+            return False
+        if key != "theta":
+            if dictA[key] != dictB[key]:
+                # print(dictA[key], dictB[key])
+                return False
+        else:
+            if abs(dictA["theta"] - dictB["theta"]) > eps:
+                return False
+
+    # If all checks pass, they match
+    return True
 
 
 if __name__ == "__main__":

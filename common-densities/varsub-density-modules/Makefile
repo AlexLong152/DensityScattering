@@ -1,5 +1,3 @@
-
-# hgrie Nov 2023: uses user-specific path to hd5 library
 objects= precision.o constants.o memcheck_c.o mpi_const.o gauss.o spline.o clebsch.o besselfu.o hdf_tool.o parallel.o pwbook.o meshpoints.o meshscatt.o amplitudes.o CompDens.o  
 
 include make.inc
@@ -46,4 +44,3 @@ clean:
 
 .c.o          :
 	$(CC) $(CFLAGS) -c $<
-

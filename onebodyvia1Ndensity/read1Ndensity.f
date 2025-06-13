@@ -84,6 +84,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     following are local variables for possible cross checks below
       
       real*8,parameter :: eps=1.d-1 ! a "small parameter" to compare omega and theta to be numerically identical
+
       
       integer,parameter :: L1Nmax=1  ! hard-wired!
       integer L1N, ML1N              ! orb ang mom & projection of 1N operator

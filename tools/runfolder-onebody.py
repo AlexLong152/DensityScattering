@@ -19,17 +19,22 @@ parrallel, along with input files for the code
 """
 
 basefile = ".pyinput.dat"  # system auto creates this file
-folder = (
-    r"/home/alexander/OneDrive/densities-6Li/1Ndensities/60MeV/lambda400/lambdaSRG1.88/"
-)
+folder = r"/home/alexander/OneDrive/densities-6Li/1Ndensities/60MeV/"
+
+out = r"/output/"
+# outfolder = folder + out
+# outfolder = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/chiralsmsN4LO+3nfN2LO-lambda400/onebody/"
+outfolder = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/newfiles-April28/onebody/"
+
 
 if folder[-1] != r"/":
     folder += r"/"
 
+outfolder = outfolder.replace(r"//", r"/")
 runStandard = True  # runs Odelta3
-runVaryA = True  # runs the polarizability calculation
+runVaryA = False  # runs the polarizability calculation
 
-Odelta = "Odelta3"
+# Odelta = "Odelta3"
 Odelta = "Odelta2"
 
 
@@ -40,19 +45,14 @@ def main():
     onlyfiles = [f for f in listdir(folder) if isfile(join(folder, f))]
 
     runcommand = []
-    out = r"/output/"
-    outfolder = folder + out
-    # outfolder = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/chiralsmsN4LO+3nfN2LO-lambda400/onebody/"
-    outfolder = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/newfiles/lambda400/"
 
-    outfolder = outfolder.replace(r"//", r"/")
     outfiles = []
 
     if not os.path.isdir(outfolder):
         os.mkdir(outfolder)
     # removeSmallOut()
 
-    outfolder = outfolder.replace(r"//", r"/")
+    # outfolder = outfolder.replace(r"//", r"/")
     for i, f in enumerate(onlyfiles):
         path = folder + f  # path to density
         if runStandard:
@@ -125,22 +125,41 @@ def main():
 
     #   Its possible for the command to become too long for the program to handle
     #   so break it up into chunks of size step
-    print(runcommand)
+    # print(runcommand)
+    # step = 50
+    # for i in range(step, len(runcommand), step):
+    #     finalCommand = " ".join(runcommand[i - step : i])
+    #     system(finalCommand)
     step = 50
-    for i in range(step, len(runcommand), step):
-        finalCommand = " ".join(runcommand[i - step : i])
+    commandTmp = copy(runcommand)
+    while True:
+        runcommand = commandTmp[:step]
+        del commandTmp[:step]
+        finalCommand = " ".join(runcommand)
         system(finalCommand)
+        if len(commandTmp) == 0:
+            break
+
     # system(f"cd {folder}")
     # system(
     #     r"mkdir outputs;mv output-* outputs/;tar -zcvf outputs-lambda400-Odelta2.tar.gz outputs/"
     # )
 
-    print("Running these files again")
-    for file, command in outfiles:
-        if not isfile(file):
-            print("The following file was not created")
-            print(f"{file}\n")
-            os.system(command)
+    badfiles = [file for file in outfiles if not (isfile)]
+    while len(badfiles) > 0:
+        print("Running these files again")
+        print(badfiles)
+        for file, command in outfiles:
+            if not isfile(file):
+                # print("The following file was not created")
+                # print(f"{file}\n")
+                os.system(command)
+
+        badfiles = [file for file in outfiles if not (isfile)]
+        again = input("Run inputs again? [y/n] ")
+        again = again.lower() == "y"
+        if not again:
+            break
 
 
 def getOutname(inName, varyAStr):

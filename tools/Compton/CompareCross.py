@@ -14,9 +14,22 @@ sys.path.insert(1, "..")
 import readDensity as rd
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
+from scipy.optimize import curve_fit
 
 rcParams["text.usetex"] = True
 rcParams["font.family"] = "serif"
+printFiles = False  # plots the names of the
+fitIt = True
+
+
+def fitFunc(x, b, c, d):
+    """
+    Define a function passed to plotMe that will be fitted at the angles
+    you specify in thetaPlot
+    if you change the number of parameters this function takes
+    you will also have to change "bounds" to be the correct length
+    """
+    return b + c * x**-2.0 + d * x**-3.0
 
 
 def main():
@@ -32,7 +45,7 @@ def main():
 
     paramToPlot = "omegaH"
 
-    CompareCross(
+    xs, ys, info = compareCross(
         onebody_dir,
         twobody_dir,
         paramToPlot,
@@ -45,8 +58,38 @@ def main():
         omegaH=omegaH,
     )
 
+    out, _ = curve_fit(fitFunc, xs, ys, maxfev=10000000)  # "out" is an array
+    xsTmp = np.linspace(np.min(xs), np.max(xs), num=100)
+    yDatafit = fitFunc(xsTmp, *out)  # automatically unpacks "out"
 
-def CompareCross(onebody_dir, twobody_dir, paramToPlot, Odeltaonebod, **kwargs):
+    ScatterPlot(xs, ys, paramToPlot, info, fit=[xsTmp, yDatafit])
+
+
+def ScatterPlot(xs, ys, paramToPlot, info, fit=None):
+    plt.title(
+        r"$d \sigma/ d \Omega\;\; [\mu \mathrm{b}\;\mathrm{ sr^{-1}} ]$ vs "
+        + paramToPlot
+    )
+    plt.ylabel(r"$d \sigma/ d \Omega\;\; [\mu \mathrm{b}\;\mathrm{ sr^{-1}} ]$")
+
+    infoStr = ""
+    for key, value in info.items():
+        if not isinstance(value, type(None)) and key != "theta":
+            infoStr += str(key) + "=" + str(value) + ", "
+
+    plt.xlabel(paramToPlot + "\n" + infoStr[:-2])
+    if not isinstance(fit, type(None)):
+        plt.plot(fit[0], fit[1], label="Fitted Curve")
+        plt.scatter(xs, ys, label="True Data")
+        plt.legend()
+
+    else:
+        plt.scatter(xs, ys)
+    plt.tight_layout()
+    plt.show()
+
+
+def compareCross(onebody_dir, twobody_dir, paramToPlot, Odeltaonebod, **kwargs):
     """
     Compares cross-sections from one-body and two-body files whose
     parameters match. Plots cross section vs. `paramToPlot`.
@@ -82,7 +125,8 @@ def CompareCross(onebody_dir, twobody_dir, paramToPlot, Odeltaonebod, **kwargs):
     xs = []
     ys = []
 
-    files = []
+    matchedFiles = []
+
     for one in matched_onebody:
         onebod = rd.getQuantNums(onebody_dir + one, returnMat=True)
         x = onebod[paramToPlot]
@@ -92,27 +136,29 @@ def CompareCross(onebody_dir, twobody_dir, paramToPlot, Odeltaonebod, **kwargs):
             if x == xTest:
                 twobod = rd.getQuantNums(twobody_dir + two, returnMat=True)
                 xs.append(x)
-                files.append(two)
+                matchedFiles.append((one, two))
                 yVal = cc.crossSection(onebod["file"], twobod["file"])["cc"]
                 ys.append(yVal)
 
-    # for i, f in enumerate(files):
-    #     if xs[i] == 10:
-    #         print(xs[i])
-    #         print(f)
+    xs = np.array(xs)
+    ys = np.array(ys)
+    matchedFiles = np.array(matchedFiles)
 
-    plt.figure()
-    plt.scatter(xs, ys)
-    plt.xlabel(paramToPlot)
-    plt.ylabel(
-        r"$d \sigma/ d \Omega\;\; [\mu \mathrm{b}\mathrm{ sr^{-1}}]$", fontsize=12
-    )
+    indx = np.argsort(xs)
+    xs = xs[indx]
+    ys = ys[indx]
 
-    plt.title(
-        r"$d \sigma/ d \Omega\;\; [\mu \mathrm{b}\;\mathrm{ sr^{-1}} ]$ vs "
-        + paramToPlot
-    )
-    plt.show()
+    matchedFiles = matchedFiles[indx]
+    fileStr = ""
+    for i, f in enumerate(matchedFiles):
+        one, two = matchedFiles[i]
+        j = i + 1
+        fileStr += f"{j}. {one}\n  {two}\n\n"
+
+    if printFiles:
+        print(fileStr)
+
+    return xs, ys, kwargs
 
 
 def params_match(dictA, dictB, paramToPlot):

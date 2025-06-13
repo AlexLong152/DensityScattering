@@ -1,12 +1,13 @@
-131.9 131.9 15                           omegaLow, omegaHigh, omegaStep
+132.6 132.6 15                           omegaLow, omegaHigh, omegaStep
 060 060 30                             thetaLow, thetaHigh, thetaStep
-results/j12=1-samesign-thresh-orig-output.dat
-'/home/alexander/OneDrive/densities-3He/2Ndensities/twobody-dens-3He-chsfr-nnlo-lambda=2.0-tnf=n2lo-srgnn=0.0-0.0-srg3n=0.0-0.0-np12a=40-np12b=16-p12a=1.0-p12b=3.0-p12c=8.0-nx=20-om=131.857-th=59.98-hash=4dc5aaae23f81daea252bd01a7ad1b53de75e0e173eef9ecdc651b8284a4d8ee-row=106.h5'
+out.dat
+'/home/alexander/OneDrive/densities-3He/2Ndensities/twoBody-3He-theta=59.98-omega=131.857-chsfr-nnlo-lambda=2.0-hash=4dc5aaae23f81daea252bd01a7ad1b53de75e0e173eef9ecdc651b8284a4d8ee-row=106.h5'
 nosymmetry_verbos_extQnumlimit=3                     frame, symmetry, verbosity of STDOUT
 Odelta4_j12max=1_numDiagrams=1 		    Calctype, maximal total ang mom in (12) subsystem, and number of diagrams
-14 4 		    		    NP12A, NP12B
+2 2 		    		    NP12A, NP12B
 1.0 5.0 15 			    P12A, P12B, P12C
-2 72      			    AngularType12,(Nordth12 OR Nanggrid12),Nthbins12,Nordphi12,Nphibins12
+2 2      			    AngularType12,(Nordth12 OR Nanggrid12),Nthbins12,Nordphi12,Nphibins12
 COMMENTS:_PionPhotoProdThresh.v2.0
 # in density filename, code replaces XXX and YYY automatically by energy and angle.
 #results/ezsub-1-sub=false.dat
+# no difference between this run and finite-test1.dat except NP12A

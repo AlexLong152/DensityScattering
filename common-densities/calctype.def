@@ -14,8 +14,10 @@ c
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
-	integer OQ2,OQ3,OQ4,Oepsilon3,VaryAp,VaryAn,Odelta0,Odelta2,Odelta3,Odelta4 ! calctype
+	  integer OQ2,OQ3,OQ4,Oepsilon3,VaryAp,VaryAn
+      integer Odelta0
+      integer Odelta2,Odelta3,Odelta4 
 c
-	parameter (OQ2=2,OQ3=3,Oepsilon3=4,OQ4=5)
-	parameter (Odelta0=OQ2,Odelta2=OQ3,Odelta3=Oepsilon3,Odelta4=6)
-	parameter (VaryAp=0,VaryAn=1)
+	  parameter (OQ2=2,OQ3=3,Oepsilon3=4,OQ4=5)
+	  parameter (Odelta0=OQ2,Odelta2=OQ3,Odelta3=Oepsilon3,Odelta4=6)
+	  parameter (VaryAp=0,VaryAn=1)

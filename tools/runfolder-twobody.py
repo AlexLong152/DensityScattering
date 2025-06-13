@@ -13,9 +13,9 @@ from pathlib import Path
 # below is the .pyinput.dat file
 
 basefile = ".pyinput.dat"  # system auto creates this file
-# folder = r"/home/alex/OneDrive/DENSITIES/twobodyvia2Ndensity/XiangXiang-files/Experimental_6Li_Aug6/N4LO-400MeV-part1/"
 folder = r"/home/alexander/OneDrive/densities-6Li/2Ndensities/60MeV/"
-folder = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/chiralsmsN4LO+3nfN2LO-lambda550/twobody/"
+
+outputfolder = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/newfiles-April28"
 
 if folder[-1] != r"/":
     folder += r"/"
@@ -51,9 +51,9 @@ def main():
     j = 0
     for i, f in enumerate(onlyfiles):
         path = folder + f  # path to density
-        output = folder + "output-" + f[:-2] + "dat"
-        outputfolder = folder
-        outputfolder = r"./output-for-dropbox/"
+        output = outputfolder + "output-" + f[:-2] + "dat"
+        # outputfolder = folder
+        # outputfolder = r"./output-for-dropbox/"
 
         output = outputfolder + generate2BodOutputName(f, Odelta=2, j12max=2)
         print("output=", output)
@@ -78,7 +78,7 @@ def main():
                 s = s.replace("INPUT", r"'" + path + r"'")
                 fout.write(s)
 
-            if j % 7 == 0:
+            if j % 5 == 0:
                 runcommand.append(r"; ./.pCommand.sh ")
 
     finalCommand = " ".join(np.array(runcommand))

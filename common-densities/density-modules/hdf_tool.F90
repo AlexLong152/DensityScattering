@@ -45,7 +45,7 @@ MODULE hdf_tool
    INTEGER(HSIZE_T) size ! long integer
 
    IF(master) THEN
-    WRITE(*,*) 'hdf tools version: ',VERREV
+    ! WRITE(*,*) 'hdf tools version: ',VERREV
 !    WRITE(*,*) 'Date             : ',VERDATE
    END IF
    

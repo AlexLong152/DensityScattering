@@ -183,6 +183,7 @@ c      pVec=(/px,py,pz/)
 
 c      !subroutine calculateqsmass is available for kpVec calculation
        call calculateqsmass(pVec,ppVec,kVec,kpVec,thetacm,mPion,mNucl,verbosity)
+c      kpVec=(/0.d0,0.d0,0.d0/) !need to read in more precison in input file energy
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Odelta0 2N contributions: NONE
@@ -193,8 +194,8 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Odelta2 2N contributions
 cccccccccccccccccccccccTrue
       diagNumber=1
-      call getDiagAB(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,kpVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
-c     call getDiagABfinite(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,kpVec,ppVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
+c     call getDiagAB(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,kpVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
+      call getDiagABfinite(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,kpVec,ppVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
       Kernel2B(diagNumber,:,:,:,:,:)=KernelA
 c     write(*,*) "In varsub-2Bkernel main: ppVecs=",ppVecs 
 
@@ -233,13 +234,13 @@ c     Internal variables
       real*8 Jacobian, prefactor
       real*8 q0,kp0, vecsquare,qp0,omega
 
-      if (.not.(all(ppVecA.eq.0))) then
-          write(*,*) "ppVec assigned elsewhere, stopping"
-          write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: ppVecA=",ppVecA 
-          stop
-      end if
+c     if (.not.(all(ppVecA.eq.0))) then
+c         write(*,*) "ppVec assigned elsewhere, stopping"
+c         write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: ppVecA=",ppVecA 
+c         stop
+c     end if
 
-      useTransform=.true.
+      useTransform=.false.
       if (useTransform) then
 c       uVec=pVec-ppVec+kVec/2!-> ppVec= pVec-uVec+kVec/2 -> jacobian on the integration gives a factor of -1
         ppVec=pVec-uVec+kVec/2
@@ -263,23 +264,26 @@ c       uVec=pVec-ppVec+kVec/2!-> ppVec= pVec-uVec+kVec/2 -> jacobian on the int
       omega=sqrt(vecsquare(kVec))! omega=k0
 
       prefactor=(-1)**(t12)*(2*Pi)**3/(HC)
+c   In the threshold result q0+kp0 cancels with 2*mpi0, but we need it here above threshold
       prefactor=prefactor/(2*mpi0)
 
+c     The lines below assigning q0, qp0, and kp0 recover the threshold case
+c     exactly as it appears in lenkewitz 2011
+      q0=mpi0
+      qp0=0
+      kp0=mpi0
+
+c     The lines below assigning q0, qp0 and kp0 recover higher order correctionsto lenkewitz 
       q0=omega+1/(2*Mnucleon) *(
      &  vecsquare(pVec-kVec/2)-vecsquare(ppVec-kpVec/2))
-
       qp0=1/(2*Mnucleon)*(vecsquare(pVec-kVec/2)-vecsquare(ppVec-kpVec/2))
-c     q0=omega
-c     q0=mpi
-c     qp0=0
+      qp0=q0-omega
       kp0=sqrt(mpi0**2+vecsquare(kpVec))
-
-
-      factorAsym=(q0+kp0)/(q0**2-vecsquare(qVec)-mpi0**2)
-      factorBsym=((q0+kp0)/(q0**2-vecsquare(qVec)-mpi0**2))*(1.d0/(qp0**2 -vecsquare(qpVec)-mpi0**2))
+      
+c     write(*,*) "qp0=", qp0 , "close to 0?"
 
       factorAsym=(q0+kp0)/(q0**2-vecsquare(qVec)-mpi0**2)
-      factorBsym=((q0+kp0)/(q0**2-vecsquare(qVec)-mpi0**2))*(1.d0/(qp0**2 -vecsquare(qpVec)-mpi0**2))
+      factorBsym=factorAsym*(1/(qp0**2 -vecsquare(qpVec)-mpi0**2))
 
       factorAsym=factorAsym*prefactor
       factorBsym=factorBsym*prefactor
@@ -322,6 +326,7 @@ c     diagrams (A/B) have no components with t12!=t12p.
 
 
       subroutine getDiagAB(Kerneltmp,pVec,uVec,ppVecA,kVec,kpVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
+c     Threshold pion photoproduction - first two diagrams
 c     Diagram A and Diagram B actually have the same integration variable, so combine them
 c     and use only "one" diagram in the input file numDiagrams=1
 
@@ -368,14 +373,30 @@ c       uVec=pVec-ppVec+kVec/2!-> ppVec= pVec-uVec+kVec/2 -> jacobian on the int
           stop
       end if
 
+c     Sign difference comes from convention. In Lenkewitz paper the result is 
+c     F^a-F^b (Table 2 in Lenkewitz 2011) whereas we define the result to be 
+c     the addition of quantities, so for us its F^a+F^b
+
 c     For imlicit cancelation
-      factorAsym=(-1)**(t12)*(1.d0/(DOT_PRODUCT(qVec,qVec)))*(2*Pi)**3/HC
-      factorBsym=+2*(-1)**(t12)*(1.d0/(
+      factorAsym=-1*(-1)**(t12)*(1.d0/(DOT_PRODUCT(qVec,qVec)))*(2*Pi)**3/HC
+c     factorBsym=+2*(-1)**(t12)*(1.d0/(
+c    &        DOT_PRODUCT(qVec,qVec)))*
+c    &        (1.d0/(DOT_PRODUCT(qpVec,qpVec)+mpi2))
+c    &     *(2*Pi)**3/HC
+
+      factorBsym=2*(-1)**(t12)*(1.d0/(
      &        DOT_PRODUCT(qVec,qVec)))*
-     &        (1.d0/(DOT_PRODUCT(qpVec,qpVec)+mpi2))
+     &        (1.d0/(DOT_PRODUCT(qpVec,qpVec)+mpi0**2))
      &     *(2*Pi)**3/HC
 
-
+c     write(*,*) "In threshold case"
+c     write(*,*) "Denom of factorA is",(DOT_PRODUCT(qVec,qVec)) 
+c     write(*,*) "factorAsym=", factorAsym 
+c     write(*,*) "factorBsym=", factorBsym 
+c     write(*,*) "qpVec=", qpVec 
+c     write(*,*) "qVec=", qVec 
+c     write(*,*) "kpVec,kp0=", kpVec ,mpi0
+c     write(*,*) "kVec=", kVec 
       factorAasy=factorAsym
       factorBasy=factorBsym
 
@@ -392,7 +413,7 @@ c     For imlicit cancelation
      &           pVec-ppVec, ! preceding is vector dotted with ε
      &           s12p,s12,extQnumlimit,verbosity)
          else                   ! s12 question: s12-s12p=±1 => l12-l12p is odd; spin anti-symmetric part only
-c     
+
             call CalcKernel2BAasy(Kerneltmp,
      &           factorAasy,
      &           s12p,s12,extQnumlimit,verbosity)

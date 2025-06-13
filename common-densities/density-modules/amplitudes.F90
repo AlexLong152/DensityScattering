@@ -275,7 +275,7 @@ CONTAINS
   
   ! first printout version running
   IF(master) THEN
-   WRITE(*,*) 'Initamp version: ',VERREV
+   ! WRITE(*,*) 'Initamp version: ',VERREV
 !   WRITE(*,*) 'Date           : ',VERDATE
   END IF
   
@@ -582,7 +582,7 @@ CONTAINS
   WRITE(*,*) 'Initialization of amplitudes module' 
   WRITE(*,*)
         ! first printout version running
-  WRITE(*,*) 'Amplitudes version: ',VERREV
+  ! WRITE(*,*) 'Amplitudes version: ',VERREV
 !  WRITE(*,*) 'Date              : ',VERDATE
   WRITE(*,*)
   WRITE(*,*) 'Distribution of mesh points' 
