@@ -22,117 +22,122 @@ rcParams["font.family"] = "serif"
 def main():
     base = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/"
     resultSave = base + "results/"
-    # energy = 86
-    energy = 60
-    angle = 40
-    lambdaSRG = 2.236
+    energy = 86
+    # energy = 60
+    angle = 159
+    # lambdaSRG = 2.236
     Ntotmax = 14
     lambdaCut = 450
     omegaH = 18
     angles = [40, 159, 180]
     energies = [60, 86]
     lambdaSRGs = [1.880, 2.236, 3.0]
-    ps = ["lambdaSRG", "Ntotmax", "lambdaCut", "omegaH"]
-    for lambdaSRG in lambdaSRGs:
-        for angle in angles:
-            for energy in energies:
-                for plotting in ps:
-                    onebody_dir = base + f"1bod//{energy}MeV//"
-                    twobody_dir = base + f"2bod//{energy}MeV//"
-                    xs1 = getValuesAvailable(onebody_dir, plotting)
-                    xs2 = getValuesAvailable(twobody_dir, plotting)
-                    xs = list(set(xs1) & set(xs2))
-                    xs = np.sort(np.array(xs))
-                    ccs = []
-                    xsPlot = []
-                    dString = ""
-                    MeVtmp = 0
+    plotting = "omegaH"
+    colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    markers = ["o", "s", "^", "v", "D", "*", "x", "P", "h", ">"]
+    fig, (ax_scatter, ax_text) = plt.subplots(
+        1,
+        2,
+        figsize=7 * np.array([1.6, 1]),
+        gridspec_kw={"width_ratios": [2, 1]},
+    )
+    for i, lambdaSRG in enumerate(lambdaSRGs):
+        onebody_dir = base + f"1bod//{energy}MeV//"
+        twobody_dir = base + f"2bod//{energy}MeV//"
+        xs1 = getValuesAvailable(onebody_dir, plotting)
+        xs2 = getValuesAvailable(twobody_dir, plotting)
+        xs = list(set(xs1) & set(xs2))
+        xs = np.sort(np.array(xs))
+        ccs = []
+        xsPlot = []
+        dString = ""
+        MeVtmp = 0
 
-                    kwargsfind = {
-                        "energy": energy,
-                        "angle": angle,
-                        "lambdaCut": lambdaCut,
-                        "lambdaSRG": lambdaSRG,
-                        "Ntotmax": Ntotmax,
-                        "omegaH": omegaH,
-                    }
-                    for x in xs:
-                        kwargsfind[plotting] = x
+        kwargsfind = {
+            "energy": energy,
+            "angle": angle,
+            "lambdaCut": lambdaCut,
+            "lambdaSRG": lambdaSRG,
+            "Ntotmax": Ntotmax,
+            "omegaH": omegaH,
+        }
+        for x in xs:
+            kwargsfind[plotting] = x
 
-                        # print(kwargsfind)
-                        onebod, twobod, kwargs = getMatchingFiles(
-                            onebody_dir, twobody_dir, **kwargsfind
-                        )
+            # print(kwargsfind)
+            onebod, twobod, kwargs = getMatchingFiles(
+                onebody_dir, twobody_dir, **kwargsfind
+            )
 
-                        if onebod is not None and twobod is not None:
-                            onefile = onebody_dir + onebod
-                            twofile = twobody_dir + twobod
-                            print("onefile=", onebod.split("-.denshash")[0])
-                            print("twofile=", twobod.split("-.denshash")[0])
-                            print(50 * "--")
-                            yVal = cc.crossSection(onefile, twofile)["cc"]
-                            ccs.append(yVal)
-                            xsPlot.append(x)
-                            # print("xsPlot=", xsPlot)
-                            # print("ccs=", ccs)
-                        # else:
-                        #     print(f"For x={x}:\n   onebod={onebod}\n   twobod={twobod}\n\n")
+            if onebod is not None and twobod is not None:
+                onefile = onebody_dir + onebod
+                twofile = twobody_dir + twobod
+                print("onefile=", onebod.split("-.denshash")[0])
+                print("twofile=", twobod.split("-.denshash")[0])
+                print(65 * "--")
+                yVal = cc.crossSection(onefile, twofile)["cc"]
+                ccs.append(yVal)
+                xsPlot.append(x)
+                # print("xsPlot=", xsPlot)
+                # print("ccs=", ccs)
+            # else:
+            #     print(f"For x={x}:\n   onebod={onebod}\n   twobod={twobod}\n\n")
 
-                        dString = dictString(kwargs)
-                        MeVtmp = kwargs["energy"]
-                    # make a figure with 1 row, 2 columns
-                    if len(ccs) != 0:
-                        fig, (ax_scatter, ax_text) = plt.subplots(
-                            1,
-                            2,
-                            figsize=7 * np.array([1.6, 1]),
-                            gridspec_kw={"width_ratios": [2, 1]},
-                        )
-                        print("\n\n")
-                        # left subplot: your scatter
-                        ax_scatter.scatter(xsPlot, ccs)
-                        ax_scatter.set_ylim(0, np.max(ccs) * 1.2)
-                        ax_scatter.set_ylabel(
-                            r"$\mathrm{d} \sigma /\mathrm{d} \Omega$ ", fontsize=14
-                        )
-                        ax_scatter.set_xlabel(plotting, fontsize=14)
-                        ax_scatter.set_title(
-                            r"$\mathrm{d} \sigma /\mathrm{d} \Omega$ vs "
-                            + plotting
-                            + r" for Compton Scattering on ${}^6\mathrm{Li}$"
-                            + f" at ${MeVtmp} \\mathrm{{MeV}}$",
-                            fontsize=15,
-                        )
-                        ax_scatter.set_xticks(xs)
+            dString = dictString(kwargs)
+            MeVtmp = kwargs["energy"]
+            # make a figure with 1 row, 2 columns
+            # left subplot: your scatter
+        ax_scatter.scatter(
+            xsPlot,
+            ccs,
+            label="$\\Lambda_{\\mathrm{SRG}}=$" + str(lambdaSRG),
+            color=colors[i],
+            marker=markers[i],
+        )
+    ax_scatter.set_ylim(0, np.max(ccs) * 1.2)
+    # ax_scatter.set_ylim(120, 270)
+    ax_scatter.set_ylabel(
+        r"$\mathrm{d} \sigma /\mathrm{d} \Omega [\mathrm{nb}/\mathrm{sr}]$ ",
+        fontsize=14,
+    )
+    ax_scatter.set_xlabel(plotting, fontsize=14)
+    ax_scatter.set_title(
+        r"$\mathrm{d} \sigma /\mathrm{d} \Omega$ vs "
+        + plotting
+        + r" for Compton Scattering on ${}^6\mathrm{Li}$"
+        + f" at ${MeVtmp} \\mathrm{{MeV}}"
+        + f", \\;\\theta={angle}$",
+        fontsize=15,
+    )
+    ax_scatter.set_xticks([12, 14, 16])
 
-                        # right subplot: hide the axes, and draw text
-                        ax_text.axis("off")
-                        # place the text; use wrap=True to break long lines
-                        ax_text.text(
-                            0.5,
-                            0.5,
-                            dString,
-                            transform=ax_text.transAxes,
-                            va="center",
-                            ha="center",
-                            wrap=True,
-                            fontsize=16,
-                        )
-                        plt.tight_layout()
-                        saveString = plotting
-                        for key, value in kwargsfind.items():
-                            if key != plotting:
-                                saveString += "-" + key + "=" + str(value)
-                        saveString = saveString + ".pdf"
-                        saveString = resultSave + saveString
+    # right subplot: hide the axes, and draw text
+    ax_text.axis("off")
+    # place the text; use wrap=True to break long lines
 
-                        plt.show()
+    dString += (
+        "Missing onebody density \nfor $\\Lambda_{\\mathrm{SRG}}=1.88, \\omega_H=14$"
+    )
+    ax_text.text(
+        0.5,
+        0.5,
+        dString,
+        transform=ax_text.transAxes,
+        va="center",
+        ha="center",
+        wrap=True,
+        fontsize=16,
+    )
+    plt.tight_layout()
 
-                        # yn = input("Save it?  [y/n]" + "\n" + saveString + "\n").lower()
-                        fig.savefig(saveString, format="pdf", bbox_inches="tight")
-                        # if yn == "y":
-                        # else:
-                        #     pass
+    ax_scatter.legend()
+    saveString = (
+        resultSave
+        + f"omegaH-energy={energy}-angle={angle}-lambdaCut={lambdaCut}-lambdaSRG=1.88-2.236-3.0-Ntotmax={Ntotmax}.pdf"
+    )
+
+    fig.savefig(saveString, format="pdf", bbox_inches="tight")
+    plt.show()
 
 
 def dictString(d):

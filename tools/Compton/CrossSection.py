@@ -69,7 +69,7 @@ def crossSection(onebody_file, twobody_file, delta=0):
     Returns
     ------------
     dSigmadOmega: float
-        The differential cross section in microbarns
+        The differential cross section in nanobarns
     """
 
     Z, N, spin, name = getNuc(onebody_file)
@@ -159,12 +159,12 @@ def loadAmplitudes(onebody_file, twobody_file, varyA_files):
         varyA_data[key] = tmp
         theta = tmp["theta"]
         omega = tmp["omega"]
-        assert (
-            tmp["theta"] == theta_one
-        ), f"tmp[theta]={theta}, theta_onebody={theta_one}"
-        assert (
-            tmp["omega"] == omega_one
-        ), f"tmp[theta]={omega}, theta_onebody={theta_one}"
+        assert tmp["theta"] == theta_one, (
+            f"tmp[theta]={theta}, theta_onebody={theta_one}"
+        )
+        assert tmp["omega"] == omega_one, (
+            f"tmp[theta]={omega}, theta_onebody={theta_one}"
+        )
 
     return onebody_data, twobody_data, varyA_data
 
