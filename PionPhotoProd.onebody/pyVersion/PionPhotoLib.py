@@ -14,7 +14,7 @@ from scipy.integrate import quad
 import os
 from os import listdir
 from os.path import isfile, join
-
+import re
 
 # from copy import copy
 
@@ -65,66 +65,66 @@ def main():
     # getRawM(sqrtS, x, nucs, poleData)
 
     print(calcCrossSection(sqrtS**2, x, nucs, poleData))
-    print(calcCrossSectionFromRaw(sqrtS**2, x, nucs, poleData))
+    # print(calcCrossSectionFromRaw(sqrtS**2, x, nucs, poleData))
 
 
-def calcCrossSectionFromRaw(S, x, nucs, data):
-    """
-    Calculate the cross section for a given reaction.
-
-    Parameters
-    -----------
-    S: float
-        mandalstam S
-    x: float
-        cos(theta) where theta is the scattering angle
-    nucs: str
-        options are: "pp0" "nn0" "pn+" "np-"
-        specifies the reaction,
-        string order is nucleus before, nucleus after, and outgoing pion charge
-        from getKinematics
-        ```
-        if nucs == "pp0":
-            mNucl = mProton
-            mPion = mpi
-        elif nucs == "nn0":
-            mNucl = mNeutron
-            mPion = mpi
-        elif nucs == "pn+":
-            mNucl = mProton
-            mPion = mpiPlus
-        elif nucs == "np-":
-            mNucl = mNeutron
-            mPion = mpiPlus
-        ```
-    data: SaidPoles
-        Object containing pole data for the calculation
-
-    Returns
-    -------
-    float
-        The cross section in microbarns
-    """
-    sqrtS = np.sqrt(S)
-    S, kVec, qVec = getKinematics(sqrtS, x, nucs)
-    rawM = getRawM(sqrtS, x, nucs, data)
-    # theta = np.acos(x) * 180 / np.pi
-    # print("x=", x)
-    MSquare = np.dot(rawM, np.conjugate(rawM).T)
-    # printMat(rawM, "rawM")
-    # printMat(MSquare, "MSquare")
-
-    # printMat(MSquare, "MSquare")
-    Mtrace = np.trace(MSquare)
-    # print("Mtrace=", Mtrace)
-    crossSec = (vecAbs(qVec) / vecAbs(kVec)) * Mtrace.real
-    crossSec = 0.25 * crossSec * (1 / (64 * S * np.pi**2))
-    # crossSec = crossSec * S * np.pi
-    crossSec = crossSec * MeVtofm**2
-
-    crossSec = crossSec / 100  # Convert to barns
-    crossSec = crossSec / (10**-6)  # Convert to microbarns
-    return crossSec
+# def calcCrossSectionFromRaw(S, x, nucs, data):
+#     """
+#     Calculate the cross section for a given reaction.
+#
+#     Parameters
+#     -----------
+#     S: float
+#         mandalstam S
+#     x: float
+#         cos(theta) where theta is the scattering angle
+#     nucs: str
+#         options are: "pp0" "nn0" "pn+" "np-"
+#         specifies the reaction,
+#         string order is nucleus before, nucleus after, and outgoing pion charge
+#         from getKinematics
+#         ```
+#         if nucs == "pp0":
+#             mNucl = mProton
+#             mPion = mpi
+#         elif nucs == "nn0":
+#             mNucl = mNeutron
+#             mPion = mpi
+#         elif nucs == "pn+":
+#             mNucl = mProton
+#             mPion = mpiPlus
+#         elif nucs == "np-":
+#             mNucl = mNeutron
+#             mPion = mpiPlus
+#         ```
+#     data: SaidPoles
+#         Object containing pole data for the calculation
+#
+#     Returns
+#     -------
+#     float
+#         The cross section in microbarns
+#     """
+#     sqrtS = np.sqrt(S)
+#     S, kVec, qVec = getKinematics(sqrtS, x, nucs)
+#     rawM = getRawM(sqrtS, x, nucs, data)
+#     # theta = np.acos(x) * 180 / np.pi
+#     # print("x=", x)
+#     MSquare = np.dot(rawM, np.conjugate(rawM).T)
+#     # printMat(rawM, "rawM")
+#     # printMat(MSquare, "MSquare")
+#
+#     # printMat(MSquare, "MSquare")
+#     Mtrace = np.trace(MSquare)
+#     # print("Mtrace=", Mtrace)
+#     crossSec = (vecAbs(qVec) / vecAbs(kVec)) * Mtrace.real
+#     crossSec = 0.25 * crossSec * (1 / (64 * S * np.pi**2))
+#     # crossSec = crossSec * S * np.pi
+#     crossSec = crossSec * MeVtofm**2
+#
+#     crossSec = crossSec / 100  # Convert to barns
+#     crossSec = crossSec / (10**-6)  # Convert to microbarns
+#     return crossSec
 
 
 def calcCrossSection(S, x, nucs, data):
@@ -218,98 +218,25 @@ def getMSquare(sqrtS, x, nucs, data):
 
     # Initialize the total squared amplitude
     # Prefactor for the amplitude
-    # prefactor = 4 * np.pi * sqrtS / mN
+     
+    # Remember to square then sum not sum then square
     prefactor = 8 * np.pi * sqrtS
-    # print("prefactor=", prefactor)
-    Mtmp = np.zeros((2, 2), dtype=complex)
+    MSquare = np.zeros((2, 2), dtype=complex)
+    sumMSq = 0.0
     for epsVec in epsVecs:
+        # build the 2×2 amplitude for this polarization only
+        Mpol = np.zeros((2, 2), dtype=complex)
         for i, target in enumerate(targets):
-            # F returns a 2x2 matrix
-            Mtmp += coefs[i] * F(x, sqrtS, qVec, kVec, epsVec, data, target) * prefactor
+            Mpol += coefs[i] * F(x, sqrtS, qVec, kVec, epsVec, data, target)
+        Mpol *= prefactor
 
-    # Compute |Mtmp|^2 by taking Mtmp Mtmp^\dagger and then the trace
-    M_conjugate_transpose = Mtmp.conjugate().T
-    Mtmp_MS = np.dot(Mtmp, M_conjugate_transpose)  # This is a 2x2 matrix
+        # now square _that_ one, sum over final spins, then add to sumMSq
+        Mpol_ms = Mpol @ Mpol.conjugate().T
+        sumMSq += np.trace(Mpol_ms).real
 
-    # Add the trace of Mtmp_MS to MSquare
-    MSquare = np.trace(Mtmp_MS).real
+    return sumMSq
     # MSquare = np.sum(Mtmp_MS).real  # both are equivalent, trace is slightly more accurate with floating point
     # MSquare now contains the sum over the two photon polarizations of |M|^2.
-
-    return MSquare
-
-
-def getRawM(sqrtS, x, nucs, data):
-    """
-    Get the raw matrix element.
-
-    Parameters
-    ----------
-    sqrtS: float
-        The square root of the Mandelstam variable S
-    x: float
-        cos(theta) where theta is the scattering angle
-    nucs: str
-        Specifies the reaction ("pp0", "nn0", "pn+", "np-")
-    data: SaidPoles
-        Object containing pole data for the calculation
-
-    Returns
-    -------
-    numpy.ndarray
-        2x2 complex matrix representing the amplitude
-    """
-    _, kVec, qVec = getKinematics(sqrtS, x, nucs)
-
-    epsVecs = np.array([[-1, -1j, 0], [1, -1j, 0]]) / np.sqrt(2)
-    targets = ["p12", "n12", "32q"]
-
-    if nucs == "pp0":
-        coefs = np.array([1, 0, 2 / 3])
-    elif nucs == "nn0":
-        coefs = np.array([0, -1, 2 / 3])
-    elif nucs == "pn+":
-        coefs = np.array([1, 0, -1 / 3]) * np.sqrt(2)
-    elif nucs == "np-":
-        coefs = np.array([0, 1, 1 / 3]) * np.sqrt(2)
-    else:
-        raise ValueError(f"nucs value '{nucs}' not supported")
-    # Initialize the total squared amplitude
-    prefactor = 8 * np.pi * sqrtS
-
-    Mtmp = np.zeros((2, 2), dtype=complex)
-
-    for i, epsVec in enumerate(epsVecs):
-        # Create a temporary matrix for this polarization's contribution
-        pol_contribution = np.zeros((2, 2), dtype=complex)
-
-        for j, target in enumerate(targets):
-            # Calculate F for this target/polarization
-            f_result = F(x, sqrtS, qVec, kVec, epsVec, data, target)
-            # print("In python getRawM print")
-            # print("x,sqrtS,target=", x, sqrtS, target)
-            # print("qVec=", qVec)
-            # print("kVec=", kVec)
-            # print("epsVec=", epsVec)
-            # printMat(f_result, "f_result")
-            # print("End python getRawM prints")
-            # raise ValueError("")
-            # Scale by coefficient
-            scaled = coefs[j] * f_result
-
-            # Add to this polarization's contribution
-            pol_contribution += scaled
-
-        # Apply prefactor to this polarization's contribution
-        pol_contribution = prefactor * pol_contribution
-
-        # Add to total matrix
-        Mtmp += pol_contribution
-    # print("qVec=", qVec)
-    # print("kVec=", kVec)
-    # print("sqrtS, x, nucs=", sqrtS, x, nucs)
-    # printMat(Mtmp, "Mtmp")
-    return Mtmp
 
 
 def printMat(mat, val=None):
@@ -341,8 +268,7 @@ def getKinematics(sqrtS, x, nucs):
 
     Returns
     -------
-    tuple
-        (S, kVec, qVec) - Mandelstam S, photon momentum vector, pion momentum vector
+    S, kVec, qVec - Mandelstam S, photon momentum vector, pion momentum vector
     """
     if nucs == "pp0":
         mNucl = mProton
@@ -481,7 +407,7 @@ def F(x, sqrtS, qVec, kVec, epsVec, data, target):
     F1Term = matDotVec(sigVec, epsVec) * F1 * 1j
 
     F2 = getF(x, sqrtS, data, 2, target=target)
-    F2Term = matDotVec(sigVec, qVec) @ matDotVec(sigVec, np.cross(kVec, epsVec)) * F2
+    F2Term = matDotVec(sigVec, qVec) @ matDotVec(sigVec, np.cross(kVec, epsVec)) * F2 #operator @ is dot product
     F2Term = F2Term / (vecAbs(qVec) * vecAbs(kVec))
 
     F3 = getF(x, sqrtS, data, 3, target=target)
@@ -490,11 +416,8 @@ def F(x, sqrtS, qVec, kVec, epsVec, data, target):
 
     F4 = getF(x, sqrtS, data, 4, target=target)
     F4Term = 1j * matDotVec(sigVec, qVec) * np.dot(qVec, epsVec) * F4
-    F4Term = F4Term / (vecAbs(qVec) * vecAbs(kVec))
+    F4Term = F4Term / (vecAbs(qVec) * vecAbs(qVec))
     out = F1Term + F2Term + F3Term + F4Term
-    # flatOut=out.flatten()
-    # if np.max( np.array([abs(x) for x in flatOut ]))>1e-4:
-    #
     # print("in python F function")
     # print("x", x)
     # print("sqrtS", sqrtS)
@@ -534,7 +457,7 @@ def getF(x, sqrtS, data, Fi, target):
         The F_i value for the given parameters
     """
     out = 0
-    for ell in range(5):  # Fixed to iterate through all 4 ell values
+    for ell in range(6):  # Fixed to iterate through all ell
         Eplus, Mplus, Eminus, Mminus = getPoles(data, target, ell, sqrtS)
 
         # Debug prints for all ell values
@@ -631,7 +554,7 @@ def parseSpinString(spinString):
     Parameters
     ----------
     spinString: str
-        String like 'S11pE' or 'P33nM' to be parsed
+        String like 'S11pE', 'P33nM', 'H111pE', or 'H311nE' to be parsed
 
     Returns
     -------
@@ -643,23 +566,35 @@ def parseSpinString(spinString):
         I = 0.5 or 1.5 (usually)
         subChan = the substring after the partial-wave block, e.g. 'pE' or 'nE'
     """
-
-    # partial wave label is first 3 chars, e.g. 'S11', 'P33', ...
-    pw = spinString[:3]  # e.g. 'S11'
-    subChan = spinString[3:]  # e.g. 'pE', 'nE', etc.
-
-    letter = pw[0].upper()  # 'S','P','D','F',...
-    try:
-        twoI = int(pw[1])  # e.g. 1 => I=1/2, or 3 => I=3/2
-        twoJ = int(pw[2])  # e.g. 1 => J=1/2, etc.
-    except ValueError:
-        return None
-
+    # Extract the angular momentum letter
+    letter = spinString[0].upper()  # 'S','P','D','F',...
+    
     # Map letter -> L
-    L_map = {"S": 0, "P": 1, "D": 2, "F": 3, "G": 4}
+    L_map = {"S": 0, "P": 1, "D": 2, "F": 3, "G": 4, "H": 5}
     if letter not in L_map:
         return None
     ell = L_map[letter]
+    
+    # Extract the numerical part (could be 11, 111, 31, 311, etc.)
+    match = re.match(r'[SDPFGH](\d+)([a-zA-Z][a-zA-Z])', spinString)
+    if not match:
+        return None
+    
+    # The numerical part could now be like '11', '111', '31', '311'
+    num_part = match.group(1)
+    subChan = match.group(2)  # e.g. 'pE', 'nE', etc.
+    
+    # Handle cases with 2-digit J values (like H111, H311)
+    if len(num_part) == 3:
+        # For formats like H111, H311 - first digit is 2*I, last two digits are 2*J
+        twoI = int(num_part[0])
+        twoJ = int(num_part[1:3])
+    elif len(num_part) == 2:
+        # For standard format like S11, P33 - first digit is 2*I, second digit is 2*J
+        twoI = int(num_part[0])
+        twoJ = int(num_part[1])
+    else:
+        return None
 
     I = 0.5 * twoI
     J = 0.5 * twoJ
@@ -694,10 +629,10 @@ def buildspinstring(plusminus, ell, i, subchan):
     Returns
     -------
     str or None
-        Spin string like 'p33nm' or 's11pe', or None if inputs are unphysical
+        Spin string like 'p33nm', 's11pe', 'h111pe', or None if inputs are unphysical
     """
     # invert ell-> letter
-    l_map_inv = {0: "s", 1: "p", 2: "d", 3: "f", 4: "g"}
+    l_map_inv = {0: "s", 1: "p", 2: "d", 3: "f", 4: "g", 5: "h"}
 
     if ell not in l_map_inv:
         return None
@@ -719,8 +654,12 @@ def buildspinstring(plusminus, ell, i, subchan):
     if twoj < 1:
         return None  # e.g. 'minus' for ell=0 => unphysical
 
-    # partial wave label e.g. 'p33'
-    pw = f"{letter}{twoi}{twoj}"
+    # partial wave label e.g. 'p33' or 'h111'
+    # Use special case for double-digit J values
+    if twoj >= 10:
+        pw = f"{letter}{twoi}{twoj}"
+    else:
+        pw = f"{letter}{twoi}{twoj}"
 
     # subchan appended
     out = pw + subchan
@@ -1122,10 +1061,10 @@ class SaidPoles:
                 if len(parts) < 3:
                     continue
 
-                # build spinString = 'S11pE'
-                waveLabel = parts[1].strip()  # e.g. 'S11'
+                # build spinString = 'S11pE' or 'H111pE'
+                waveLabel = parts[1].strip()  # e.g. 'S11' or 'H111'
                 subChan = parts[2].strip()  # e.g. 'pE'
-                spinString = waveLabel + subChan  # => 'S11pE'
+                spinString = waveLabel + subChan  # => 'S11pE' or 'H111pE'
 
                 # parse it
                 parsed = parseSpinString(spinString)
@@ -1284,7 +1223,6 @@ def legP(x, n, deriv=0):
                 return 1
             case 1:
                 return x
-
             case 2:
                 return 1.5 * (x**2) - 0.5
             case 3:
@@ -1292,7 +1230,9 @@ def legP(x, n, deriv=0):
             case 4:
                 return (1 / 8) * (3 - 30 * x**2 + 35 * x**4)
             case 5:
-                (1 / 8) * (15 * x - 70 * x**3 + 63 * x**5)
+                return (1 / 8) * (15 * x - 70 * x**3 + 63 * x**5)
+            case 6:
+                return (1/16) * (231* x**6 - 315 * x**4 + 105* x**2 - 5)
             case _:
                 raise ValueError(f"legendreP not implimented for given n={n}")
     elif deriv == 1:
@@ -1314,6 +1254,8 @@ def legP(x, n, deriv=0):
                 return (-60 * x + (140 * (x**3))) / 8
             case 5:
                 return (15 - 210 * x**2 + 315 * x**4) / 8
+            case 6:
+                return (693*x**5)/8 - (315*x**3)/4 + (105*x)/8
             case _:
                 raise ValueError(f"legendreP not implimented for given n={n}")
     elif deriv == 2:
@@ -1336,6 +1278,8 @@ def legP(x, n, deriv=0):
                 return -7.5 + 52.5 * (x**2)
             case 5:
                 return (-420 * x + 1260 * x**3) / 8
+            case 6:
+                return (3465*x**4)/8 - (945*x**2)/4 + 105/8
             case _:
                 raise ValueError(f"legendreP not implimented for given n={n}")
     # print("deriv=", deriv)

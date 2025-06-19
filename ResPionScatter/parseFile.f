@@ -4,8 +4,12 @@ c     Author: Translated from Python version by alexl
       module parseFileData
       implicit none
       
+c     Include common physics constants and parameters
+      include '../common-densities/params.def'
+      include '../common-densities/calctype.def'
+      include '../common-densities/constants.def'
+      
       integer, parameter :: MAXDATA = 50000
-      real*8, parameter :: PI = 3.141592653589793d0
       
       integer :: totalEntries
       integer :: letterIndex(MAXDATA)
@@ -100,7 +104,7 @@ c        Try to parse data line
                   twoI(totalEntries) = current2I
                   twoL(totalEntries) = current2L
                   wcmValues(totalEntries) = wcm
-                  delValues(totalEntries) = del * PI / 180.0d0
+                  delValues(totalEntries) = del * Pi / 180.0d0
                   srValues(totalEntries) = sr
                endif
             endif
@@ -179,7 +183,7 @@ c        Try to parse data line
          endif
       enddo
       
-      if (best_match .gt. 0) then
+      if (best_match .gt. 0 .and. min_diff .lt. 50.0d0) then
          del_result = delValues(best_match)
          sr_result = srValues(best_match)
          found = .true.
@@ -198,6 +202,11 @@ c        Try to parse data line
       character*200 :: cmd
       character*50 :: outname
       
+c     Initialize variables
+      found = .false.
+      del_result = 0.0d0
+      sr_result = 0.0d0
+      
       call getScatteringData(letterToIndex(letter), target2I, target2L, 
      &     wcm_target, del_result, sr_result, found)
 
@@ -212,80 +221,15 @@ c        Try to parse data line
       cmd = 'python3 pyVersion/parseFile.py ' // trim(arg1) // ' ' // 
      &      trim(arg2) // ' ' // trim(arg3) // ' ' // trim(arg4) 
       call EXECUTE_COMMAND_LINE(cmd)
-      
-      write(*,'(A,ES12.5,A,ES12.5)') 'Fortran result: del=', del_result,
-     &     ' sr=', sr_result
-      write(*,'(A)') '-------------------------------------------------'
+      if(found) then
+        write(*,'(A,ES12.5,A,ES12.5)') 'Fortran result: del=',
+     &   del_result, ' sr=', sr_result
+        write(*,'(A)') '---------------------------------------------'
+      else
+        write(*,'(A)') 'Fortran result - Entry not found'
+        write(*,'(A)') '---------------------------------------------'
+      endif
       end subroutine getScatteringDataByLetter
       
       end module parseFileData
       
-      program testParseFile
-      use parseFileData
-      implicit none
-      
-      real*8 :: del_val, sr_val
-      logical :: found
-      integer :: verbosity = 1
-      
-      call initializeFileData('said-pi.txt', verbosity)
-      
-c     Test S-wave states
-      call getScatteringDataByLetter('S', 1, 1, 1080.0d0, 
-     &     del_val, sr_val, found)
-      call getScatteringDataByLetter('S', 1, 1, 1200.0d0, 
-     &     del_val, sr_val, found)
-      call getScatteringDataByLetter('S', 3, 1, 1150.0d0, 
-     &     del_val, sr_val, found)
-
-c     Test P-wave states  
-      call getScatteringDataByLetter('P', 1, 1, 1100.0d0, 
-     &     del_val, sr_val, found)
-      call getScatteringDataByLetter('P', 1, 3, 1250.0d0, 
-     &     del_val, sr_val, found)
-      call getScatteringDataByLetter('P', 3, 1, 1180.0d0, 
-     &     del_val, sr_val, found)
-      call getScatteringDataByLetter('P', 3, 3, 1232.0d0, 
-     &     del_val, sr_val, found)
-
-c     Test D-wave states
-      call getScatteringDataByLetter('D', 1, 3, 1520.0d0, 
-     &     del_val, sr_val, found)
-      call getScatteringDataByLetter('D', 1, 5, 1400.0d0, 
-     &     del_val, sr_val, found)
-      call getScatteringDataByLetter('D', 3, 3, 1200.0d0, 
-     &     del_val, sr_val, found)
-      call getScatteringDataByLetter('D', 3, 5, 1300.0d0, 
-     &     del_val, sr_val, found)
-
-c     Test F-wave states
-      call getScatteringDataByLetter('F', 1, 5, 1680.0d0, 
-     &     del_val, sr_val, found)
-      call getScatteringDataByLetter('F', 1, 7, 1800.0d0, 
-     &     del_val, sr_val, found)
-      call getScatteringDataByLetter('F', 3, 5, 1450.0d0, 
-     &     del_val, sr_val, found)
-      call getScatteringDataByLetter('F', 3, 7, 1296.0d0, 
-     &     del_val, sr_val, found)
-
-c     Test G-wave states
-      call getScatteringDataByLetter('G', 1, 7, 1900.0d0, 
-     &     del_val, sr_val, found)
-      call getScatteringDataByLetter('G', 1, 9, 2000.0d0, 
-     &     del_val, sr_val, found)
-      call getScatteringDataByLetter('G', 3, 7, 1750.0d0, 
-     &     del_val, sr_val, found)
-      call getScatteringDataByLetter('G', 3, 9, 1850.0d0, 
-     &     del_val, sr_val, found)
-
-c     Test unphysical state (should fail)
-      call getScatteringDataByLetter('D', 3, 7, 1236.0d0, 
-     &     del_val, sr_val, found)
-
-c     Test edge cases and famous resonances
-      call getScatteringDataByLetter('P', 3, 3, 1232.0d0, 
-     &     del_val, sr_val, found)
-      call getScatteringDataByLetter('D', 1, 3, 1520.0d0, 
-     &     del_val, sr_val, found)
-      
-      end program testParseFile

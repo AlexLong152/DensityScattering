@@ -28,7 +28,7 @@ c     write(*,*) "Warning, this cross section function only works for spin 1/2 r
       S=sqrtS*sqrtS
       
       call getKinematics(sqrtS, x, nuc, S, kVec, qVec, mNucl)
-      call getRawM(sqrtS, x, nuc, Mmat, mNucl, twoSnucl)
+      call getRawM(sqrtS, x, nuc, Mmat, mNucl, twoSnucl,sqrtS)
       ! call printmat(Mmat,"Mmat")
 
 c     write(*,'(A,E30.25)') "For x=",x
@@ -58,13 +58,14 @@ c     write(*,*) "crossSec=", crossSec
       end subroutine
 
 
-      subroutine getRawM(sqrtS, x, nucs, Mout, mNucl,twoSnucl)
+      subroutine getRawM(sqrtS, x, nucs, Mout, mNucl,twoSnucl,sqrtSReal)
 c     Get the raw matrix element.
 c     
 c     Parameters
 c     ----------
 c     sqrtS: double precision
-c         The square root of the Mandelstam variable S
+c         The equivalent sqrtS for the kinetmatics we have 
+c         if the reaction was single nucleon scattering
 c     x: double precision
 c         x=cos(theta)
 c     nucs: character*3
@@ -73,12 +74,14 @@ c     Mmat: double complex, dimension(2,2) (output)
 c         2x2 complex matrix representing the amplitude
 c     mNucl: double precision
 c         Mass of the nucleon
+c     sqrtS: double precision
+c         The square root of the Mandelstam variable S
 c     ==================================================
       implicit none
       include '../common-densities/constants.def'
 
 c     Input parameters
-      double precision sqrtS, x, mNucl
+      double precision sqrtS, x, mNucl,sqrtSReal
       character*3 nucs
       integer twoSnucl
       
@@ -148,7 +151,7 @@ c     Set coefficients based on reaction type
           return
       endif
       
-      call getKinematics(sqrtS, x, nucs, S, kVec, qVec, mNucl)
+      call getKinematics(sqrtSReal, x, nucs, S, kVec, qVec, mNucl)
       ! write(*,*) "In poles.f"
       ! write(*,*) "sqrtS=", sqrtS 
       ! write(*,*) "x=", x 
@@ -158,7 +161,7 @@ c     Set coefficients based on reaction type
 
 
 c     Calculate prefactor
-      prefactor = 8.0d0 * Pi * sqrtS
+      prefactor = 8.0d0 * Pi * sqrtSReal
       
 c     Initialize Mmat
       Mmat = dcmplx(0.0d0, 0.0d0)
@@ -212,23 +215,8 @@ c         Add to total matrix
           Mmat = Mmat + polContribution
       enddo
       
-c     write(*,*) "Mmat=", Mmat 
-c     TODO generalize this to any spin state
-      do i = 1, 2
-      do j = 1, 2
-          if (Mmat(i,j).ne.Mmat(i,j)) then
-            write(*,*) "Got Nan value"
-            stop
-          end if
-c         write(*,'(A,"(",I1,",",I1,")=",E18.10,1x,E18.10,"j")')
-c    &       "Mmat", i, j, real(Mmat(i,j)), aimag(Mmat(i,j))
-      end do
-      end do
-
-      if (twoSnucl.ne.1) then
-        write(*,*) "Warning: the mapping Mmat to Mout is not done"
-      end if
-      
+c     Cast the "regular" matricies generated from f to the spin indicies 
+c     we assigned in main
       Mout(-1,-1)=Mmat(1,1)
       Mout(-1,1)=Mmat(1,2)
       Mout(1,-1)=Mmat(2,1)

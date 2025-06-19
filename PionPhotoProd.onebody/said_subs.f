@@ -79,7 +79,6 @@ c     Initialize output values to zero
       Mplus = dcmplx(0.0d0, 0.0d0)
       Eminus = dcmplx(0.0d0, 0.0d0)
       Mminus = dcmplx(0.0d0, 0.0d0)
-      
 c     Units conversion factor is now defined in the module
       
 c     Check if we need to load the SAID data

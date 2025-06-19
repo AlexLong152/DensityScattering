@@ -114,38 +114,6 @@ def dataExpCheck(dataExp):
         print(ccs[i], "--", theta)
 
 
-def basicCheck():
-    # Original test
-    sqrtS = 1100
-    theta = 40 * np.pi / 180
-    x = np.cos(theta)
-    nucs = "pp0"
-    data = ppl.SaidPoles()
-    # Debug prints to match Fortran test
-    print("sqrtS =", sqrtS)
-    print("theta =", theta, "radians =", 40, "degrees")
-    print("x =", x)
-    print("nucs =", nucs)
-
-    # Get matrix and do calculation
-    Mtmp = ppl.getRawM(sqrtS, x, nucs, data)
-    print("\n Final Matrix Mtmp:")
-    print(Mtmp)
-    # Calculate MSquare
-    MCT = Mtmp.conjugate().T
-    Mtmp_MS = np.dot(Mtmp, MCT)  # This is a 2x2 matrix
-
-    print("\nAfter matrix multiplication Mtmp·Mtmp^†:")
-    print(Mtmp_MS)
-    # Add the trace of Mtmp_MS to MSquare
-    MSquare2 = np.trace(Mtmp_MS).real
-    print("Trace =", np.trace(Mtmp_MS))
-    print("MSquare2=", MSquare2)
-
-    # Call the getPoles test as a separate function
-    test_getPoles()
-
-
 def test_getPoles():
     """Test the getPoles function with specific parameters that match the Fortran test."""
     data = ppl.SaidPoles()
@@ -658,39 +626,6 @@ def checkGetFFortran():
         print("Passed")
 
 
-def checkGetRawM():
-    x = float(sys.argv[1])
-    sqrtS = float(sys.argv[2])
-    nucs = sys.argv[3]
-    MFortran = np.zeros((2, 2), dtype=complex)
-
-    # MmatFortran[0, 0] = parse_complex(sys.argv[4])
-    # MmatFortran[0, 1] = parse_complex(sys.argv[5])
-    # MmatFortran[1, 0] = parse_complex(sys.argv[6])
-    # MmatFortran[1, 1] = parse_complex(sys.argv[7])
-
-    MFortran[0, 0] = complex(sys.argv[4])
-    MFortran[0, 1] = complex(sys.argv[5])
-    MFortran[1, 0] = complex(sys.argv[6])
-    MFortran[1, 1] = complex(sys.argv[7])
-    flat = MFortran.flatten()
-    # for i in range(4, 8):
-    #     print(sys.argv[i])
-
-    data = ppl.SaidPoles()
-    Mpython = ppl.getRawM(sqrtS, x, nucs, data)
-    diff = Mpython - MFortran
-    # print("diff=\n", diff)
-    diff2 = np.array([abs(x) for x in diff.flatten()])
-    if np.max(diff2) > 1e-6:
-        print("ISSUE HERE" + 150 * "!")
-        print("Mpython=\n", Mpython)
-        print("MFortran=\n", MFortran)
-    else:
-        # Maxp = np.max(np.array([abs(x) for x in Mpython.flatten()]))
-        # print("Passed, Maxp=", Maxp)
-        print("Passed")
-
 
 if __name__ == "__main__":
     # When called with command-line arguments, run the appropriate test
@@ -706,9 +641,6 @@ if __name__ == "__main__":
             case "getPoles":
                 sys.argv.remove("getPoles")
                 checkPoleReadingFortran()
-            case "getRawM":
-                sys.argv.remove("getRawM")
-                checkGetRawM()
             case "checkF":
                 sys.argv.remove("checkF")
                 checkFFortran()

@@ -49,12 +49,11 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       PROGRAM onebodydensitymain
 
       USE CompDens              ! needs module CompDens.mod
+      USE pionScatLib           ! use full pionScatLib module (constants now from constants.def)
 
       IMPLICIT NONE
 c**********************************************************************
-      include '../common-densities/params.def'
-      include '../common-densities/calctype.def'
-      include '../common-densities/constants.def'
+c     Constants now come through pionScatLib -> parseFileData
 c**********************************************************************
 c     External functions for pion photoproduction
 c     EXTERNAL INITIALIZE_PION_PHOTO
@@ -85,6 +84,7 @@ c     outfile-name of output file
 
       integer inUnitno,outUnitno,extQnumlimit, extQnum
       real*8 Egamma,kgamma,thetaL,thetacm,Elow,Ehigh,Einterval
+      real*8 pAbs, mpi1
       
       real*8 thetaLow,thetaHigh,thetaInterval
       integer calctype,frame,Nangles,Nenergy,ienergy,j ! number of energies/angles; index for energies/angles
@@ -104,6 +104,7 @@ c     onebody knows only about 1N amplitude's Feynman parameter integration
 c     
       integer Nx                ! grid size 
       real*8 xq(Nxmax),wx(Nxmax)! points & weights
+      real*8 mpiArr(3)
       
 c     
 c----------------------------------------------------------------------
@@ -180,11 +181,12 @@ c     0: do not delete; 1: delete un-gz'd file; 2: delete downloaded and un-gz'd
 
       complex*16, allocatable :: Mmat(:,:)
       complex*16, allocatable :: outputMat(:,:,:) 
-      real*8 sqrtS,x
+      real*8 sqrtS,x,sqrtSReal
       character*3 nuc
       character piCharges(3)
       character isospin2Str(-1:1)
       integer lab, cm
+      integer piCharge
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     end OF VARIABLE DECLARATIONS, BEGINNING OF CODING
@@ -246,6 +248,8 @@ c     hgrie June 2017: keep original filename: needed for replacements of energy
 c     Initialize pion photoproduction data
 c     Setting up quadratures for the Feynman integrals
       call AnglePtsWts(Nx,1,Nxmax,0.d0,1.0d0,xq,wx,Nx,verbosity)
+c     Initialize pion scattering data from SAID database
+      call initializeFileData('said-pi.txt', verbosity)
 c**********************************************************************
 c     BS: new Nangles algebra due to changed input form
       Nangles=int((thetaHigh-thetaLow)/thetaInterval)+1
@@ -256,6 +260,8 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Nov 30 2022 Hard coded values from https://arxiv.org/abs/1103.3400v2 for 3He
 c     3He values
 
+c     Set pion charge for scattering calculation (0 = neutral pion)
+      piCharge = 0
           
 c       Epsilon stuff. WLOG photon comes from the z direction
 c**********************************************************************
@@ -296,8 +302,6 @@ c     hgrie Sep 2014: if thetaL is ZERO degrees, actual calculated at 1 Degree
                kgamma=Egamma      
             end if
 c**********************************************************************
-c           call calcphotonmomenta(k,kth,kphi,t,kp,kpth,kpphi,omega,
-c    &           Qk,Qkth,Qkphi,kgamma,thetacm,verbosity)
             omega=Egamma
             
 c**********************************************************************
@@ -316,30 +320,27 @@ c     hgrie May 2018: outsourced into subroutine common-densities/makedensityfil
 c**********************************************************************
 c     hgrie May 2018: read 1N density
             call read1Ndensity(densityFileName,Anucl,twoSnucl,omega,thetacm,verbosity)
+            omega=omega+10
             outputMat=c0
-            nuc='pp0'
-            piCharges(1)="-"
-            piCharges(2)="0"
-            piCharges(3)="+"
-
-            isospin2Str(-1)="n"
-            isospin2Str(0)="#" !This should not happen
-            isospin2Str(1)="p"
             x=cos(thetacm)
-            sqrtS=omega+sqrt(omega*omega+mNucl*mNucl)
-c           write(*,*) "extQnumlimit=", extQnumlimit 
+
+            mpiArr=(/mpi,mpi0,mpi/)
             do extQnum=1,extQnumlimit
+            mpi1=mpiArr(extQnum)
+            piCharge=extQnum-2
+            pAbs=sqrt(omega*omega-mpi1*mpi1)
+
+            sqrtSReal=omega+sqrt(Mnucl*Mnucl+pAbs*pAbs)
+            sqrtS=omega+sqrt(mNucleon*mNucleon+pAbs*pAbs)
             do rindx=1,maxrho1bindex
                 CALL get1Nqnnum(rindx,twom1N,twomt1N,twoMz,twom1Np,twomt1Np,twoMzp,L1N,ML1N)
                 if (L1N.eq.0) then !ML1N is automatically zero if L1N is
                   Mmat=c0
-                  nuc(1:1)=isospin2Str(twomt1N)
-                  nuc(2:2)=isospin2Str(twomt1Np)
-                  ! nuc(3:3)=piCharges(extQnum)
-                  nuc(3:3)="0" !only looking at neutral pion photoproduction
-                  call getRawM(sqrtS,x , nuc, Mmat, Mnucl, twoSnucl)
+c                 write(*,*) "About to call getMat with sqrtS=", sqrtS, ", x=", x, ", twomt1N=", twomt1N, ", piCharge=", piCharge
+                  call getMat(sqrtS, x, twomt1N, piCharge, Mmat,sqrtSReal)
+c                 write(*,*) "Returned from getMat, Mmat=", Mmat 
                   outputMat(extQnum,twoMzp,twoMz)= outputMat(extQnum,twoMzp,twoMz)+
-     &                            Anucl*rho1b(rindx)*Mmat(twom1Np,twom1N)!Argument order?
+     &                            Anucl*rho1b(rindx)*Mmat(twom1Np,twom1N)
                 end if 
             end do              !rindx   
             end do             !extQnum
@@ -374,8 +375,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
      
       write (*,*) '*** Wrote output to file: ',TRIM(outfile)
       
-      write(*,*) "Remember to change the value of the energy to match the density "
-      stop
+      write(*,*) "Artifically added 10 to energy - fix at some point"
       
 c20   format(' ',A,I6,A,8I8,A,E24.15,SP,E25.15," I")
 c30   format(' ',A,5I4,A,F20.13,SP,F21.13," I")

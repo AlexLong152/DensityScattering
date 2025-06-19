@@ -29,6 +29,7 @@ OBJS    := \
     ../onebodyvia1Ndensity/construct1NAmps.o \
     ../onebodyvia1Ndensity/read1Ndensity.o \
     ../onebodyvia1Ndensity/trafo1Namps-to-helicity.o \
+    ../onebodyvia1Ndensity/readinput-onebody.o \
     ../common-densities/gauleg.o \
     ../common-densities/gridGauleg.o \
     ../common-densities/makedensityfilename.o \
@@ -38,11 +39,9 @@ OBJS    := \
     ../common-densities/readinput-densities.o \
     ../common-densities/outputroutine.o \
     main.onebodyvia1Ndensity.o \
-    poles.o \
-    readinput-onebody.o \
-    said_subs.o \
-    subroutines.o \
-    utility_suite.o
+    utility_suite.o \
+    parseFile.o \
+    PionScat.o
 
 # ─── include‐file dependencies ─────────────────────────────────────────────────
 INCS    := \
@@ -67,6 +66,14 @@ TEST_OBJS := $(filter-out main.onebodyvia1Ndensity.o, $(OBJS))
 test: testCrossSec.o $(TEST_OBJS)
 	$(FC) -o testCrossSec testCrossSec.o $(TEST_OBJS) $(LDFLAGS)
 	chmod +x testCrossSec
+
+# Special rule for main program that depends on PionScat module
+main.onebodyvia1Ndensity.o: main.onebodyvia1Ndensity.f $(INCS) PionScat.o
+	$(FC) $(FFLAGS) $< -o $@
+
+# Special rule for parseFile that depends on PionScat module
+parseFile.o: parseFile.f $(INCS) PionScat.o
+	$(FC) $(FFLAGS) $< -o $@
 
 # compile any .f → .o if sources or .def files change
 %.o: %.f $(INCS)

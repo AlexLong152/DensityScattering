@@ -7,7 +7,7 @@ FC      := mpif90
 HDF5_DIR := /usr/local/hdf5/openmpi
 
 # ─── compiler flags ───────────────────────────────────────────────────────────
-FFLAGS  := -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-132 \
+FFLAGS  := -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none \
            -ffpe-summary=none -mcmodel=large \
            -I$(HDF5_DIR)/include \
            -I../common-densities/density-modules \
@@ -53,7 +53,7 @@ INCS    := \
 # ─── final executable ─────────────────────────────────────────────────────────
 COMMAND := onebodyvia1Ndensity
 
-.PHONY: all clean
+.PHONY: all clean test
 
 all: $(COMMAND)
 
@@ -61,9 +61,16 @@ $(COMMAND): $(OBJS)
 	$(FC) -o $@ $(OBJS) $(LDFLAGS)
 	chmod +x $@
 
+# Define test objects excluding the main program object
+TEST_OBJS := $(filter-out main.onebodyvia1Ndensity.o, $(OBJS))
+
+test: testCrossSec.o $(TEST_OBJS)
+	$(FC) -o testCrossSec testCrossSec.o $(TEST_OBJS) $(LDFLAGS)
+	chmod +x testCrossSec
+
 # compile any .f → .o if sources or .def files change
 %.o: %.f $(INCS)
 	$(FC) $(FFLAGS) $< -o $@
 
 clean:
-	rm -f $(OBJS) $(COMMAND)
+	rm -f $(OBJS) $(COMMAND) testCrossSec testCrossSec.o

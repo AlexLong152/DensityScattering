@@ -180,7 +180,7 @@ c     0: do not delete; 1: delete un-gz'd file; 2: delete downloaded and un-gz'd
 
       complex*16, allocatable :: Mmat(:,:)
       complex*16, allocatable :: outputMat(:,:,:) 
-      real*8 sqrtS,x
+      real*8 sqrtS,x,sqrtSReal
       character*3 nuc
       character piCharges(3)
       character isospin2Str(-1:1)
@@ -326,7 +326,11 @@ c     hgrie May 2018: read 1N density
             isospin2Str(0)="#" !This should not happen
             isospin2Str(1)="p"
             x=cos(thetacm)
-            sqrtS=omega+sqrt(omega*omega+mNucl*mNucl)
+            sqrtSReal=omega+sqrt(omega*omega+mNucl*mNucl)
+c           Below is not the "real" value of mandalstam sqrtS, this is the value
+c           of the equivalent sqrtS for the kinematics of the poles, this value
+c           picks out which pole to load
+            sqrtS=omega+sqrt(omega*omega+Mnucleon*Mnucleon)
 c           write(*,*) "extQnumlimit=", extQnumlimit 
             do extQnum=1,extQnumlimit
             do rindx=1,maxrho1bindex
@@ -337,7 +341,7 @@ c           write(*,*) "extQnumlimit=", extQnumlimit
                   nuc(2:2)=isospin2Str(twomt1Np)
                   ! nuc(3:3)=piCharges(extQnum)
                   nuc(3:3)="0" !only looking at neutral pion photoproduction
-                  call getRawM(sqrtS,x , nuc, Mmat, Mnucl, twoSnucl)
+                  call getRawM(sqrtS,x , nuc, Mmat, Mnucl, twoSnucl,sqrtSReal)
                   outputMat(extQnum,twoMzp,twoMz)= outputMat(extQnum,twoMzp,twoMz)+
      &                            Anucl*rho1b(rindx)*Mmat(twom1Np,twom1N)!Argument order?
                 end if 

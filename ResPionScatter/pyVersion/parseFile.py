@@ -73,8 +73,8 @@ if __name__ == "__main__":
         print("should be .02, 0")
         print(dataDict[3][3][7][1296])
 
-        print("should be .18, 0")
-        print(dataDict[2][3][7][1236])
+        # print("should be .18, 0")
+        # print(dataDict[2][3][7][1236])
     else:
         assert len(argv) == 5
         arg1 = int(argv[1])
@@ -85,7 +85,7 @@ if __name__ == "__main__":
             v1 = dataDict[arg1][arg2][arg3][arg4][0]
             v2 = dataDict[arg1][arg2][arg3][arg4][1]
             print(
-                f"Python result:    del={v1:9.5e} sr={v2:9.5e}",
+                f"Python result:  del= {v1:9.5e} sr={v2:9.5e}",
             )
         except KeyError:
-            print("Entry not found\n")
+            print("Python result -- Entry not found")

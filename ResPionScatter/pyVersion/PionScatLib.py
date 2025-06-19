@@ -37,7 +37,7 @@ def main():
     isospin = 1
     piCharge = 1
     thetas = np.arange(0, 181, 30)
-    print("  theta      CC       Mat CS")
+    print("  theta      CS       Mat CS       Ratio")
     for theta in thetas:
         x = np.cos(theta * np.pi / 180)
         # f, g = getGH(sqrtS, x, isospin, piCharge)
@@ -63,8 +63,19 @@ def getCS(sqrtS, x, isospin=1, piCharge=0):
 
 
 def getMat(sqrtS, x, isospin=1, piCharge=0):
+    """
+    Parameters
+    ----------
+    sqrtS   : float
+      Center‐of‐mass energy (MeV)
+    x       : float
+      cos(θ)
+    isospin : int
+      Nucleon isospin (1=proton, −1=neutron)
+    piCharge: int
+      Pion charge (−1, 0, +1)
     g, h = getGH(sqrtS, x, isospin, piCharge)
-
+    """
     m1 = mpiDict[piCharge]  # pion mass (MeV)
     m2 = mNuc[isospin]  # nucleon mass (MeV)
 
