@@ -19,27 +19,59 @@ MeVtofm = 1.0 / 197.327
 M6Li = 6.0151228874 * 931.49432
 # Based on snippet:
 # BKM values at Odelta3
-BKMProtonalphaE1 = 12.52
-BKMNeutronalphaE1 = 12.52
-BKMProtonbetaM1 = 1.25
-BKMNeutronbetaM1 = 1.25
+# BKMProtonalphaE1 = 12.52
+# BKMNeutronalphaE1 = 12.52
+# BKMProtonbetaM1 = 1.25
+# BKMNeutronbetaM1 = 1.25
 
-# Best-fit values given:
-centralprotonalphaE1 = 10.65
-centralneutronalphaE1 = 11.55
-centralprotonbetaM1 = 3.15
-centralneutronbetaM1 = 3.65
 
-# Compute deltas
-deltaAlphaE1p = centralprotonalphaE1 - BKMProtonalphaE1  # = 10.65 - 12.52 = -1.87
-deltaAlphaE1n = centralneutronalphaE1 - BKMNeutronalphaE1  # = 11.55 - 12.52 = -0.97
-deltaBetaM1p = centralprotonbetaM1 - BKMProtonbetaM1  # = 3.15 - 1.25 = 1.90
-deltaBetaM1n = centralneutronbetaM1 - BKMNeutronbetaM1  # = 3.65 - 1.25 = 2.40
+class BKM:
+    # Baselines (class attrs)
+    ProtonalphaE1 = 12.52
+    NeutronalphaE1 = 12.52
+    ProtonbetaM1 = 1.25
+    NeutronbetaM1 = 1.25
+
+    # Centrals
+    centralprotonalphaE1 = 10.65
+    centralneutronalphaE1 = 11.55
+    centralprotonbetaM1 = 3.15
+    centralneutronbetaM1 = 3.65
+
+    # Deltas (computed on access)
+    @classmethod
+    def alphap(cls):
+        return cls.centralprotonalphaE1 - cls.ProtonalphaE1
+
+    @classmethod
+    def alphan(cls):
+        return cls.centralneutronalphaE1 - cls.NeutronalphaE1
+
+    @classmethod
+    def betap(cls):
+        return cls.centralprotonbetaM1 - cls.ProtonbetaM1
+
+    @classmethod
+    def betan(cls):
+        return cls.centralneutronbetaM1 - cls.NeutronbetaM1
+
+    @classmethod
+    def apply_offsets(cls, alpha=0.0, beta=0.0):
+        cls.ProtonalphaE1 += alpha
+        cls.NeutronalphaE1 += alpha
+        cls.ProtonbetaM1 += beta
+        cls.NeutronbetaM1 += beta
+
 
 alphap = -1.87
 alphan = -0.97
 betap = 1.9
 betan = 2.4
+
+# print("alphap=", alphap)
+# print("alphan=", alphan)
+# print("betap=", betap)
+# print("betan=", betan)
 
 
 def main():
@@ -194,6 +226,7 @@ def computeMatrix(onebody_data, twobody_data, varyA_data, delta=0):
 
     We do not use A=3,... since spin polarisabilities = 0 now.
     """
+    # print("BKMProtonalphaE1=", BKMProtonalphaE1)
     onebody = onebody_data["MatVals"]
     twobody = twobody_data["MatVals"]
 
@@ -410,7 +443,7 @@ def params_match_free(dictA, dictB):
     return True
 
 
-def params_match(dictA, dictB, paramToPlot):
+def params_match(dictA, dictB, paramToPlot=None):
     """
     Returns True if the relevant parameters match in both dicts.
     You can compare as many or as few fields as you need.
@@ -428,7 +461,8 @@ def params_match(dictA, dictB, paramToPlot):
         "energy",
     ]  # example fields
     eps = 1.0
-    keys_to_compare.remove(paramToPlot)
+    if paramToPlot is not None:
+        keys_to_compare.remove(paramToPlot)
     for key in keys_to_compare:
         # If a key doesn't exist or the values differ, return False
         if key not in dictA or key not in dictB:
@@ -440,6 +474,219 @@ def params_match(dictA, dictB, paramToPlot):
         else:
             if abs(dictA["theta"] - dictB["theta"]) > eps:
                 return False
+
+    # If all checks pass, they match
+    return True
+
+
+def getMatchingFiles(onebody_dir, twobody_dir, **kwargs):
+    """
+    Given a directory onebody_dir and twobody_dir along with the kwargs
+    keys_to_compare = [
+        "lambdaSRG",
+        "Ntotmax",
+        "omegaH",
+        "lambdaCut",
+        "theta",
+        "energy",
+    ]
+    returns the files that match both of these
+    """
+    Odeltaonebod = "Odelta3"
+    if onebody_dir[-1] != r"/":
+        onebody_dir += r"/"
+
+    if twobody_dir[-1] != r"/":
+        twobody_dir += r"/"
+
+    kwargs["theta"] = kwargs["angle"]
+    # 1. Gather all one-body and two-body files
+    onebody_files = [f for f in listdir(onebody_dir) if isfile(join(onebody_dir, f))]
+    twobody_files = [f for f in listdir(twobody_dir) if isfile(join(twobody_dir, f))]
+    oneBodMatch = []
+    # print("in CC lib")
+    # print("onebody_dir=", onebody_dir)
+    # print("twobody_dir=", twobody_dir)
+    for f in onebody_files:
+        if Odeltaonebod in f:
+            info = rd.getQuantNums(join(onebody_dir, f), returnMat=False)
+            if params_match(info, kwargs):
+                oneBodMatch.append(f)
+
+    twoBodMatch = []
+    for f in twobody_files:
+        # print("joined Str=", join(twobody_dir, f))
+        info = rd.getQuantNums(join(twobody_dir, f), returnMat=False)
+        if params_match(info, kwargs):
+            twoBodMatch.append(f)
+    # print("oneBodMatch=", oneBodMatch)
+    # print("twoBodMatch=", twoBodMatch)
+    if len(oneBodMatch) > 1:
+        print("More than 1 1 body file matches, picking first one ")
+        for i, f in enumerate(oneBodMatch):
+            print(f"{i}. file=", f)
+        print("\n")
+
+    if len(twoBodMatch) > 1:
+        print("More than 1 2 body file matches, picking first one ")
+        for i, f in enumerate(twoBodMatch):
+            print(f"{i}. file=", f)
+        print("\n")
+    if len(oneBodMatch) == 0:
+        oneBodMatch = None
+    else:
+        oneBodMatch = oneBodMatch[0]
+
+    if len(twoBodMatch) == 0:
+        twoBodMatch = None
+    else:
+        twoBodMatch = twoBodMatch[0]
+
+    if twoBodMatch is None and oneBodMatch is not None:
+        print("twobod does not exist but onebody file does")
+        print(dictString(kwargs))
+
+    if oneBodMatch is None and twoBodMatch is not None:
+        print("onebod does not exist but twobody file does")
+        print(dictString(kwargs))
+
+    if oneBodMatch is None and twoBodMatch is None:
+        print(50 * "!")
+        print("NO RESULT FOUND FOR THIS SET OF PARMETERS")
+        print(50 * "!")
+        print(dictString(kwargs))
+    return oneBodMatch, twoBodMatch, kwargs
+
+
+def getValuesAvailable(dir, param):
+    """
+    For all the files in the directory dir,
+    gets the values of the parameter param within those files.
+    For example if a param is "Ntotmax" and there are
+    Ntotmax=10,12,14 in dir, then returns the list [10,12,14]
+    """
+    if dir[-1] != r"/":
+        dir += r"/"
+    files = [f for f in listdir(dir) if isfile(join(dir, f))]
+    values = []
+    for f in files:
+        info = rd.getQuantNums(join(dir, f), returnMat=False)
+        if info is not None:
+            val = info[param]
+            if val not in values:
+                values.append(val)
+
+    return values
+
+
+# def getMatchingFiles(onebody_dir, twobody_dir, **kwargs):
+#     """
+#     Given a directory onebody_dir and twobody_dir along with the kwargs
+#     keys_to_compare = [
+#         "lambdaSRG",
+#         "Ntotmax",
+#         "omegaH",
+#         "lambdaCut",
+#         "theta",
+#         "energy",
+#     ]
+#     returns the files that match both of these
+#     """
+#     Odeltaonebod = "Odelta3"
+#     if onebody_dir[-1] != r"/":
+#         onebody_dir += r"/"
+#
+#     if twobody_dir[-1] != r"/":
+#         twobody_dir += r"/"
+#
+#     kwargs["theta"] = kwargs["angle"]
+#     # 1. Gather all one-body and two-body files
+#     onebody_files = [f for f in listdir(onebody_dir) if isfile(join(onebody_dir, f))]
+#     twobody_files = [f for f in listdir(twobody_dir) if isfile(join(twobody_dir, f))]
+#     oneBodMatch = []
+#     for f in onebody_files:
+#         if Odeltaonebod in f:
+#             info = rd.getQuantNums(join(onebody_dir, f), returnMat=False)
+#             if params_match(info, kwargs):
+#                 oneBodMatch.append(f)
+#
+#     twoBodMatch = []
+#     for f in twobody_files:
+#         info = rd.getQuantNums(join(twobody_dir, f), returnMat=False)
+#         if params_match(info, kwargs):
+#             twoBodMatch.append(f)
+#     # print("oneBodMatch=", oneBodMatch)
+#     # print("twoBodMatch=", twoBodMatch)
+#
+#     if len(oneBodMatch) > 1:
+#         print("More than 1 1 body file matches, picking first one ")
+#         for f in oneBodMatch:
+#             print("file=", f)
+#
+#     if len(twoBodMatch) > 1:
+#         print("More than 1 2 body file matches, picking first one ")
+#         for f in twoBodMatch:
+#             print("file=", f)
+#     if len(oneBodMatch) == 0:
+#         oneBodMatch = None
+#     else:
+#         oneBodMatch = oneBodMatch[0]
+#
+#     if len(twoBodMatch) == 0:
+#         twoBodMatch = None
+#     else:
+#         twoBodMatch = twoBodMatch[0]
+#
+#     if twoBodMatch is None and oneBodMatch is not None:
+#         print("twobod is None but onebody isnt")
+#         print(dictString(kwargs))
+#
+#     if oneBodMatch is None and twoBodMatch is not None:
+#         print("onebod is None but twobody isnt")
+#         print(dictString(kwargs))
+#     return oneBodMatch, twoBodMatch, kwargs
+
+
+def dictString(d):
+    keys_to_compare = [
+        "lambdaSRG",
+        "Ntotmax",
+        "omegaH",
+        "lambdaCut",
+        "theta",
+        "energy",
+    ]
+    # keys_to_compare.remove(skip)
+    out = ""
+    for k in keys_to_compare:
+        out += k + "=" + str(d[k]) + "\n"
+    return out
+
+
+def params_match_exclude(dictA, dictB, paramToPlot):
+    """
+    Returns True if the relevant parameters match in both dicts.
+    You can compare as many or as few fields as you need.
+    """
+    # For example, compare lambdaSRG, Ntotmax, omegaH, etc.
+    # If you have other constraints (energy, angle, lambdaCut, etc.)
+    # you can incorporate them here or pass them in **kwargs.
+    keys_to_compare = [
+        "lambdaSRG",
+        "Ntotmax",
+        "omegaH",
+        "lambdaCut",
+        "theta",
+        "energy",
+    ]  # example fields
+    keys_to_compare.remove(paramToPlot)
+    for key in keys_to_compare:
+        # If a key doesn't exist or the values differ, return False
+        if key not in dictA or key not in dictB:
+            return False
+        if dictA[key] != dictB[key]:
+            # print(dictA[key], dictB[key])
+            return False
 
     # If all checks pass, they match
     return True

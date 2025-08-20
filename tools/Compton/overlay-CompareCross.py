@@ -20,19 +20,11 @@ rcParams["font.family"] = "serif"
 
 
 def main():
-    base = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/"
-    resultSave = base + "results/"
-    energy = 86
-    # energy = 60
-    angle = 159
-    # lambdaSRG = 2.236
-    Ntotmax = 14
-    lambdaCut = 450
-    omegaH = 18
+    """
+
+    omegaHs = [14,16,18,20,22]
     angles = [40, 159, 180]
-    energies = [60, 86]
-    lambdaSRGs = [1.880, 2.236, 3.0]
-    plotting = "omegaH"
+    """
     colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
     markers = ["o", "s", "^", "v", "D", "*", "x", "P", "h", ">"]
     fig, (ax_scatter, ax_text) = plt.subplots(
@@ -41,7 +33,29 @@ def main():
         figsize=7 * np.array([1.6, 1]),
         gridspec_kw={"width_ratios": [2, 1]},
     )
-    for i, lambdaSRG in enumerate(lambdaSRGs):
+
+    base = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/"
+    resultSave = base + "results/"
+    # Set 'default' values
+    energy = 86
+    angle = 159
+    lambdaSRG = 2.236
+    Ntotmax = 14
+    lambdaCut = 450
+    omegaH = 18
+
+    # plotting is x axis variable
+    # iterVar is the variable in the loop
+    omegaHs = [14, 16, 18]
+    lambdaSRGs = [1.880, 2.236, 3.0]
+    plotting = "Ntotmax"
+    iterVarStr = "omegaH"
+    iterVarArray = omegaHs
+    # iterVarArray = lambdaSRGs
+    # iterVarStr = "lambdaSRG"
+    ccOuts = []
+    xTicks = []
+    for i, iterVar in enumerate(iterVarArray):
         onebody_dir = base + f"1bod//{energy}MeV//"
         twobody_dir = base + f"2bod//{energy}MeV//"
         xs1 = getValuesAvailable(onebody_dir, plotting)
@@ -61,7 +75,13 @@ def main():
             "Ntotmax": Ntotmax,
             "omegaH": omegaH,
         }
+        assert plotting in kwargsfind
+        assert iterVarStr in kwargsfind
+
+        kwargsfind[iterVarStr] = iterVar
         for x in xs:
+            if x not in xTicks:
+                xTicks.append(x)
             kwargsfind[plotting] = x
 
             # print(kwargsfind)
@@ -72,10 +92,13 @@ def main():
             if onebod is not None and twobod is not None:
                 onefile = onebody_dir + onebod
                 twofile = twobody_dir + twobod
-                print("onefile=", onebod.split("-.denshash")[0])
-                print("twofile=", twobod.split("-.denshash")[0])
+                # print("onefile=", onebod.split("-.denshash")[0])
+                # print("twofile=", twobod.split("-.denshash")[0])
+                print("onefile=", onebod)
+                print("twofile=", twobod)
                 print(65 * "--")
                 yVal = cc.crossSection(onefile, twofile)["cc"]
+                ccOuts.append(yVal)
                 ccs.append(yVal)
                 xsPlot.append(x)
                 # print("xsPlot=", xsPlot)
@@ -83,18 +106,20 @@ def main():
             # else:
             #     print(f"For x={x}:\n   onebod={onebod}\n   twobod={twobod}\n\n")
 
-            dString = dictString(kwargs)
             MeVtmp = kwargs["energy"]
             # make a figure with 1 row, 2 columns
             # left subplot: your scatter
+        del kwargs[plotting]
+        del kwargs[iterVarStr]
+        dString = dictString(kwargs)
         ax_scatter.scatter(
             xsPlot,
             ccs,
-            label="$\\Lambda_{\\mathrm{SRG}}=$" + str(lambdaSRG),
+            label=iterVarStr + "=" + str(iterVar),
             color=colors[i],
             marker=markers[i],
         )
-    ax_scatter.set_ylim(0, np.max(ccs) * 1.2)
+    ax_scatter.set_ylim(0, np.max(ccOuts) * 1.2)
     # ax_scatter.set_ylim(120, 270)
     ax_scatter.set_ylabel(
         r"$\mathrm{d} \sigma /\mathrm{d} \Omega [\mathrm{nb}/\mathrm{sr}]$ ",
@@ -109,15 +134,15 @@ def main():
         + f", \\;\\theta={angle}$",
         fontsize=15,
     )
-    ax_scatter.set_xticks([12, 14, 16])
+    ax_scatter.set_xticks(xTicks)
 
     # right subplot: hide the axes, and draw text
     ax_text.axis("off")
     # place the text; use wrap=True to break long lines
 
-    dString += (
-        "Missing onebody density \nfor $\\Lambda_{\\mathrm{SRG}}=1.88, \\omega_H=14$"
-    )
+    # dString += (
+    #     "Missing onebody density \nfor $\\Lambda_{\\mathrm{SRG}}=1.88, \\omega_H=14$"
+    # )
     ax_text.text(
         0.5,
         0.5,
@@ -131,10 +156,18 @@ def main():
     plt.tight_layout()
 
     ax_scatter.legend()
-    saveString = (
-        resultSave
-        + f"omegaH-energy={energy}-angle={angle}-lambdaCut={lambdaCut}-lambdaSRG=1.88-2.236-3.0-Ntotmax={Ntotmax}.pdf"
-    )
+    # need the last dash before .pdf for pattern matching
+    AddStr = f"energy={energy}-angle={angle}-lambdaCut={lambdaCut}-lambdaSRG={lambdaSRG}-Ntotmax={Ntotmax}-omegaH={omegaH}-.pdf"
+    a, b = AddStr.split(iterVarStr)
+    j = b.find("-")
+    AddStr = a[:-1] + b[j:]
+
+    a, b = AddStr.split(plotting)
+    j = b.find("-")
+    AddStr = a[:-1] + b[j:]
+    AddStr = f"{plotting}-formany-{iterVarStr}-" + AddStr
+    saveString = resultSave + AddStr
+    # print("saveString=", saveString)
 
     fig.savefig(saveString, format="pdf", bbox_inches="tight")
     plt.show()
@@ -152,7 +185,8 @@ def dictString(d):
     # keys_to_compare.remove(skip)
     out = ""
     for k in keys_to_compare:
-        out += k + "=" + str(d[k]) + "\n"
+        if k in d:
+            out += k + "=" + str(d[k]) + "\n"
     return out
 
 
@@ -230,11 +264,11 @@ def getMatchingFiles(onebody_dir, twobody_dir, **kwargs):
         twoBodMatch = twoBodMatch[0]
 
     if twoBodMatch is None and oneBodMatch is not None:
-        print("twobod is None but onebody isnt")
+        print("Missing twobody file for")
         print(dictString(kwargs))
 
     if oneBodMatch is None and twoBodMatch is not None:
-        print("onebod is None but twobody isnt")
+        print("Missing onebody file for")
         print(dictString(kwargs))
     return oneBodMatch, twoBodMatch, kwargs
 

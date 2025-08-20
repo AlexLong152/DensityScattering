@@ -134,8 +134,6 @@ c     NB: this is the nucleon struck by the photons
       
       integer rindx
       integer i
-      integer a 
-      integer aa
 c     projections of target nucleus' in-spin, out-spin
       integer twoMz,twoMzp
 
@@ -147,8 +145,8 @@ c     Value twoMzplimit = -twoSnucl calculates all amplitudes
 c     integer twoMzlimit ! for symmetry calculation: Mzp>=0 *and* for Mzp=0, only Mz>=0, else Mz between +Snucl and -Snucl
       real*8 frac
 
-      complex*16, allocatable :: SResultx(:,:),SResulty(:,:), SResultz(:,:) ! twoMz from -twoSnucl to
-      complex*16, allocatable :: VResultx(:,:),VResulty(:,:), VResultz(:,:) ! twoMz from -twoSnucl to
+c     complex*16, allocatable :: SResultx(:,:),SResulty(:,:), SResultz(:,:) ! twoMz from -twoSnucl to
+c     complex*16, allocatable :: VResultx(:,:),VResulty(:,:), VResultz(:,:) ! twoMz from -twoSnucl to
       complex*16, allocatable :: FSPlusV(:,:), FSMinusV(:,:)
 c     complex*16 :: nucS(3)
 c     That means arrays are less than 2^2=4 times bigger than need be, but that's ok since quite small anyway. 
@@ -184,13 +182,6 @@ c     if downloaded and .gz, also delete the download.
 c     0: do not delete; 1: delete un-gz'd file; 2: delete downloaded and un-gz'd file 
       integer rmDensityFileLater  
 
-      real*8 dummy
-
-      real*8 Paper3HeFTSPlusV
-      real*8 Paper3HeFTSMinusV
-      integer mOne
-      integer mTwo
-      complex F2
       real*8 :: Iden(-1:1,-1:1)  ! (ms3p,ms3): sigma-0=unit matrix
       complex*16 :: sigmax(-1:1,-1:1)  ! (ms3p,ms3): sigma-x
       complex*16 :: sigmay(-1:1,-1:1) ! (ms3p,ms3): sigma-y
@@ -200,11 +191,6 @@ c     0: do not delete; 1: delete un-gz'd file; 2: delete downloaded and un-gz'd
       real*8,parameter ::  munucleon(-1:1) = (/kappan,0.d0,kappap+1.d0/)! indices of entries: (-1,0,+1)!!!!
       real*8 :: kVec(3)  ! Momentum vector of k
       real*8 :: kHat(3)  ! normalized kVec
-      real*8 temp
-      integer mOneArr(2)
-      integer mTwoArr(2)
-      integer ii
-      integer jj
       integer lab, cm
       real*8 eps(3,3)
       integer ieps
@@ -339,25 +325,11 @@ c**********************************************************************
 c      Initialise everything to 0, overwriting entries from previous ω/θ
 c**********************************************************************
 
-            allocate(VResultx(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
-            allocate(VResulty(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
-            allocate(VResultz(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
-            VResultx=c0
-            VResulty=c0
-            VResultz=c0
 
             allocate(FSPlusV(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
             allocate(FSMinusV(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
-c           allocate(SResultx(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
-c           allocate(SResultz(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
-c           allocate(SResulty(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
             FSPlusV=c0
             FSMinusV=c0
-c           SResultx=c0
-c           SResultz=c0
-c           SResulty=c0
-c     for calculating electric FF on the way
-c           dummy=0.d0
 
             sigmax=0.d0
             sigmay=0.d0
@@ -425,7 +397,7 @@ c           write(*,*) ""
             write(*,'(A)') "F_L^S+V=-0.079 and F_L^S-V=1.479"
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     be a good boy and deallocate arrays. Compilers do that automatically for simple programs. Better safe than sorry.
-            deallocate (FSMinusV,FSPlusV, SResultx,SResulty,VResulty, VResultx, STAT=test ) ! test becomes nonzero if this fails
+            deallocate (FSMinusV,FSPlusV, STAT=test ) ! test becomes nonzero if this fails
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     hgrie Aug/Sep 2020: delete the local .dat file if one was generated from .gz
             if (rmDensityFileLater.gt.0) then
