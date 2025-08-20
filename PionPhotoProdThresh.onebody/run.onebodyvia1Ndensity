@@ -1,0 +1,24 @@
+#!/bin/bash
+
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <input_file1> [input_file2] [input_file3] ..."
+    echo "Example: $0 input-400.dat input-450.dat input-500.dat"
+    exit 1
+fi
+
+for input_file in "$@"; do
+    if [ ! -f "$input_file" ]; then
+        echo "Warning: File '$input_file' not found, skipping..."
+        continue
+    fi
+    
+    echo "Processing $input_file..."
+    ./onebodyvia1Ndensity "$input_file"
+    
+    if [ $? -ne 0 ]; then
+        echo "Error processing $input_file"
+        exit 1
+    fi
+done
+
+echo "All files processed successfully."

@@ -1,0 +1,26 @@
+ densityFileName=/home/alexander/OneDrive/densities-3He/1Ndensities/132MeV/onebody-3He.132MeV-060deg.dens-chiralsmsN4LO+3nfN2LO-lambda550-lambdaSRG0.000setNtotmax00omegaH00.denshash=42671930ced147a0075183b832f865f27f332bc29ab6112e4a3a12eda36c7a94.v2.0.h5                                                                                                                                                                                                                                                                       
+ 
+############################################
+eps=1,0,0 Result
+FMinus(-1,1) =   1.4457 +0.0000
+FMinus(1,-1) =   1.4457 +0.0000
+FPlus(-1,1) =  -0.0931 +0.0000
+FPlus(1,-1) =  -0.0931 +0.0000
+ 
+############################################
+eps=0,1,0 Result
+FMinus(-1,1) =   1.4485 +0.0000
+FMinus(1,-1) =   1.4485 -0.0000
+FPlus(-1,1) =  -0.0206 -0.0000
+FPlus(1,-1) =  -0.0206 +0.0000
+ 
+############################################
+eps=0,0,1 Result
+FMinus(-1,-1) =   1.4476 -0.0000
+FMinus(1,1) =   1.4476 +0.0000
+FPlus(-1,-1) =  -0.0447 -0.0000
+FPlus(1,1) =  -0.0447 +0.0000
+ 
+Lenkewitz 2011 paper 3He result
+F_T^S+V=0.017 and F_T^S-V=1.480
+F_L^S+V=-0.079 and F_L^S-V=1.479

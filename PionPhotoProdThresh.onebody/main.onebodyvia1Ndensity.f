@@ -192,6 +192,7 @@ c     0: do not delete; 1: delete un-gz'd file; 2: delete downloaded and un-gz'd
       real*8 :: kVec(3)  ! Momentum vector of k
       real*8 :: kHat(3)  ! normalized kVec
       integer lab, cm
+      character(len=512) :: errmsg
       real*8 eps(3,3)
       integer ieps
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -223,6 +224,7 @@ c**********************************************************************
       inUnitno=13
       outUnitno=10
       open(unit=inUnitno, file=inputfile, status= 'OLD',iostat=test)
+
       if (test .ne. 0) stop "*** ERROR: Could not open input file!!! Aborting."
 
       call ReadinputCommon(Elow,Ehigh,Einterval,
@@ -230,6 +232,7 @@ c**********************************************************************
      &     outfile,descriptors,densityFileName,inUnitno,
      &     nucleus,Anucl,twoSnucl,Mnucl,extQnumlimit,
      &     cartesian,verbosity)
+      write(*,*) ""
 c      
       call ReadinputOnebody(inUnitno,calctype,variedA,descriptors,
 c---- Variable to control Feynman quadrature settings------------------------
@@ -241,6 +244,11 @@ c---- Variable to control Feynman quadrature settings------------------------
       close(unit=inUnitno,iostat=test)
       if (test .ne. 0) stop "*** ERROR: Could not close input file!!! Aborting."
 c
+      open(unit=outUnitno, file=outfile, status='unknown', iostat=test,iomsg=errmsg)
+      if (test .ne. 0) stop "*** ERROR: In main, could not open output file!!! Aborting."
+
+      write(*,*) "densityFileName=", densityFileName 
+      write(outUnitno,*) "densityFileName=", densityFileName 
       call makeoutputfilename(outfile,calctype,nucleus,descriptors,densityFileName,variedA,
      &     Elow,Ehigh,Einterval,thetaLow,thetaHigh,thetaInterval,verbosity)
 c**********************************************************************
@@ -381,10 +389,13 @@ c           tmpPlus and tmpMinus combines spin and isospin part of diagrams
             end do              !rindx   
             FSPlusV= 2* FSPlusV! S has factor of 1/2 with it
             FSMinusV = 2* FSMinusV
+            write(outUnitno,*) ""
+            write(outUnitno,'(A)') "############################################"
+            write(outUnitno,'(A,I1,",",I1,",",I1,A)') "eps=", int(eps(ieps,:)), " Result"
             write(*,*) ""
             write(*,'(A)') "############################################"
             write(*,'(A,I1,",",I1,",",I1,A)') "eps=", int(eps(ieps,:)), " Result"
-            call ResultWrite(FSPlusV,FSMinusV,Sigma,twoSnucl)
+            call ResultWrite(FSPlusV,FSMinusV,Sigma,twoSnucl,outUnitno)
             end do!ieps
 
 
@@ -395,6 +406,11 @@ c           write(*,*) ""
             write(*,'(A)') "Lenkewitz 2011 paper 3He result"
             write(*,'(A)') "F_T^S+V=0.017 and F_T^S-V=1.480"
             write(*,'(A)') "F_L^S+V=-0.079 and F_L^S-V=1.479"
+
+            write(outUnitno,*) ""
+            write(outUnitno,'(A)') "Lenkewitz 2011 paper 3He result"
+            write(outUnitno,'(A)') "F_T^S+V=0.017 and F_T^S-V=1.480"
+            write(outUnitno,'(A)') "F_L^S+V=-0.079 and F_L^S-V=1.479"
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     be a good boy and deallocate arrays. Compilers do that automatically for simple programs. Better safe than sorry.
             deallocate (FSMinusV,FSPlusV, STAT=test ) ! test becomes nonzero if this fails
@@ -431,9 +447,19 @@ c40   format(A,2F18.13)
       
       end PROGRAM
 
-      subroutine ResultWrite(FPlus,FMinus,Sigma,twoSnucl)
+c     Custom subroutine to write to both stdout and output file
+      subroutine writetoall(outUnitno, message)
       implicit none
-      integer twoSnucl
+      integer, intent(in) :: outUnitno
+      character(*), intent(in) :: message
+      
+      write(*,*) message
+      write(outUnitno,*) message
+      end subroutine
+
+      subroutine ResultWrite(FPlus,FMinus,Sigma,twoSnucl,outUnitno)
+      implicit none
+      integer twoSnucl, outUnitno
       complex*16, intent(in) :: FPlus(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
       complex*16, intent(in) :: FMinus(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
       complex*16, intent(in) :: Sigma(-1:1,-1:1)  ! (ms3p,ms3): sigma-z
@@ -458,4 +484,19 @@ c40   format(A,2F18.13)
       end do
       end do
       
+      do i=-twoSnucl,twoSnucl
+      do j=-twoSnucl,twoSnucl
+        if (Sigma(i,j).ne.cmplx(0.d0,0.d0,kind=16)) then
+                WRITE(outUnitno,fmt) 'FMinus(', i, ',', j, ') = ', FMinus(i,j)/Sigma(i,j)
+        end if        
+      end do
+      end do
+
+      do i=-twoSnucl,twoSnucl
+      do j=-twoSnucl,twoSnucl
+        if (Sigma(i,j).ne.cmplx(0.d0,0.d0,kind=16)) then
+                WRITE(outUnitno,fmt) 'FPlus(', i, ',', j, ') = ', FPlus(i,j)/Sigma(i,j)
+        end if        
+      end do
+      end do
       end subroutine
