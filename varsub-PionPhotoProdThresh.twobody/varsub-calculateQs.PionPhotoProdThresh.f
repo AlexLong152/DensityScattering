@@ -123,15 +123,13 @@ c     A full derivation of the kinematics can be found in the particle physics b
 c     https://pdg.lbl.gov/2023/download/db2022.pdf pg 259, see figure 49.6
       k=sqrt(DOT_PRODUCT(kVec,kVec))
       omegaThreshold=(mPion*(mPion+2*mNucl))/(2*(mPion+mNucl))
-      if (k.lt.omegaThreshold) then
-          if (abs(k-omegaThreshold).le.1) then
-c             assume that if within 1MeV we are trying to run at threshold
+      if (abs(k-omegaThreshold).le.2) then
+c             assume that if within 2MeV we are trying to run at threshold
 c             write(*,*) "reset k"
-              k=omegaThreshold
-          else
-            write(*,*) "kp^2<0 -> given masses/energy are incompatable"
-            stop
-          end if
+          k=omegaThreshold
+      else
+        write(*,*) "kp^2<0 -> given masses/energy are incompatable"
+        stop
       end if
       ENuc=sqrt((mNucl**2) + (k**2))
       mandalS=(ENuc + k)**2 !lab frame

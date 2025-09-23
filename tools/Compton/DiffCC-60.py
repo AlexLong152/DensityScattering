@@ -31,7 +31,7 @@ rcParams["font.family"] = "serif"
 # print(cc.BKM.deltaBetaM1p())  # reflects updated values
 
 alphaDiff = 0.0
-betaDiff = -2.0
+betaDiff = 0.0
 
 
 def main():
@@ -92,7 +92,8 @@ def main():
                     yVal = cc.crossSection(
                         onebody_dir + onebod,
                         twobody_dir + twobod,
-                        delta=[alphaDiff, betaDiff],
+                        deltaAlpha=alphaDiff,
+                        deltaBeta=betaDiff,
                     )["cc"]
                     ccs.append(yVal)
                     outDict[(lambdaSRG, lambdaCut)].append([float(x), yVal])

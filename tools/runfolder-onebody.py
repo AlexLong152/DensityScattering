@@ -12,33 +12,38 @@ import readDensity as rd
 
 """
 Automatically runs all densities in a folder provided.
-TODO: add a taskNumber so that multiple instances can run at the same time.
-
 when running this file automatically creates a bash script to run things in
 parrallel, along with input files for the code
+
+Really there should be three seperate values for running the 
+varyA, Odelta3, and Odelta2 scripts but theres not need to fix it for now 
 """
 
+# Ideally you should only have to change the folder and outfolder variables
+energy = 100
+folder = rf"/home/alexander/OneDrive/densities-6Li/1Ndensities/{energy}MeV/"
+outfolder = rf"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/{energy}MeV/"
+runStandard = True  # runs Odelta2/3 if true, if false only runs varyA
 basefile = ".pyinput.dat"  # system auto creates this file
-folder = r"/home/alexander/OneDrive/densities-6Li/1Ndensities/60MeV/"
-
-out = r"/output/"
-# outfolder = folder + out
-# outfolder = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/chiralsmsN4LO+3nfN2LO-lambda400/onebody/"
-outfolder = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/newfiles-April28/onebody/"
-
-
-if folder[-1] != r"/":
-    folder += r"/"
-
-outfolder = outfolder.replace(r"//", r"/")
-runStandard = True  # runs Odelta3
-runVaryA = False  # runs the polarizability calculation
-
-# Odelta = "Odelta3"
-Odelta = "Odelta2"
 
 
 def main():
+    run("Odelta3", True)  # Doesn't matter which one of thse has runVaryA as "True"
+    run("Odelta2", False)
+    run("Odelta0", False)
+
+
+# Add slashes to the end of the folder names in case the user forgot
+if folder[-1] != r"/":
+    folder += r"/"
+
+if outfolder[-1] != r"/":
+    outfolder += r"/"
+
+outfolder = outfolder.replace(r"//", r"/")
+
+
+def run(Odelta="Odelta3", runVaryA=True):
     system(r"rm .pyinput-*")
     writepyInput()
     print("folder=", folder)
@@ -55,6 +60,7 @@ def main():
     # outfolder = outfolder.replace(r"//", r"/")
     for i, f in enumerate(onlyfiles):
         path = folder + f  # path to density
+        # print("path=", path)
         if runStandard:
             output = outfolder + getOutname(f, Odelta)
 

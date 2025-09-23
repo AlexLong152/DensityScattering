@@ -11,14 +11,29 @@ from copy import copy
 from pathlib import Path
 
 # below is the .pyinput.dat file
-
 basefile = ".pyinput.dat"  # system auto creates this file
-folder = r"/home/alexander/OneDrive/densities-6Li/2Ndensities/60MeV/"
 
-outputfolder = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/newfiles-April28"
+# input folder with densities
+folder = r"/home/alexander/OneDrive/densities-6Li/2Ndensities/86MeV/Ntotmax14/"
 
-if folder[-1] != r"/":
-    folder += r"/"
+outputfolder = (
+    r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/2bod/86MeV/"
+)
+Odelta = 4
+j12max = 2
+
+
+def formatFolder(folder):
+    if folder[-1] != r"/":
+        folder += r"/"
+    return folder
+
+
+# number of parallel processes to run at once
+batchSize = 15
+
+outputfolder = formatFolder(outputfolder)
+folder = formatFolder(folder)
 
 
 def main():
@@ -32,15 +47,12 @@ def main():
 
     writepyInput()
     writeParCommands()
-    # tmp = listdir(folder)
-    # f = tmp[0]
-    # print("f[-3:]=", f[-3:])
     onlyfiles = [
         f
         for f in listdir(folder)
         if isfile(join(folder, f)) and (f[-3:] == ".h5" or f[-3:] == ".gz")
     ]
-    print(onlyfiles)
+    # print(onlyfiles)
     word = "output-"
     onlyfiles = [f for f in onlyfiles if f[: len(word)] != word]
 
@@ -55,8 +67,7 @@ def main():
         # outputfolder = folder
         # outputfolder = r"./output-for-dropbox/"
 
-        output = outputfolder + generate2BodOutputName(f, Odelta=2, j12max=2)
-        print("output=", output)
+        output = outputfolder + generate2BodOutputName(f, Odelta=Odelta, j12max=j12max)
         if not isfile(output):
             j += 1
             runfile = basefile[:-4] + "-" + str(i) + ".dat"  # input file for fortran
@@ -78,11 +89,18 @@ def main():
                 s = s.replace("INPUT", r"'" + path + r"'")
                 fout.write(s)
 
-            if j % 5 == 0:
+            if j % batchSize == 0:
                 runcommand.append(r"; ./.pCommand.sh ")
-
     finalCommand = " ".join(np.array(runcommand))
+    # print number of times a dash appears in the string finalCommand
     print("finalCommand=", finalCommand)
+    print(
+        "In total this is ",
+        finalCommand.count("-"),
+        "or",
+        int(np.ceil(finalCommand.count("-") / batchSize)),
+        "batches",
+    )
     yn = input("Run this command? [y/n]").lower()
     yn = True if yn == "y" else False
     if yn:
@@ -114,13 +132,16 @@ YYY YYY 15                             thetaLow, thetaHigh, thetaStep
 OUTPUT
 INPUT
 cm_ymmetry_verbos                     frame, symmetry, verbosity of STDOUT
-Odelta2_j12max=2 		    Calctype, maximal total ang mom in (12) subsystem
+OdeltaODELTAVALUE_j12max=J12MAXVALUE 		    Calctype, maximal total ang mom in (12) subsystem
 14 2 		    		    NP12A, NP12B
 1.1 5.0 15.0 			    P12A, P12B, P12C
 2 50     			    AngularType12,(Nordth12 OR Nanggrid12),Nthbins12,Nordphi12,Nphibins12
 COMMENTS:_v2.0
 # in density filename, code replaces XXX and YYY automatically by energy and angle.
 """[1:]
+
+pyinputText = pyinputText.replace("ODELTAVALUE", str(Odelta))
+pyinputText = pyinputText.replace("J12MAXVALUE", str(j12max))
 
 
 def writeParCommands():

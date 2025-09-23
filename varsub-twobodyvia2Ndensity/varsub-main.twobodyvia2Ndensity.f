@@ -137,7 +137,7 @@ c     outfile-name of output file
 c     
       integer inUnitno,outUnitno
       
-      real*8 Egamma,kgamma,thetaL,thetacm,Elow,Ehigh,Einterval
+      real*8 Egamma,kgamma,thetaL,thetacm,Elow,Ehigh,Einterval,Eprobe,Einput
       
       real*8 thetaLow,thetaHigh,thetaInterval
       integer calctype,Nangles,Nenergy,ienergy,j ! number of energies/angles; index for energies/angles
@@ -190,7 +190,7 @@ c               |      |
 c     ----------|      |--------------
 c     -p12-k/2  --------   -p12p-kp/2
 c     
-      real*8 k,kth,kphi,kp,kpth,kpphi,Qk,Qkth,Qkphi
+      ! real*8 k,kth,kphi,kp,kpth,kpphi,Qk,Qkth,Qkphi
       real*8 t,omega
 c     
 c**********************************************************************
@@ -253,8 +253,6 @@ c     if you have 1 argument, write it to inputfile, otherwise stop
 c     
 c     
 c**********************************************************************
-c     Report kernel process and version -- KernelGreeting() set in <process-dir>/2BKernel*.f
-      call KernelGreeting(verbosity)
       
 c**********************************************************************
 c     Reading in data from the input file
@@ -278,7 +276,7 @@ c---- Variables to control angular quadrature settings------------------------
      &     AngularType12,Nanggrid12,
      &     Nordth12,Nordphi12,
      &     NthBins12,NphiBins12,
-     &     j12max,numDiagrams)
+     &     j12max,numDiagrams,verbosity)
       call ReadinputCommonComments(descriptors,inUnitno,verbosity)
       
       close(unit=inUnitno,iostat=test)
@@ -327,11 +325,21 @@ c     Loop over Energies
 c**********************************************************************
       do j=1,Nenergy
          Egamma=Elow+Einterval*(j-1)
+         EInput=Egamma
+         ! write(*,*) "varsub-main.twobodyvia2Ndensity.f:328 WARNING - overwriting input energy with fixed value for testing"  
+         ! Egamma=140
+
+c        Report kernel process and version -- KernelGreeting() set in <process-dir>/2BKernel*.f
+         call KernelGreeting(Egamma,Eprobe,Mnucl,verbosity)!Eprobe is the value returned
+         Egamma=Eprobe
+         ! omega=Eprobe
+         ! write(*,*) "varsub-main.twobodyvia2Ndensity.f:335 Egamma=", Egamma 
+         ! stop
          ienergy=int(Egamma)
          write(*,*) "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
          write(*,*) "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
          write(*,*)
-         write(*,*) "Incoming photon energy (rounded) = ", ienergy, " MeV"
+         write(*,*) "Incoming energies (rounded) = ", ienergy, " MeV"
          write(*,*) "Number of Angles Nangles         = ", Nangles
 c**********************************************************************
 c     Loop over angles
@@ -342,14 +350,15 @@ c**********************************************************************
                thetacm=1.0d0*Pi/180.d0
                write(*,*) "   Replaced input angle 0 deg with 1 deg."
             end if   
-            kgamma=Egamma      
+            ! kgamma=Egamma      
             write (outUnitno,*) "cm ","omega = ",Egamma,"thetacm = ",thetacm*180.0/Pi
             write(*,*)
             write(*,*) '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'
             write(*,*) 'Calculating amps: theta =',thetacm*180.0/Pi,'deg: angle #',i
 c**********************************************************************
-            call calcphotonmomenta(k,kth,kphi,t,kp,kpth,kpphi,omega,
-     &           Qk,Qkth,Qkphi,kgamma,thetacm,verbosity)
+c           call calcphotonmomenta(k,kth,kphi,t,kp,kpth,kpphi,omega,
+c    &           Qk,Qkth,Qkphi,kgamma,thetacm,verbosity)
+
 c**********************************************************************
 c     be a good boy and initialise everything to 0, overwriting entries from previous ω/θ
 c**********************************************************************
@@ -364,7 +373,7 @@ c     outsourced into subroutine common-densities/makedensityfilename.f
 c**********************************************************************
 c     hgrie May 2017: read 2Ndensity
 c           the line below defines rho
-            call read2Ndensity(densityFileName,Anucl,twoSnucl,omega,thetacm,j12max,P12MAG,AP12MAG,NP12,verbosity)
+            call read2Ndensity(densityFileName,Anucl,twoSnucl,Einput,thetacm,j12max,P12MAG,AP12MAG,NP12,verbosity)
 c           write(*,*) "In main.twobodyvia2Ndensity.f: shape(rhoRead)=",shape(rhoDensity) 
 c**********************************************************************      
 c     hgrie Aug/Sep 2020: delete the local .h5 file if one was generated from .gz
@@ -394,7 +403,7 @@ c**********************************************************************
                               call twobodyfinalstatesumsvia2Ndensity(
      &                             Result,Mnucl,
      &                             Anucl,twoSnucl,extQnumlimit,j12,m12,l12,s12,t12,mt12,
-     &                             k,thetacm,
+     &                             Eprobe,thetacm,
      &                             ip12,P12MAG(ip12),AP12MAG(ip12),     
      &                             p12MAG,AP12MAG,NP12,                                 
      &                             th12,phi12,Nth12,Nphi12,j12max,

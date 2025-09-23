@@ -24,7 +24,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
      &     extQnumlimit,
      &     j12p,m12p,l12p,s12p,t12p,mt12p,j12,m12,
      &     l12,s12,t12,mt12,pAbs,uVecRs,th12,phi12,Nth12,Nphi12,NP12,
-     &     thetacm,k,
+     &     thetacm,Eprobe,
      &     AngularType12,angweight12,calctype,numDiagrams,ip12p,twoSnucl,twoMzp,twoMz,verbosity)
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
@@ -43,8 +43,8 @@ c     INPUT VARIABLES:
       integer,intent(in) :: m12p,m12,j12p,s12p,l12p,j12,s12,l12,Nth12,Nphi12
       integer,intent(in) :: t12p,t12,mt12p,mt12
       
-      real*8,intent(in) :: thetacm,k,th12(Nangmax),phi12(Nangmax)
-      real*8, intent(in) :: Mnucl
+      real*8,intent(in) :: thetacm,th12(Nangmax),phi12(Nangmax)
+      real*8, intent(in) :: Mnucl, Eprobe
       integer,intent(in) :: AngularType12
       real*8,intent(in) :: angweight12(Nangmax,Nangmax)
       integer,intent(in) :: calctype,verbosity
@@ -170,7 +170,7 @@ c     angle integral: φprime of p12p
                            call Calc2Bspinisospintrans(Kernel2B,ppVecs,Mnucl,
      &                          extQnumlimit,ml12,ml12p,
      &                          t12,mt12,t12p,mt12p,l12,
-     &                          s12,l12p,s12p,thetacm,k,pVec,
+     &                          s12,l12p,s12p,thetacm,Eprobe,pVec,
      &                          uVec,calctype,numDiagrams,verbosity)
 
 c                         tmpRho=0.0000001
@@ -262,7 +262,7 @@ c use the names Q to decrease the likelihood of a transcription error
       fQ21=rho(loc2p,locpp)
       fQ22=rho(loc2p,loc2pp)
 
-      call bilinear_interpolate(tmpRho, fQ11,fQ12,fQ21,fQ22,x1,x2,y1,y2,pAbs,ppAbs)
+      call bilinear_interpolate(tmpRho,fQ11,fQ12,fQ21,fQ22,x1,x2,y1,y2,pAbs,ppAbs)
 
 c     write(*,*) "In varsub-calculate2BI2: locp,loc2p,locpp,loc2pp=",locp,loc2p,locpp,loc2pp 
 c     write(*,*) "In varsub-calculate2BI2: ppAbs,pAbs=",ppAbs,pAbs 
@@ -277,7 +277,7 @@ c     stop
       end subroutine
 
 
-      subroutine bilinear_interpolate(tmpRho, fQ11,fQ12,fQ21,fQ22,x1,x2,y1,y2,x,y)
+      subroutine bilinear_interpolate(tmpRho,fQ11,fQ12,fQ21,fQ22,x1,x2,y1,y2,x,y)
 c   Implimentation of this: https://en.wikipedia.org/wiki/Bilinear_interpolation
 c   Essentially this is first order multivariable polynomial interpolation 
 c   A higher order multivariable interpolation can be done in mathematica if needed (but I doubt this will be required)

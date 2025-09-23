@@ -12,81 +12,53 @@ from os import listdir
 sys.path.insert(1, "..")
 import readDensity as rd
 
+# from nucdens import access
+# import os
+# workdir = os.environ["HOME"] + r"/OneDrive/"
+# file = f"{workdir}densities_table.h5"
+# beta_webbase = "https://just-object.fz-juelich.de:9000/jikp03/densitystore-beta/"
+# densdf = access.database(workdir=workdir, webbase=beta_webbase)
+# df = densdf.pddf
 ########################
 # Constants
 ########################
 MeVtofm = 1.0 / 197.327
 M6Li = 6.0151228874 * 931.49432
-# Based on snippet:
-# BKM values at Odelta3
-# BKMProtonalphaE1 = 12.52
-# BKMNeutronalphaE1 = 12.52
-# BKMProtonbetaM1 = 1.25
-# BKMNeutronbetaM1 = 1.25
 
+# BKM values
+ProtonalphaE1 = 12.52
+NeutronalphaE1 = 12.52
+ProtonbetaM1 = 1.25
+NeutronbetaM1 = 1.25
 
-class BKM:
-    # Baselines (class attrs)
-    ProtonalphaE1 = 12.52
-    NeutronalphaE1 = 12.52
-    ProtonbetaM1 = 1.25
-    NeutronbetaM1 = 1.25
+# Centrals
+centralprotonalphaE1 = 10.65
+centralneutronalphaE1 = 11.55
+centralprotonbetaM1 = 3.15
+centralneutronbetaM1 = 3.65
 
-    # Centrals
-    centralprotonalphaE1 = 10.65
-    centralneutronalphaE1 = 11.55
-    centralprotonbetaM1 = 3.15
-    centralneutronbetaM1 = 3.65
+# These are the central - BKM values modulo a sign
+# The central BKM values are hard coded in the onebody code which is
+# why they don't appear here
+# alphap = -1.87
+# alphan = -0.97
+# betap = 1.9
+# betan = 2.4
 
-    # Deltas (computed on access)
-    @classmethod
-    def alphap(cls):
-        return cls.centralprotonalphaE1 - cls.ProtonalphaE1
+alphap = 0.0
+alphan = 0.0
+betap = 0.0
+betan = 0.0
+#
 
-    @classmethod
-    def alphan(cls):
-        return cls.centralneutronalphaE1 - cls.NeutronalphaE1
-
-    @classmethod
-    def betap(cls):
-        return cls.centralprotonbetaM1 - cls.ProtonbetaM1
-
-    @classmethod
-    def betan(cls):
-        return cls.centralneutronbetaM1 - cls.NeutronbetaM1
-
-    @classmethod
-    def apply_offsets(cls, alpha=0.0, beta=0.0):
-        cls.ProtonalphaE1 += alpha
-        cls.NeutronalphaE1 += alpha
-        cls.ProtonbetaM1 += beta
-        cls.NeutronbetaM1 += beta
-
-
-alphap = -1.87
-alphan = -0.97
-betap = 1.9
-betan = 2.4
-
-# print("alphap=", alphap)
-# print("alphan=", alphan)
-# print("betap=", betap)
-# print("betan=", betan)
+twoBodyOdelta0 = "Odelta0TwoBod"  # Magic Value, means no twobody file, and is interpreted as such by crossSection function
 
 
 def main():
-    twobody_file = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/chiralsmsN4LO+3nfN2LO-lambda550/twobody/twobody-6Li.060MeV-075deg.dens-chiralsmsN4LO+3nfN2LO-lambda550-lambdaSRG1.880setNtotmax14omegaH24.Odelta2-j12max=2-.denshash=19f5bc14eff49c008d12dbb0bfd3d63a7c03ee4999ccc3407af828479f37a2cb.v2.0.dat"
-
-    # Odelta3 onebody file
-    # VaryAXX files inferred from onebody file string
-    onebody_file = "/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/newfiles/lambda550/onebody-6Li.060MeV-075deg.dens-chiralsmsN4LO+3nfN2LO-lambda550-lambdaSRG1.880setNtotmax14omegaH24.Odelta3-.denshash=53cdbc7a4128c4b6b4c00f980eaafb7abca39033fdf70f90d4054a2534774285.v2.0.dat"
-
-    dSigmadOmega = crossSection(onebody_file, twobody_file)
-
-    print("dσ/dΩ=", dSigmadOmega["cc"], "μBarn")
+    pass
 
 
-def crossSection(onebody_file, twobody_file, delta=0):
+def crossSection(onebody_file, twobody_file, deltaAlpha=0, deltaBeta=0):
     """
     Calculates the differential cross section given two output files
     onebody_file is expected to be the Odelta version. The varyA file names are then automatically
@@ -117,12 +89,16 @@ def crossSection(onebody_file, twobody_file, delta=0):
     energy = onebody_data["omega"]  # in MeV
     energy_twobod = twobody_data["omega"]  # in MeV
 
-    theta = onebody_data["theta"]  # in MeV
-    theta_twobod = twobody_data["theta"]  # in MeV
+    theta = onebody_data["theta"]
+    theta_twobod = twobody_data["theta"]
     assert theta == theta_twobod
     assert energy == energy_twobod
 
-    matrixValues = computeMatrix(onebody_data, twobody_data, varyA_data, delta=delta)
+    matrixValues = computeMatrix(
+        onebody_data, twobody_data, varyA_data, deltaAlpha, deltaBeta
+    )
+    # print("matrixValues=", matrixValues)
+    # assert False
     dSigmadOmega = computeCrossSection(matrixValues, energy, spin, M6Li)
 
     returnObject = {}
@@ -135,19 +111,24 @@ def crossSection(onebody_file, twobody_file, delta=0):
     returnObject["twobody"] = twobody_data["MatVals"]
     returnObject["varyA_data"] = varyA_data
     returnObject["nuc"] = name
-
+    returnObject["hash_onebody"] = getStringBetween(onebody_file, "denshash=", ".v2")
+    returnObject["hash_twobody"] = getStringBetween(twobody_file, "denshash=", ".v2")
     return returnObject
 
 
 def getVaryAFiles(onebody_file, Z, N):
     file = copy(onebody_file)
     num = Z + N
-    # file = onebody_file.split(r"/")[-1]
     out = []
+    position = onebody_file.find("Odelta")
+    Odelta = onebody_file[position : position + len("Odelta") + 1]
+    # print("Odelta=", Odelta)
     for n in ["n", "p"]:
         for i in range(1, num + 1):
             varyStr = "VaryA" + str(i) + n
-            varyFile = file.replace("Odelta3", varyStr)
+            varyFile = file.replace(Odelta, varyStr)
+            # print("file=", file.split(r"/")[-1])
+            # print("varyFile=", varyFile.split(r"/")[-1])
             out.append(varyFile)
 
     return out
@@ -174,7 +155,15 @@ def loadAmplitudes(onebody_file, twobody_file, varyA_files):
     Load amplitudes using getQuantNums for onebody, twobody, and varyA files.
     """
     onebody_data = rd.getQuantNums(onebody_file)
-    twobody_data = rd.getQuantNums(twobody_file)
+    if "Odelta0" in twobody_file:
+        twobody_data = copy(onebody_data)
+        twobody_data["MatVals"] = np.zeros(np.shape(onebody_data["MatVals"]))
+        twobody_data["file"] = "NoFile"
+        twobody_data["hash"] = "NoFile"
+    else:
+        twobody_data = rd.getQuantNums(twobody_file)
+    # print("onebody_file=", onebody_file)
+    # print("twobody_file=", twobody_file)
     theta_one = onebody_data["theta"]
     theta_two = twobody_data["theta"]
 
@@ -201,15 +190,7 @@ def loadAmplitudes(onebody_file, twobody_file, varyA_files):
     return onebody_data, twobody_data, varyA_data
 
 
-def getVaryStrFromName(file):
-    file = copy(file)
-    file = file.split(r"/")[-1]
-    tmp = file.split("omegaH")[-1]
-    assert "Vary" in tmp
-    return tmp[3:10]
-
-
-def computeMatrix(onebody_data, twobody_data, varyA_data, delta=0):
+def computeMatrix(onebody_data, twobody_data, varyA_data, deltaAlpha, deltaBeta):
     """
     Compute total as per the given formula (for scalar polarisabilities only):
 
@@ -246,17 +227,11 @@ def computeMatrix(onebody_data, twobody_data, varyA_data, delta=0):
     #     print(varyA_data[strV]["name"])
     #     print(vals[i].flatten())
     #     print("\n")
-    if isinstance(delta, (int, float)):
-        alphap_tmp = alphap + delta
-        alphan_tmp = alphan + delta
-        betap_tmp = betap + delta
-        betan_tmp = betan + delta
-    else:
-        deltap, deltan = delta
-        alphap_tmp = alphap + deltap
-        alphan_tmp = alphan + deltan
-        betap_tmp = betap + deltap
-        betan_tmp = betan + deltan
+
+    alphap_tmp = alphap + deltaAlpha
+    alphan_tmp = alphan + deltaAlpha
+    betap_tmp = betap + deltaBeta
+    betan_tmp = betan + deltaBeta
 
     tmp1 = (alphap_tmp + cos_theta * betap_tmp) * varyA_1p - betap_tmp * varyA_2p
     tmp2 = (alphan_tmp + cos_theta * betan_tmp) * varyA_1n - betan_tmp * varyA_2n
@@ -335,7 +310,16 @@ def getNuc(filename):
     return (Z, N, S, name)
 
 
-def ccForDict(onebody_dir, twobody_dir, Odeltaonebod="Odelta3", delta=0, **kwargs):
+def ccForDict(
+    onebody_dir,
+    twobody_dir,
+    Odeltaonebod="Odelta3",
+    Odeltatwobod="Odelta2",
+    deltaAlpha=0,
+    deltaBeta=0,
+    returnFull=False,
+    **kwargs,
+):
     """
     Given a set of parameters in kwargs and the directories the output files are in
     returns the cross section for the given parameters, for example:
@@ -362,12 +346,18 @@ def ccForDict(onebody_dir, twobody_dir, Odeltaonebod="Odelta3", delta=0, **kwarg
         "Odelta3" or "Odelta2"
     delta: float or int
         the value to shift the polarizabilities
+    returnFull: boolean
+        Returns the entire dictionary from the crossSection function, instead
+        of just the crossSection
     Returns
     -------
     ccVal: float
-        the cross section
+        the cross section, or the whole dictionary if returnFull=True
 
     """
+    assert onebody_dir[-1] == r"/", "onebody_dir must end with /"
+    assert twobody_dir[-1] == r"/", "onebody_dir must end with /"
+
     kwargs["theta"] = kwargs["angle"]
     # 1. Gather all one-body and two-body files
     onebody_files = [f for f in listdir(onebody_dir) if isfile(join(onebody_dir, f))]
@@ -388,25 +378,40 @@ def ccForDict(onebody_dir, twobody_dir, Odeltaonebod="Odelta3", delta=0, **kwarg
     # print("matched_onebody=", matched_onebody)
     twobody_info = []
     matched_twobody = []
-    for f in twobody_files:
-        info = rd.getQuantNums(join(twobody_dir, f), returnMat=False)
-        if params_match_free(info, kwargs):
-            twobody_info.append((f, info))
-            matched_twobody.append(f)
-    # if kwargs["theta"] == 55 and kwargs["Ntotmax"] == 12:
-    #     print("In CrossSection.py ccForDict debug")
-    #     print("onebody_dir=", onebody_dir)
-    #     print("twobody_dir=", twobody_dir)
-    #     print("matched_onebody=", matched_onebody)
-    #     print("matched_twobody=", matched_twobody)
-    if len(matched_twobody) == 0 or len(matched_onebody) == 0:
-        return None
+    # Magic Value, means no twobody file, and is interpreted as such by crossSection function
+    if Odeltatwobod == twoBodyOdelta0:
+        matched_twobody.append(twoBodyOdelta0)
+    else:
+        for f in twobody_files:
+            if Odeltatwobod in f:
+                info = rd.getQuantNums(join(twobody_dir, f), returnMat=False)
+                if params_match_free(info, kwargs):
+                    twobody_info.append((f, info))
+                    matched_twobody.append(f)
+
+    if len(matched_twobody) == 0 and len(matched_onebody) == 0:
+        if len(matched_twobody) == 0 and len(matched_onebody) == 0:
+            print("No onebody or twobody file found for parameters")
+        elif len(matched_onebody) == 0:
+            print("No onebody file found for parameters")
+        else:  # len(matched_twobody) == 0:
+            print("No twobody file found for parameters")
+        for key, value in kwargs.items():
+            print(f"{key}={value}")
+        print("\n")
+        raise ValueError("File not found")
     one = matched_onebody[0]
     two = matched_twobody[0]
     onebod = rd.getQuantNums(onebody_dir + one, returnMat=True)
     twobod = rd.getQuantNums(twobody_dir + two, returnMat=False)
-    ccVal = crossSection(onebod["file"], twobod["file"], delta=delta)["cc"]
-    return ccVal
+    if returnFull:
+        return crossSection(
+            onebod["file"], twobod["file"], deltaAlpha=deltaAlpha, deltaBeta=deltaBeta
+        )
+    else:
+        return crossSection(
+            onebod["file"], twobod["file"], deltaAlpha=deltaAlpha, deltaBeta=deltaBeta
+        )["cc"]
 
 
 def params_match_free(dictA, dictB):
@@ -492,7 +497,15 @@ def getMatchingFiles(onebody_dir, twobody_dir, **kwargs):
     ]
     returns the files that match both of these
     """
-    Odeltaonebod = "Odelta3"
+    try:
+        Odeltaonebod = kwargs["Odeltaonebod"]
+    except KeyError:
+        Odeltaonebod = "Odelta3"
+    try:
+        Odeltatwobod = kwargs["Odeltatwobod"]
+    except KeyError:
+        Odeltatwobod = "Odelta2"
+
     if onebody_dir[-1] != r"/":
         onebody_dir += r"/"
 
@@ -514,47 +527,27 @@ def getMatchingFiles(onebody_dir, twobody_dir, **kwargs):
                 oneBodMatch.append(f)
 
     twoBodMatch = []
-    for f in twobody_files:
-        # print("joined Str=", join(twobody_dir, f))
-        info = rd.getQuantNums(join(twobody_dir, f), returnMat=False)
-        if params_match(info, kwargs):
-            twoBodMatch.append(f)
-    # print("oneBodMatch=", oneBodMatch)
-    # print("twoBodMatch=", twoBodMatch)
-    if len(oneBodMatch) > 1:
-        print("More than 1 1 body file matches, picking first one ")
-        for i, f in enumerate(oneBodMatch):
-            print(f"{i}. file=", f)
-        print("\n")
+    # For compton scattering Odelta0 means no twobody file
+    if twoBodyOdelta0 != Odeltaonebod:
+        for f in twobody_files:
+            if Odeltatwobod in f:
+                info = rd.getQuantNums(join(twobody_dir, f), returnMat=False)
+                if params_match(info, kwargs):
+                    twoBodMatch.append(f)
 
-    if len(twoBodMatch) > 1:
-        print("More than 1 2 body file matches, picking first one ")
-        for i, f in enumerate(twoBodMatch):
-            print(f"{i}. file=", f)
-        print("\n")
-    if len(oneBodMatch) == 0:
-        oneBodMatch = None
-    else:
+    if len(oneBodMatch) != 0:
         oneBodMatch = oneBodMatch[0]
 
-    if len(twoBodMatch) == 0:
-        twoBodMatch = None
-    else:
+    if len(twoBodMatch) != 0:
         twoBodMatch = twoBodMatch[0]
+    elif "Odelta0" in Odeltaonebod:
+        twoBodMatch = twoBodyOdelta0
+    else:
+        raise ValueError("File does not exist")
 
-    if twoBodMatch is None and oneBodMatch is not None:
-        print("twobod does not exist but onebody file does")
-        print(dictString(kwargs))
-
-    if oneBodMatch is None and twoBodMatch is not None:
-        print("onebod does not exist but twobody file does")
-        print(dictString(kwargs))
-
-    if oneBodMatch is None and twoBodMatch is None:
-        print(50 * "!")
-        print("NO RESULT FOUND FOR THIS SET OF PARMETERS")
-        print(50 * "!")
-        print(dictString(kwargs))
+    if "Odelta0" in Odeltaonebod:
+        # this means no twobody file, and is interpreted as such by crossSection function
+        assert twoBodMatch == twoBodyOdelta0
     return oneBodMatch, twoBodMatch, kwargs
 
 
@@ -579,83 +572,8 @@ def getValuesAvailable(dir, param):
     return values
 
 
-# def getMatchingFiles(onebody_dir, twobody_dir, **kwargs):
-#     """
-#     Given a directory onebody_dir and twobody_dir along with the kwargs
-#     keys_to_compare = [
-#         "lambdaSRG",
-#         "Ntotmax",
-#         "omegaH",
-#         "lambdaCut",
-#         "theta",
-#         "energy",
-#     ]
-#     returns the files that match both of these
-#     """
-#     Odeltaonebod = "Odelta3"
-#     if onebody_dir[-1] != r"/":
-#         onebody_dir += r"/"
-#
-#     if twobody_dir[-1] != r"/":
-#         twobody_dir += r"/"
-#
-#     kwargs["theta"] = kwargs["angle"]
-#     # 1. Gather all one-body and two-body files
-#     onebody_files = [f for f in listdir(onebody_dir) if isfile(join(onebody_dir, f))]
-#     twobody_files = [f for f in listdir(twobody_dir) if isfile(join(twobody_dir, f))]
-#     oneBodMatch = []
-#     for f in onebody_files:
-#         if Odeltaonebod in f:
-#             info = rd.getQuantNums(join(onebody_dir, f), returnMat=False)
-#             if params_match(info, kwargs):
-#                 oneBodMatch.append(f)
-#
-#     twoBodMatch = []
-#     for f in twobody_files:
-#         info = rd.getQuantNums(join(twobody_dir, f), returnMat=False)
-#         if params_match(info, kwargs):
-#             twoBodMatch.append(f)
-#     # print("oneBodMatch=", oneBodMatch)
-#     # print("twoBodMatch=", twoBodMatch)
-#
-#     if len(oneBodMatch) > 1:
-#         print("More than 1 1 body file matches, picking first one ")
-#         for f in oneBodMatch:
-#             print("file=", f)
-#
-#     if len(twoBodMatch) > 1:
-#         print("More than 1 2 body file matches, picking first one ")
-#         for f in twoBodMatch:
-#             print("file=", f)
-#     if len(oneBodMatch) == 0:
-#         oneBodMatch = None
-#     else:
-#         oneBodMatch = oneBodMatch[0]
-#
-#     if len(twoBodMatch) == 0:
-#         twoBodMatch = None
-#     else:
-#         twoBodMatch = twoBodMatch[0]
-#
-#     if twoBodMatch is None and oneBodMatch is not None:
-#         print("twobod is None but onebody isnt")
-#         print(dictString(kwargs))
-#
-#     if oneBodMatch is None and twoBodMatch is not None:
-#         print("onebod is None but twobody isnt")
-#         print(dictString(kwargs))
-#     return oneBodMatch, twoBodMatch, kwargs
-
-
 def dictString(d):
-    keys_to_compare = [
-        "lambdaSRG",
-        "Ntotmax",
-        "omegaH",
-        "lambdaCut",
-        "theta",
-        "energy",
-    ]
+    keys_to_compare = ["lambdaSRG", "Ntotmax", "omegaH", "lambdaCut", "theta", "energy"]
     # keys_to_compare.remove(skip)
     out = ""
     for k in keys_to_compare:
@@ -690,6 +608,31 @@ def params_match_exclude(dictA, dictB, paramToPlot):
 
     # If all checks pass, they match
     return True
+
+
+def getStringBetween(s, prefix, suffix):
+    """
+    Return the substring in `s` that is between `prefix` and `suffix`.
+    If either is not found, return None.
+    """
+    start = s.find(prefix)
+    if start == -1:
+        return None
+    start += len(prefix)
+
+    end = s.find(suffix, start)
+    if end == -1:
+        return None
+
+    return s[start:end]
+
+
+def getVaryStrFromName(file):
+    file = copy(file)
+    file = file.split(r"/")[-1]
+    tmp = file.split("omegaH")[-1]
+    assert "Vary" in tmp, f"file tmp str= {tmp}, \n full file={file}"
+    return tmp[3:10]
 
 
 if __name__ == "__main__":

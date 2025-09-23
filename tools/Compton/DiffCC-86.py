@@ -21,7 +21,7 @@ rcParams["text.usetex"] = True
 rcParams["font.family"] = "serif"
 
 
-alphaDiff = -2.0
+alphaDiff = 0.0
 betaDiff = 0.0
 
 
@@ -78,7 +78,8 @@ def main():
                     yVal = cc.crossSection(
                         onebody_dir + onebod,
                         twobody_dir + twobod,
-                        delta=[alphaDiff, betaDiff],
+                        deltaAlpha=alphaDiff,
+                        deltaBeta=betaDiff,
                     )["cc"]
                     ccs.append(yVal)
                     outDict[(lambdaSRG, lambdaCut)].append([float(x), yVal])

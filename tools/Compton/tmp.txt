@@ -1,82 +1,8 @@
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-001deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=b75635ec58e6b1d774bd527b0388fe16845a4a1afae36e19d0439e13deca454b.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-001deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=eba907f57d9923033539fb3981d7c655678e911a530760ac8d9ea4f99ce18c8d.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-001deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=cc719241bc8aead6d60bfa69bf8d361f7de41769146d4ace16e918ea13fccbfd.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-001deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=cb5c65738b99d4dbceb2e80fab5e336151f490f9a941d0aaf842de55587bf0af.v2.0.dat
-More than 1 1 body file matches, picking first one 
-0. file= onebody-6Li.060MeV-040deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=e59d61084a701a652cc1a868b81c96d8ab64d9a1e659321913ab1589e5926dad.v2.0.dat
-1. file= onebody-6Li.060MeV-040deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=ae5015991c14d613c1b21f8c8660e4f7fc7e97622f022a9305db31b0a7860c82.v2.0.dat
+
+(np.int64(1), 1.88, 450, 'Odelta3', 'Odelta2')
+onebody-6Li.086MeV-001deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=828b12b4c804fae5cab429f0a176c748f5513a12c5abab2828b325d41d0625b4.v2.0.dat
+twobody-6Li.086MeV-001deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG1.880setNtotmax14omegaH18.Odelta2-j12max=2-.denshash=1b93f5826e9e35d46b84753009c9b6582a17b3c2bb1a27aaa09d3f5906066f86.v2.0.dat
 
 
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-040deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=e59d61084a701a652cc1a868b81c96d8ab64d9a1e659321913ab1589e5926dad.v2.0.dat
-More than 1 1 body file matches, picking first one 
-0. file= onebody-6Li.060MeV-040deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=c549803dfb84d3dcf6656d4ab1589bf2d44d782490de78be6cd11bd06cb4edde.v2.0.dat
-1. file= onebody-6Li.060MeV-040deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=3a4253b07017cb686d8a707f19c16aab0f383a726b66a4541e35e13e8bca78f9.v2.0.dat
-
-
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-040deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=c549803dfb84d3dcf6656d4ab1589bf2d44d782490de78be6cd11bd06cb4edde.v2.0.dat
-More than 1 1 body file matches, picking first one 
-0. file= onebody-6Li.060MeV-040deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=6066846fe6fecb05defd19bcc9b7868d16b8bfa79c150ae703e97c1c028c93ee.v2.0.dat
-1. file= onebody-6Li.060MeV-040deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=7dfbe596cb8113b5578305117387e38d7e5487b4322191f3a52adf98029ab476.v2.0.dat
-
-
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-040deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=6066846fe6fecb05defd19bcc9b7868d16b8bfa79c150ae703e97c1c028c93ee.v2.0.dat
-More than 1 1 body file matches, picking first one 
-0. file= onebody-6Li.060MeV-040deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=0cbd8282999a39af66bf087962538d1e578d104ab1875d830164c11410534f53.v2.0.dat
-1. file= onebody-6Li.060MeV-040deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=f502c95d2ff7ab3ca0d5a4b891fd23f7322e97c2f80a04a09650fe70457cfe51.v2.0.dat
-
-
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-040deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=0cbd8282999a39af66bf087962538d1e578d104ab1875d830164c11410534f53.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-055deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=9e87268682de930586ddb26cc34423bcfd2e82f1c9acc55cf32a5eeac1dd2028.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-055deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=795c368dcb84a2bf64b280749973b2b6490eca5c2ab8453905f72fc3ce8c693e.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-055deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=94990cfca1b5b4532b9b79f734a7faef51c5f9e082ccc9e8e10c4a85bc465865.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-055deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=81ecc2d596e4e9557bb92d32858359097465cc978905bfd77d76ae3332294c2d.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-075deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=5adddc837d66e8b912e27a8c3b6af19a0687d9f18c6533de589178e3be6c864e.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-075deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=f2ad7343beece83c79e50a084ed0ddd17f7ba09ffa0feb1d53ed7d50d5522982.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-075deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=e70c9f1844fadc0485714ebc09c5f6a6ad6d175bbe0cac411372f70b763c0ef3.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-075deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=0c3b23673467b10af3a031f66dba5de37912515ac562cab3f4787d705bf22a07.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-090deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=d32ee87dffe1cb3011137cde5991c41b063a808cd8c97fd8ce91da77101aece7.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-090deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=c205e16eb8f1b3830f80e6bb706b43c7d4da6690d9255edd45e230dc69da0902.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-090deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=cc2506554106425c4f63555379a35df5c02dd102d083200fd77fa7091a7c9ae8.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-090deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=8c1bb88854b7136002ce926ecfd36d90f3a3d0f0472bd50dca8717661f3a8b89.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-110deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=b7a9cb5bd729abced0491e9c94c3fde7f02cb89a59142a4bb38fa5b4d8819b08.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-110deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=ef4d0fbad8703f684a2a16aa28322c84eeb2ccf112498bb2df6299a24bfa40a6.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-110deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=532b2b3ad2700df22d1f168a95010a6576e86a9948c01889c9c11fbd69841be8.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-110deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=8245d4cc4deed0d2ec3360562a9893cead74fb078a73713718013ff2c9ae2efe.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-125deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=5a67b504352767f13ab407d4a5df834c4c82c732221897b6e42c051cc35355ab.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-125deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=b7fd167765f6becd3fa41fa410b13a321a99414f1bcebe09a410873df973b763.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-125deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=b5d721dc9aa15cbd22be997e0b4dc280aa44bb1a39a52aacf11a4649b77cdbc1.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-125deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=db7266f898aa9494deaec90f6870cacb4b321b9780d546ea2a98c4d61467175b.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-145deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=ed1186b611c3cfb6d7f5f8a05839907b0258308b599e3994dd70eb13af55fe60.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-145deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=61fb13b54edf61d3360d7ce8a683636946b7613ccf7e1ca0655f048e5757fb93.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-145deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=e5b7934d71ff221fdf1307f1648d0658e8461dcc36d5b07de765acb3c7b11973.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-145deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=928923220d256de2a492e10d665b3337524bcff1f718f210ee5f54b9d07ab432.v2.0.dat
-More than 1 1 body file matches, picking first one 
-0. file= onebody-6Li.060MeV-159deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=dce75b786d9370de188b8d8c1f7e22b11f9403a8c68824ac52ed243dc5505d82.v2.0.dat
-1. file= onebody-6Li.060MeV-159deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=2863eeae08f274a2959e1f2fb51b0c06c8cd4d19045528f9d778c8992b7260ac.v2.0.dat
-
-
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-159deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=dce75b786d9370de188b8d8c1f7e22b11f9403a8c68824ac52ed243dc5505d82.v2.0.dat
-More than 1 1 body file matches, picking first one 
-0. file= onebody-6Li.060MeV-159deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=36bf1d77b64339b042066b5329b282869c1a3452dff2b67127bfca2e450793d1.v2.0.dat
-1. file= onebody-6Li.060MeV-159deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=f730e025e4a309691de66b607256aa34cbbc5d04f7ad2e3b2a1311a30342a414.v2.0.dat
-
-
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-159deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=36bf1d77b64339b042066b5329b282869c1a3452dff2b67127bfca2e450793d1.v2.0.dat
-More than 1 1 body file matches, picking first one 
-0. file= onebody-6Li.060MeV-159deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=b455aac04d60a82d1d4a3c411b47da92fa409333fa4609fb55d0715daee343e7.v2.0.dat
-1. file= onebody-6Li.060MeV-159deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=44e6c4f6bd140c3141ab8b59841de67b8cc5f7ca3d1a7d2790a67ff9778ec7a6.v2.0.dat
-
-
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-159deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=b455aac04d60a82d1d4a3c411b47da92fa409333fa4609fb55d0715daee343e7.v2.0.dat
-More than 1 1 body file matches, picking first one 
-0. file= onebody-6Li.060MeV-159deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=4cf46728fa59af69ebf9943d0f2e2823ecd373f3154ec579c37ccc89dbbd8ce3.v2.0.dat
-1. file= onebody-6Li.060MeV-159deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=624e6f0908a9aa4f62be219c3bb91db9af6b257e1371d207459f0673943b12ea.v2.0.dat
-
-
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-159deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=4cf46728fa59af69ebf9943d0f2e2823ecd373f3154ec579c37ccc89dbbd8ce3.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-180deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=e14fbc6f22601dad8f8c727f7980959818656575da129318aac8491474e8a765.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-180deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=b054d0c458a0c282282f23fb7e468cc42846956a22d6af4408a7a3d3251f7977.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-180deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=ea7fbdeb37ba1c29c15b3129b518f894a7afbd0e3e3094641dfcc33ecb1d4f9f.v2.0.dat
-All zero entries for file: /home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/onebody-6Li.060MeV-180deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG2.236setNtotmax14omegaH18.Odelta3-.denshash=f10391c21ca9c68df86bfaab29b6c1cf110ceaef436657ae34b3ea24c7a36fd4.v2.0.dat
-Save it?  [y/n]
-/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/results/plot_theta-energy=60-angle=180-lambdaCut=500-lambdaSRG=2.236-Ntotmax=14-omegaH=18.pdf
+(np.int64(1), 1.88, 500, 'Odelta3', 'Odelta2')
+: ('onebody-6Li.086MeV-001deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=f9d4b2385bdf709a46ea1f3a33b580aba21a0b9f8917fea402707c2b309f48df.v2.0.dat', 'twobody-6Li.086MeV-001deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG1.880setNtotmax14omegaH18.Odelta2-j12max=2-.denshash=490a29b89dcfb23ad33f22adbab03657d66164b810c674bd4aff8ee944365dc6.v2.0.dat')

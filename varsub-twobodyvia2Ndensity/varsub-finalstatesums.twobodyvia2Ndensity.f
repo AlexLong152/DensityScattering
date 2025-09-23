@@ -31,7 +31,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       subroutine twobodyfinalstatesumsvia2Ndensity(
      &     Result,Mnucl,
      &     Anucl,twoSnucl,extQnumlimit,j12,m12,l12,s12,t12,mt12,
-     &     k,thetacm,
+     &     Eprobe,thetacm,
      &     ip12,p12,wp12,
      &     P12MAG,AP12MAG,NP12,
      &     th12,phi12,Nth12,Nphi12,j12max,
@@ -49,7 +49,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     INPUT VARIABLES:
       integer,intent(in) :: j12,m12,l12,s12,t12,mt12 ! are automatically integers, so do NOT multiply by 2, unlike for Mz=>twoMz
       integer,intent(in) :: j12max
-      real*8,intent(in)  :: k,thetacm
+      real*8,intent(in)  :: Eprobe,thetacm
       real*8,intent(in)  :: p12,wp12
       real*8,intent(in)  :: P12MAG(Npmax),AP12MAG(Npmax)
       integer,intent(in) :: NP12
@@ -131,7 +131,7 @@ c                        if (invokesymmetrytwoMzp(symmetry,twoSnucl,twoMzp,verbo
      &                    j12p,m12p,l12p,s12p,t12p,mt12p,
      &                    j12,m12,l12,s12,t12,mt12,
      &                    p12*HC,P12MAG*HC,th12,
-     &                    phi12,Nth12,Nphi12,NP12,thetacm,k,
+     &                    phi12,Nth12,Nphi12,NP12,thetacm,Eprobe,
      &                    AngularType12,angweight12,calctype,numDiagrams,ip12p,twoSnucl,twoMzp,twoMz,verbosity)
 c     Note P12MAG(ip12p) is the generic integration variable, not physical momenta 
 
@@ -144,16 +144,6 @@ c                           write(*,*) l12p,s12p,j12p,mt12p,m12p,twoMzp
 c P12P_density units in  fm^-1, so convert to MeV 
                            do diagNum=1,numDiagrams
 c                              ppAbs= sqrt(DOT_PRODUCT(ppVecs(diagNum,:),ppVecs(diagNum,:)))!in MeV
-c   Find the closest values in the P12 array to ppAbs
-
-
-c                              ppTmp=ppAbs/HC!TODO combine this into the HC**3 in fact
-c                              pTmp=pAbs/HC!just use p12
-c                              call interpolate(tmpRho, real(rhoDensity(:,:,rindx),8), P12_MeV, ppAbs, pAbs, size(P12_MeV))
-
-c                              fact=(Anucl*(Anucl-1)/2)*(p12**2)*wp12*(P12MAG(ip12p)**2)*AP12MAG(ip12p)/(2*Pi)**3*
-c    &                                 tmpRho*HC**3.d0
-
 c                              fact=(Anucl*(Anucl-1)/2)*(p12**2)*wp12*((ppAbs/HC)**2)*AP12MAG(ip12p)/(2*Pi)**3*
 c    &                                 HC**3.d0
                                fact=(Anucl*(Anucl-1)/2)*(p12**2)*wp12*AP12MAG(ip12p)*(P12MAG(ip12p)**2)/(2*Pi)**3*

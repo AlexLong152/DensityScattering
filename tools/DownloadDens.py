@@ -9,39 +9,66 @@ pd.set_option("display.max_columns", None)
 pd.set_option("display.max_colwidth", None)
 
 workdir = os.environ["HOME"] + r"/OneDrive/"
-beta_webbase = "https://just-object.fz-juelich.de:8080/v1/AUTH_1715b19bd3304fb4bb04f4beccea0cf2/densitystore-beta/"
 beta_webbase = "https://just-object.fz-juelich.de:9000/jikp03/densitystore-beta/"
 
-# webbase = "https://just-object.fz-juelich.de:8080/v1/AUTH_1715b19bd3304fb4bb04f4beccea0cf2/densitystore/"
-
 filename = "_KIND_body-_NUC_._ENERGY_MeV-_ANGLE_deg.dens-_MODENN__ORDERNN__TNFORDER_-lambda_LAMBDANN_-lambdaSRG_LAMBDASRGNN_setNtotmax_NTOMAXVAL_omegaH_OMEGAHVAL_.denshash=_HASHNAME_.v2.0.h5"
+
+
+def formatFolder(folder):
+    if folder[-1] != r"/":
+        folder += r"/"
+    return folder
+
+
+workdir = formatFolder(workdir)
 
 
 def main():
     # User interface: the `select` variable filters the DataFrame
     # Adjust this selection as needed
-    # os.system(f"rm {workdir}//densities_table.h5")
+
+    file = f"{workdir}densities_table.h5"
+    try:
+        os.remove(file)
+    except FileNotFoundError:
+        pass
     densdf = access.database(workdir=workdir, webbase=beta_webbase)
     df = densdf.pddf
-    df = df.reset_index()
-    # tableCheck(df)
-    ts1 = pd.Timestamp("2025-04-26 1:00:00")
+    # df = df.reset_index()
+    """
+    eps = 0.1
+
+    thetas = np.array([1, 40, 55, 75, 90, 110, 125, 145, 159, 180])
+    theta_mask = [(df["theta"] - theta).abs() < eps for theta in thetas]
+    theta_mask = np.logical_or.reduce(theta_mask)
+
+    energies = np.array([60])
+    omega_masks = [(df["omega"] - e).abs() < eps for e in energies]
+    omega_mask = np.logical_or.reduce(omega_masks)
+
+    thetas = np.array([1, 40, 55, 75, 90, 110, 125, 145, 159, 180])
+    theta_masks = [(df["theta"] - t).abs() < eps for t in thetas]
+    theta_mask = np.logical_or.reduce(theta_masks)
 
     select = (
-      (df["N"] == 3)
-    & (df["LambdaNN"]>10)
-    & (df["Z"] == 3)
-    & (df["addtime"] < ts1)
-    & (df["omega"]<60.1)
-    & (df["omega"]>59.9)
-    & (df["theta"]==40)
-    & (df["LambdaNN"]==400)
-    & (df["Nmax"]==10.0)
-    & (df["OmegaHO"]==16.0)
-    #& (df["lambdaSRGNN"]==1.880)
-)
-    df = df[select]
+        (df["N"] == 3)
+        & (df["Z"] == 3)
+        & omega_mask
+        & ((df["LambdaNN"] == 450) | (df["LambdaNN"] == 500))
+        # & (df["Nmax"] == 14)
+        & theta_mask
+    )
 
+    df = df[select]
+    """
+    df["addtime"] = pd.to_datetime(df["addtime"])
+    one_week_ago = pd.Timestamp.now() - pd.Timedelta(weeks=3)
+    df = df[df["addtime"] >= one_week_ago]
+
+    # i = 1
+    # for idx, row in df.iterrows():
+    #     print("row=", idx, "hashname=", row["hashname"], "file number=", i)
+    #     i += 1
     dlNames = []
     i = 0
     for _, row in df.iterrows():
@@ -60,14 +87,15 @@ def main():
     i = 0
     errorout = []
 
-    nuc = getName(row["Z"], row["N"])
-    if nuc == "4He" or nuc == "6Li":
-        yn = input(
-            "Place these files into seperate folders based on lambda/lambdaSRG? (y/n): "
-        ).lower()
-        splitFolder = True if yn == "y" else False
-    else:
-        splitFolder = False
+    # nuc = getName(row["Z"], row["N"])
+    # if nuc == "4He" or nuc == "6Li":
+    #     yn = input(
+    #         "Place these files into seperate folders based on lambda/lambdaSRG? (y/n): "
+    #     ).lower()
+    #     splitFolder = True if yn == "y" else False
+    # else:
+    #     splitFolder = False
+    splitFolder = False
 
     for _, row in df.iterrows():
         nucName = "densities-" + getName(row["Z"], row["N"])

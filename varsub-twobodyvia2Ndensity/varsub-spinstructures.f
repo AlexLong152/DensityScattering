@@ -305,9 +305,10 @@ c
       real*8 function ddelta(a,b)
       implicit none
       integer, intent(in) :: a,b
-      if (a.eq.b) then
-          ddelta=1.d0  
-      else
-          ddelta=0.d0
-      end if
+      ! if (a.eq.b) then
+      !     ddelta=1.d0  
+      ! else
+      !     ddelta=0.d0
+      ! end if
+      ddelta=merge(1,0,a.eq.b)
       end function ddelta

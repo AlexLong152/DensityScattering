@@ -97,7 +97,10 @@ def getQuantNums(filename, returnMat=True):
             vals = np.zeros(len(lines), dtype=np.complex128)
             for i in range(len(vals)):
                 tmp = lines[i].split(",")
-                vals[i] = float(tmp[0]) + 1j * float(tmp[1])
+                try:
+                    vals[i] = float(tmp[0]) + 1j * float(tmp[1])
+                except ValueError:
+                    return None
         out["MatVals"] = vals2matrix(filename, vals)
 
     out["name"] = filename
@@ -115,6 +118,7 @@ def getQuantNums(filename, returnMat=True):
     out["omegaH"] = getOmegaH(filename)
     out["lambda"] = getLambda(filename)
     out["lambdaCut"] = getLambda(filename)
+    # print("filename=", filename)
     out["lambdaSRG"] = getLambdaSRG(filename)
     out["numBodies"] = getNumBodies(filename)
     out["Odelta"] = getOdelta(filename)
@@ -136,6 +140,8 @@ def vals2matrix(filename, vals):
         case _ if "6Li" in name:
             twoSpin = 2
         case _ if "4He" in name:
+            twoSpin = 0
+        case _ if "3He" in name:
             twoSpin = 1
         case _:
             raise ValueError("Nucleus not found")
@@ -155,14 +161,19 @@ def vals2matrix(filename, vals):
     # print(np.shape(vals))
     # print("np.shape(out)=", np.shape(out))
     # print("twoMz=", twoMz)
+    allZeros = True
     i = 0
     for extNum in range(numextQnums):
         for mzp in range(numStates):
             for mz in range(numStates):
                 # print("vals[i]=", vals[i])
                 out[extNum, mzp, mz] = vals[i]
+                if vals[i] != 0:
+                    allZeros = False
                 i += 1
-    # print(out)
+    if allZeros:
+        raise ValueError(f"All zero entries for file: {filename}")
+
     return out
 
 

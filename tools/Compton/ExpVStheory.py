@@ -3,7 +3,7 @@
 """
 
 import numpy as np
-import param_depend as pdep
+import CrossSection as cc
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
 
@@ -47,7 +47,7 @@ def main():
         for theta in thetas:
             for j, Ntot in enumerate(Ntotmaxs):
                 try:
-                    ccVal = pdep.ccForDict(
+                    ccVal = cc.ccForDict(
                         onebody_dir,
                         twobody_dir,
                         energy=energy,
