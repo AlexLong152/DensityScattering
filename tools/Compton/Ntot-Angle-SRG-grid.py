@@ -30,20 +30,24 @@ Li6Bind = -5332.33 * 6 / 1000
 def main():
     Ntotmaxs = np.array([6, 8, 10, 12, 14])
     thetas = np.array([40, 159])
-    energy = 86
+    energy = 60
     # energy = 100
 
     twobody_dir = f"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/2bod/{energy}MeV/"
     onebody_dir = f"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/{energy}MeV/"
 
     lambdaSRGs = np.array([1.880, 2.236, 3.00])
-    lambdaCut = 500
+    lambdaCut = 450
     omegaHs = np.array([14, 16, 18])
     markers = ["x", ",", "o", "v", "1", "*", "D"]
-
     out = {}
-    for lambdaSRG in lambdaSRGs:
-        for theta in thetas:
+
+    print("lambdaCut=", lambdaCut)
+    print("energy=", energy)
+    print(f"{'lambdaSRG':>10} {'omegaH':>10} {'Ntot':>8} {'theta':>8} {'ccVal':>12}")
+
+    for theta in thetas:
+        for lambdaSRG in lambdaSRGs:
             for i, omegaH in enumerate(omegaHs):
                 for j, Ntot in enumerate(Ntotmaxs):
                     try:
@@ -65,13 +69,17 @@ def main():
                         #'hashname'
                         selectOne = df["hashname"] == oneHash
                         selectTwo = df["hashname"] == twoHash
-                    except ValueError:
+
+                        out[(lambdaSRG, omegaH, Ntot, theta)] = ccVal
                         print(
-                            f"Missing file for energy={energy}, angle={theta}, lambdaCut={lambdaCut}, "
-                            f"lambdaSRG={lambdaSRG}, Ntotmax={Ntot}, omegaH={omegaH}"
+                            f"{lambdaSRG:10} {omegaH:10} {Ntot:8} {theta:8} {ccVal:12}"
                         )
+                    except FileNotFoundError:
+                        # print(
+                        #     f"Missing file for energy={energy}, angle={theta}, lambdaCut={lambdaCut}, "
+                        #     f"lambdaSRG={lambdaSRG}, Ntotmax={Ntot}, omegaH={omegaH}"
+                        # )
                         ccVal = None
-                    out[(lambdaSRG, omegaH, Ntot, theta)] = ccVal
                     try:
                         oneBodyBind = df.loc[selectOne, "E[MeV]"].iloc[0]
                         twoBodyBind = df.loc[selectTwo, "E[MeV]"].iloc[0]
@@ -86,21 +94,21 @@ def main():
                         twoBodyBind = 0
                         out[(lambdaSRG, omegaH, Ntot, theta, "oneBodyBind")] = 0
                         out[(lambdaSRG, omegaH, Ntot, theta, "twoBodyBind")] = 0
-                    if oneBodyBind != 0 or twoBodyBind != 0:
-                        print(
-                            "lambdaSRG, omegaH,Ntot,theta,=",
-                            lambdaSRG,
-                            omegaH,
-                            Ntot,
-                            theta,
-                        )
-                        print(
-                            "oneBodyBind-Li6Bind=", np.round(oneBodyBind - Li6Bind, 5)
-                        )
-                        print(
-                            "twoBodyBind-Li6Bind=", np.round(twoBodyBind - Li6Bind, 5)
-                        )
-                        print("\n")
+                    # if oneBodyBind != 0 or twoBodyBind != 0:
+                    #     print(
+                    #         "lambdaSRG, omegaH,Ntot,theta,=",
+                    #         lambdaSRG,
+                    #         omegaH,
+                    #         Ntot,
+                    #         theta,
+                    #     )
+                    #     print(
+                    #         "oneBodyBind-Li6Bind=", np.round(oneBodyBind - Li6Bind, 5)
+                    #     )
+                    #     print(
+                    #         "twoBodyBind-Li6Bind=", np.round(twoBodyBind - Li6Bind, 5)
+                    #     )
+                    #     print("\n")
 
     # --- shared axes & figure setup ---
     fig, axs = plt.subplots(
@@ -238,12 +246,7 @@ def main():
                             )
                             legendPlotted = True
                         else:
-                            ax.scatter(
-                                Ntot,
-                                val,
-                                marker=markers[i],
-                                c=colors[i],
-                            )
+                            ax.scatter(Ntot, val, marker=markers[i], c=colors[i])
                     except KeyError:
                         pass
 

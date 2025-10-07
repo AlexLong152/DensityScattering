@@ -227,14 +227,7 @@ def params_match(dictA, dictB):
     # For example, compare lambdaSRG, Ntotmax, omegaH, etc.
     # If you have other constraints (energy, angle, lambdaCut, etc.)
     # you can incorporate them here or pass them in **kwargs.
-    keys_to_compare = [
-        "lambdaSRG",
-        "Ntotmax",
-        "omegaH",
-        "lambdaCut",
-        "theta",
-        "energy",
-    ]
+    keys_to_compare = ["lambdaSRG", "Ntotmax", "omegaH", "lambdaCut", "theta", "energy"]
     for key in keys_to_compare:
         # If a key doesn't exist or the values differ, return False
         if (key in dictA) and (key in dictB):

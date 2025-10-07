@@ -1,8 +1,0 @@
-
-(np.int64(1), 1.88, 450, 'Odelta3', 'Odelta2')
-onebody-6Li.086MeV-001deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=828b12b4c804fae5cab429f0a176c748f5513a12c5abab2828b325d41d0625b4.v2.0.dat
-twobody-6Li.086MeV-001deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG1.880setNtotmax14omegaH18.Odelta2-j12max=2-.denshash=1b93f5826e9e35d46b84753009c9b6582a17b3c2bb1a27aaa09d3f5906066f86.v2.0.dat
-
-
-(np.int64(1), 1.88, 500, 'Odelta3', 'Odelta2')
-: ('onebody-6Li.086MeV-001deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG1.880setNtotmax14omegaH18.Odelta3-.denshash=f9d4b2385bdf709a46ea1f3a33b580aba21a0b9f8917fea402707c2b309f48df.v2.0.dat', 'twobody-6Li.086MeV-001deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG1.880setNtotmax14omegaH18.Odelta2-j12max=2-.denshash=490a29b89dcfb23ad33f22adbab03657d66164b810c674bd4aff8ee944365dc6.v2.0.dat')

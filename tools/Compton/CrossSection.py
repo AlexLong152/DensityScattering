@@ -75,7 +75,6 @@ def crossSection(onebody_file, twobody_file, deltaAlpha=0, deltaBeta=0):
     dSigmadOmega: float
         The differential cross section in nanobarns
     """
-
     Z, N, spin, name = getNuc(onebody_file)
 
     # Construct corresponding onebody and varyA filenames
@@ -97,8 +96,7 @@ def crossSection(onebody_file, twobody_file, deltaAlpha=0, deltaBeta=0):
     matrixValues = computeMatrix(
         onebody_data, twobody_data, varyA_data, deltaAlpha, deltaBeta
     )
-    # print("matrixValues=", matrixValues)
-    # assert False
+
     dSigmadOmega = computeCrossSection(matrixValues, energy, spin, M6Li)
 
     returnObject = {}
@@ -154,8 +152,10 @@ def loadAmplitudes(onebody_file, twobody_file, varyA_files):
     """
     Load amplitudes using getQuantNums for onebody, twobody, and varyA files.
     """
+    onebody_file = copy(onebody_file)
+    twobody_file = copy(twobody_file)
     onebody_data = rd.getQuantNums(onebody_file)
-    if "Odelta0" in twobody_file:
+    if twoBodyOdelta0 in twobody_file:
         twobody_data = copy(onebody_data)
         twobody_data["MatVals"] = np.zeros(np.shape(onebody_data["MatVals"]))
         twobody_data["file"] = "NoFile"
@@ -318,6 +318,7 @@ def ccForDict(
     deltaAlpha=0,
     deltaBeta=0,
     returnFull=False,
+    verbose=False,
     **kwargs,
 ):
     """
@@ -379,7 +380,11 @@ def ccForDict(
     twobody_info = []
     matched_twobody = []
     # Magic Value, means no twobody file, and is interpreted as such by crossSection function
-    if Odeltatwobod == twoBodyOdelta0:
+    # print("Odeltatwobod=", Odeltatwobod)
+    # print("Odelta0" in Odeltatwobod)
+    # assert False
+    # if ( Odeltatwobod == twoBodyOdelta0 or "Odelta0" in Odeltatwobod) or Odeltatwobod == "Odelta0":
+    if Odeltatwobod == twoBodyOdelta0 or "Odelta0" in Odeltatwobod:
         matched_twobody.append(twoBodyOdelta0)
     else:
         for f in twobody_files:
@@ -389,29 +394,29 @@ def ccForDict(
                     twobody_info.append((f, info))
                     matched_twobody.append(f)
 
-    if len(matched_twobody) == 0 and len(matched_onebody) == 0:
-        if len(matched_twobody) == 0 and len(matched_onebody) == 0:
-            print("No onebody or twobody file found for parameters")
-        elif len(matched_onebody) == 0:
-            print("No onebody file found for parameters")
-        else:  # len(matched_twobody) == 0:
-            print("No twobody file found for parameters")
-        for key, value in kwargs.items():
-            print(f"{key}={value}")
-        print("\n")
-        raise ValueError("File not found")
+    if len(matched_twobody) == 0 or len(matched_onebody) == 0:
+        if verbose:
+            print("len(matched_twobody)=", len(matched_twobody))
+            print("len(matched_onebody)=", len(matched_onebody))
+
+            for key, value in kwargs.items():
+                print(f"{key}={value}")
+            print("\n")
+        raise FileNotFoundError("No file found that matches these parameters")
+
     one = matched_onebody[0]
     two = matched_twobody[0]
-    onebod = rd.getQuantNums(onebody_dir + one, returnMat=True)
-    twobod = rd.getQuantNums(twobody_dir + two, returnMat=False)
-    if returnFull:
-        return crossSection(
-            onebod["file"], twobod["file"], deltaAlpha=deltaAlpha, deltaBeta=deltaBeta
-        )
+    onebod = rd.getQuantNums(onebody_dir + one, returnMat=True)["file"]
+    if two == twoBodyOdelta0:
+        twobod = twoBodyOdelta0
     else:
-        return crossSection(
-            onebod["file"], twobod["file"], deltaAlpha=deltaAlpha, deltaBeta=deltaBeta
-        )["cc"]
+        twobod = rd.getQuantNums(twobody_dir + two, returnMat=True)["file"]
+    if returnFull:
+        return crossSection(onebod, twobod, deltaAlpha=deltaAlpha, deltaBeta=deltaBeta)
+    else:
+        return crossSection(onebod, twobod, deltaAlpha=deltaAlpha, deltaBeta=deltaBeta)[
+            "cc"
+        ]
 
 
 def params_match_free(dictA, dictB):

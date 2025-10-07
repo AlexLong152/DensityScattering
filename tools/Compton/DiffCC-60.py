@@ -16,7 +16,6 @@ import readDensity as rd
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
 from matplotlib.lines import Line2D
-import importlib
 
 rcParams["text.usetex"] = True
 rcParams["font.family"] = "serif"

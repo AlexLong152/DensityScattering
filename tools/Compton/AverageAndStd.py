@@ -14,7 +14,7 @@ rcParams["text.usetex"] = True
 rcParams["font.family"] = "serif"
 
 
-energy = 86
+energy = 100
 Odeltaonebod = "Odelta3"
 Odeltatwobod = "Odelta4"
 saveFolder = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/results/FinalCrossSections-And-Uncertainties/"
@@ -57,15 +57,57 @@ def main():
                             lambdaSRG=lambdaSRG,
                             Ntotmax=Ntot,
                             omegaH=omegaH,
-                        )["cc"]
-                        values.append(crossSec)
+                        )
+                        onebody_file = crossSec["onebody_file"]
+                        twobody_file = crossSec["twobody_file"]
+                        assert Odeltaonebod in onebody_file, (
+                            f"{Odeltaonebod} not in \n{onebody_file}"
+                        )
+                        assert Odeltatwobod in twobody_file, (
+                            f"{Odeltatwobod} not in \n{twobody_file}"
+                        )
+                        values.append(crossSec["cc"])
                         numVal += 1
 
-                    except ValueError:
+                    except FileNotFoundError:
                         pass
         counts.append(numVal)
         out[i] = np.mean(values), maxDev(values)
     # loop over mean values in a for loop and sort them into a new array
+
+    data2012 = np.array(
+        [
+            [40.0, 196.0, 2.0 * np.sqrt(34)],
+            [55.0, 176.0, 10.0],
+            [75.0, 125.0, np.sqrt(65)],
+            [90.0, 135.0, np.sqrt(65)],
+            [110.0, 138.0, np.sqrt(89)],
+            [125.0, 177.0, 3.0 * np.sqrt(13)],
+            [145.0, 178.0, 3.0 * np.sqrt(13)],
+            [159.0, 193.0, 10.0],
+        ],
+        dtype=float,
+    )
+
+    data2014 = np.array(
+        [
+            [40.0, 203.0, 2.0 * np.sqrt(106)],
+            [55.0, 147.0, np.sqrt(170)],
+            [75.0, 140.0, np.sqrt(193)],
+            [90.0, 159.0, np.sqrt(233)],
+            [110.0, 146.0, np.sqrt(449)],
+            [145.0, 167.0, 2.0 * np.sqrt(97)],
+            [159.0, 172.0, 15.0],
+        ],
+        dtype=float,
+    )
+    match energy:
+        case 60:
+            data = data2012
+        case 86:
+            data = data2014
+        case _:
+            data = None
 
     plt.figure(figsize=(8, 6))
     plt.errorbar(
@@ -77,7 +119,23 @@ def main():
         markersize=4,
         capsize=5,  # length of horizontal bars at the top/bottom
         capthick=1.5,  # thickness of those bars
+        c="C0",
+        label=r"Theory calculation $\mathcal{O}(e^2\delta^4)$",
     )
+    if data is not None:
+        plt.errorbar(
+            data[:, 0],
+            data[:, 1],
+            yerr=data[:, 2],
+            linestyle="none",
+            fmt="s",
+            markersize=6,
+            capsize=5,  # length of horizontal bars at the top/bottom
+            capthick=1.5,  # thickness of those bars
+            c="C1",
+            label="Experimental Results",
+        )
+        plt.legend(fontsize=12)
     plt.title(
         r"${}^6\mathrm{Li}$ Compton Scattering at $"
         + str(energy)
@@ -86,11 +144,14 @@ def main():
     )
 
     plt.ylabel(r"$\mathrm{d}\sigma/\mathrm{d}\Omega\; [\mathrm{nb}]$", fontsize=14)
-    plt.xlabel(r"$\theta$ (Degrees) ", fontsize=14)
+    plt.xlabel(r"$\theta$ (Degrees), CM frame", fontsize=14)
 
-    wprint(f"{'theta':>6} {'Cross Section [nb]':>20} {'Uncertainty':>12} {'Points':>8}")
+    # wprint(f"{'theta':>6} {'Cross Section [nb]':>20} {'Uncertainty':>12} {'Points':>8}")
+    wprint(f" {energy}MeV")
+    wprint(f"{'theta':>6} {'Cross Section [nb]':>20} {'Uncertainty':>12}")
     for i, theta in enumerate(thetas):
-        wprint(f"{theta:6.0f} {out[i, 0]:20.6f} {out[i, 1]:12.6f} {counts[i]:8d}")
+        # wprint(f"{theta:6.0f} {out[i, 0]:20.6f} {out[i, 1]:12.6f} {counts[i]:8d}")
+        wprint(f"{theta:6.0f} {out[i, 0]:20.2f} {out[i, 1]:12.2f}")
     wprint("Polarisability values - deviations from Fortran code")
     wprint("cc.alphap=", cc.alphap)
     wprint("cc.alphan=", cc.alphan)
@@ -99,6 +160,7 @@ def main():
     wprint("Odeltaonebod=", Odeltaonebod)
     wprint("Odeltatwobod=", Odeltatwobod)
     figureSave = saveFolder + "plot" + fileName.replace(".txt", ".pdf")
+    print("figureSave=\n", figureSave)
     plt.tight_layout()
     plt.savefig(figureSave)
     plt.show()

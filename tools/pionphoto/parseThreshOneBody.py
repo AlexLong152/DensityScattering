@@ -5,7 +5,7 @@ from copy import copy
 
 
 def main():
-    testfile = "/home/alexander/Dropbox/pionphotop/3He/threshold/onebody/output-400.dat"
+    testfile = r"/home/alexander/Dropbox/PionPhotoProduction/results-3He/1bod/132MeV/onebody-3He.132MeV-060deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG0.000setNtotmax00omegaH00.Odelta3-.denshash=fac31e8f17bc2b1a6d84411b408e05cca71aae63c04be8f6fbf3ba311acb45a3.v2.0.dat"
     d = parseOnebody(testfile)
 
     for k, v in d.items():
@@ -40,6 +40,10 @@ def parseOnebody(filepath: str) -> Dict[object, object]:
       - per-eps arrays stored as myDict[1], myDict[2], ... (dtype=complex)
         Each array contains the values encountered in that eps block, in order.
         Length can be from 0 to 8.
+
+    for 3He
+    myDict[1] contains averages eps=1,0,0 and eps=0,1,0 results
+    myDict[1] contains eps=0,0,1 results
     """
     myDict: Dict[object, object] = {}
 

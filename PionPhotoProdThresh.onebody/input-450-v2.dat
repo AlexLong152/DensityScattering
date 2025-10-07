@@ -1,9 +1,0 @@
-131.8 131.8 10                           omegaLow, omegaHigh, omegaStep
-60 60 15                             thetaLow, thetaHigh, thetaStep
-output-450-v2.dat
-'/home/alexander/OneDrive/densities-3He/1Ndensities/132MeV/onebody-3He.132MeV-060deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG0.000setNtotmaxomegaH.denshash=05f72a107e3a46d351fe3f69dc7be6fbadc6440909fad9737bd01af00c6cd79a.v2.0.h5'
-cm_symmetry_verbos_extQnumlimit=1                    frame, symmetry, verbosity of STDOUT
-Odelta3                              Calctype -- VaryAXN varies NucelonN's amplitude AX (N=p,n; X=1-6)
-32			             number of points Nx in Feynman parameter integration
-COMMENTS:_v2.0
-# in output & density filenames, code replaces ORDER, XXX and YYY automatically by order, energy and angle.

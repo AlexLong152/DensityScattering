@@ -35,14 +35,13 @@ def main():
     densdf = access.database(workdir=workdir, webbase=beta_webbase)
     df = densdf.pddf
     # df = df.reset_index()
-    """
-    eps = 0.1
+    eps = 2
 
     thetas = np.array([1, 40, 55, 75, 90, 110, 125, 145, 159, 180])
     theta_mask = [(df["theta"] - theta).abs() < eps for theta in thetas]
     theta_mask = np.logical_or.reduce(theta_mask)
 
-    energies = np.array([60])
+    energies = np.array([133])
     omega_masks = [(df["omega"] - e).abs() < eps for e in energies]
     omega_mask = np.logical_or.reduce(omega_masks)
 
@@ -50,20 +49,60 @@ def main():
     theta_masks = [(df["theta"] - t).abs() < eps for t in thetas]
     theta_mask = np.logical_or.reduce(theta_masks)
 
+    # select = (
+    #     (df["N"] == 2)
+    #     & (df["Z"] == 2)
+    #     & omega_mask
+    #     & ((df["LambdaNN"] == 450) | (df["LambdaNN"] == 500))
+    #     & ((df["lambdaSRGNN"] == 1.880) | (df["lambdaSRGNN"] == 2.236))
+    #     & (df["Nmax"] == 14)
+    #     & ((df["OmegaHO"] == 18) | (df["OmegaHO"] == 16))
+    #     & theta_mask
+    # )
+    #
+
+    thetas = np.array([60])
+    theta_mask = [(df["theta"] - theta).abs() < eps for theta in thetas]
+    theta_mask = np.logical_or.reduce(theta_mask)
     select = (
         (df["N"] == 3)
         & (df["Z"] == 3)
         & omega_mask
-        & ((df["LambdaNN"] == 450) | (df["LambdaNN"] == 500))
-        # & (df["Nmax"] == 14)
-        & theta_mask
+        # & ((df["LambdaNN"] == 450) | (df["LambdaNN"] == 500))
+        # & ((df["lambdaSRGNN"] == 1.880) | (df["lambdaSRGNN"] == 2.236))
+        & (df["Nmax"] == 14)
+        & (df["OmegaHO"] == 18)
+        # & theta_mask
     )
 
     df = df[select]
+
+    colsel = [
+        "E[MeV]",
+        "addtime",
+        "kind",
+        "N",
+        "Z",
+        # "Jtot",
+        "Nmax",
+        "OmegaHO",
+        "E[MeV]",
+        "omega",
+        "theta",
+        # "orderNN",
+        "LambdaNN",
+        # "tnforder",
+        "lambdaSRGNN",
+    ]
+    print("Printing first three rows of selected columns for header check")
+    tmp = df[colsel]
+    print(tmp[:10])
+    print("\n")
     """
     df["addtime"] = pd.to_datetime(df["addtime"])
-    one_week_ago = pd.Timestamp.now() - pd.Timedelta(weeks=3)
-    df = df[df["addtime"] >= one_week_ago]
+    weeks_ago = pd.Timestamp.now() - pd.Timedelta(weeks=3)
+    df = df[df["addtime"] >= weeks_ago]
+    """
 
     # i = 1
     # for idx, row in df.iterrows():

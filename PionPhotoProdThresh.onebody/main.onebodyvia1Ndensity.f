@@ -82,8 +82,9 @@ c
 
       real*8 Egamma,kgamma,thetaL,thetacm,Elow,Ehigh,Einterval
       
-      real*8 FT_sPlus, FT_sMinus, FL_sPlus, FL_sMinus
-      real*8 E_prot, E_neut, L_prot, L_neut, mPionPlus
+      ! real*8 FT_sPlus, FT_sMinus, FL_sPlus, FL_sMinus
+      real*8 E_prot, E_neut, L_prot, L_neut, K1N
+      real*8 E1N        
 
       real*8 thetaLow,thetaHigh,thetaInterval
       integer calctype,frame,Nangles,Nenergy,ienergy,j ! number of energies/angles; index for energies/angles
@@ -168,6 +169,8 @@ c     At the moment, L1N & ML1N are meaningless (L=ML=0), but they are implement
 
       integer,parameter :: L1Nmax=0    
       integer L1N, ML1N
+      complex*16, allocatable :: Result(:,:,:) ! extQnum from 1 to extQnumlimit; twoMzp from -twoSnucl to twoSnucl, stepsize 2; twoMz from -twoSnucl to twoSnucl, stepsize 2; rest blank.
+      real*8 aveE0,aveL0
       complex*16 :: tmpPlus(-1:1, -1:1)
       complex*16 tmpMinus(-1:1, -1:1)
       integer variedA           !BS: integer variedA to indicate which A is varied by calctype=VaryA
@@ -188,6 +191,18 @@ c     0: do not delete; 1: delete un-gz'd file; 2: delete downloaded and un-gz'd
       complex*16 :: sigmaz(-1:1,-1:1)  ! (ms3p,ms3): sigma-z
       complex*16 :: Sigma(-1:1,-1:1)  ! (ms3p,ms3): sigma-z
       complex*16 :: SigmaVec(3,-1:1,-1:1)
+
+      complex*16 :: SpinOnex(-2:2,-2:2)  ! (ms3p,ms3): sigma-x
+      complex*16 :: SpinOney(-2:2,-2:2) ! (ms3p,ms3): sigma-y
+      complex*16 :: SpinOnez(-2:2,-2:2)  ! (ms3p,ms3): sigma-z
+      complex*16 :: SpinOneVec(3,-2:2,-2:2)
+      complex*16 :: factorx,factory
+
+      complex*16 :: SpinZerox(-0:0,-0:0)  ! (ms3p,ms3): sigma-x
+      complex*16 :: SpinZeroy(-0:0,-0:0) ! (ms3p,ms3): sigma-y
+      complex*16 :: SpinZeroz(-0:0,-0:0)  ! (ms3p,ms3): sigma-z
+      complex*16 :: SpinZeroVec(3,-0:0,-0:0)
+
       real*8,parameter ::  munucleon(-1:1) = (/kappan,0.d0,kappap+1.d0/)! indices of entries: (-1,0,+1)!!!!
       real*8 :: kVec(3)  ! Momentum vector of k
       real*8 :: kHat(3)  ! normalized kVec
@@ -195,6 +210,7 @@ c     0: do not delete; 1: delete un-gz'd file; 2: delete downloaded and un-gz'd
       character(len=512) :: errmsg
       real*8 eps(3,3)
       integer ieps
+      integer ii, jj
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     end OF VARIABLE DECLARATIONS, BEGINNING OF CODING
@@ -233,7 +249,11 @@ c**********************************************************************
      &     nucleus,Anucl,twoSnucl,Mnucl,extQnumlimit,
      &     cartesian,verbosity)
       write(*,*) ""
-c      
+
+      if (.not.(extQnumlimit.eq.3)) then
+         write(*,*) "Assertion failed: (extQnumlimit.eq.3) evaluated False stopping"
+         stop
+      end if
       call ReadinputOnebody(inUnitno,calctype,variedA,descriptors,
 c---- Variable to control Feynman quadrature settings------------------------
      &     Nx,
@@ -271,19 +291,6 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 c     Nov 30 2022 Hard coded values from https://arxiv.org/abs/1103.3400v2 for 3He
 c     3He values
-
-          mPionPlus = 139.57
-
-          FT_sPlus=0.017
-          FT_sMinus=1.480
-          FL_sPlus=-0.079
-          FL_sMinus=1.479
-          
-          E_prot = -1.16E-3/mPionPlus
-          E_neut = 2.13E-3/mPionPlus
-          L_prot = -1.35E-3/mPionPlus
-          L_neut = -2.41E-3/mPionPlus
-c       Epsilon stuff. WLOG photon comes from the z direction
 c**********************************************************************
       open(unit=outUnitno, file=outfile,iostat=test)
       if (test .ne. 0) stop "*** ERROR: Could not open output file!!! Aborting."
@@ -336,8 +343,12 @@ c**********************************************************************
 
             allocate(FSPlusV(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
             allocate(FSMinusV(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
+            allocate(Result(1:extQnumlimit,-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
+
             FSPlusV=c0
             FSMinusV=c0
+            Result=c0
+
 
             sigmax=0.d0
             sigmay=0.d0
@@ -359,7 +370,48 @@ c
             SigmaVec(1,:,:)=sigmax
             SigmaVec(2,:,:)=sigmay
             SigmaVec(3,:,:)=sigmaz
+            SigmaVec=SigmaVec/2.d0
+            SpinOnex = c0
+            SpinOney = c0
+            SpinOnez = c0
 
+c--- Raw integer pattern for spin-1 matrices (before normalization)
+c--- Sx pattern: [[0,1,0],[1,0,1],[0,1,0]]
+            SpinOnex(2,0) = dcmplx(1.d0,0.d0)
+            SpinOnex(0,2) = dcmplx(1.d0,0.d0)
+            SpinOnex(0,-2) = dcmplx(1.d0,0.d0)
+            SpinOnex(-2,0) = dcmplx(1.d0,0.d0)
+
+c--- Sy pattern: [[0,1,0],[-1,0,1],[0,-1,0]]
+            SpinOney(2,0) = dcmplx(1.d0,0.d0)
+            SpinOney(0,2) = dcmplx(-1.d0,0.d0)
+            SpinOney(0,-2) = dcmplx(1.d0,0.d0)
+            SpinOney(-2,0) = dcmplx(-1.d0,0.d0)
+
+c--- Sz = diag(1,0,-1)
+            SpinOnez(2,2) = dcmplx(1.d0,0.d0)
+            SpinOnez(0,0) = dcmplx(0.d0,0.d0)
+            SpinOnez(-2,-2) = dcmplx(-1.d0,0.d0)
+
+c--- Apply normalization factors
+            factorx = 1.d0 / dsqrt(2.d0)
+            factory = 1.d0 / (ci * dsqrt(2.d0))
+
+            SpinOnex = factorx * SpinOnex
+            SpinOney = factory * SpinOney
+
+c--- Assemble vector
+            SpinOneVec(1,:,:) = SpinOnex
+            SpinOneVec(2,:,:) = SpinOney
+            SpinOneVec(3,:,:) = SpinOnez
+
+            SpinZerox(:,:)=1.d0
+            SpinZeroy(:,:)=1.d0
+            SpinZeroz(:,:)=1.d0
+
+            SpinZeroVec(1,:,:) = SpinZerox
+            SpinZeroVec(2,:,:) = SpinZeroy
+            SpinZeroVec(3,:,:) = SpinZeroz
 c**********************************************************************
 c     hgrie June 2017: create name of 1Ndensity file for given energy and angle, unpack it
 c     define correct formats for energy and angle
@@ -382,35 +434,79 @@ c           tmpPlus and tmpMinus combines spin and isospin part of diagrams
                     If (L1N.eq.0) then
                         Sigma=SigmaVec(ieps,:,:)
                         FSPlusV(twoMzp,twoMz)=FSPlusV(twoMzp,twoMz)+Anucl*rho1b(rindx)*Sigma(twom1Np,twom1N)
-     &                          *tmpPlus(twomt1Np,twomt1N)/2
+     &                          *tmpPlus(twomt1Np,twomt1N)
                         FSMinusV(twoMzp,twoMz)=FSMinusV(twoMzp,twoMz)+Anucl*rho1b(rindx)*Sigma(twom1Np,twom1N)
-     &                           *tmpMinus(twomt1Np,twomt1N)/2
+     &                          *tmpMinus(twomt1Np,twomt1N)
                     end if ! L1N
             end do              !rindx   
-            FSPlusV= 2* FSPlusV! S has factor of 1/2 with it
-            FSMinusV = 2* FSMinusV
+
+            E_prot = -1.16E-3
+            E_neut = 2.13E-3
+            L_prot = -1.35E-3
+            L_neut = -2.41E-3
+
+            K1N= ((Mnucleon+mpi)/(Mnucl+mpi))*(mnucl/Mnucleon)
+            if (twoSnucl.eq.1) then
+              FSPlusV=FSPlusV/Sigma
+              FSMinusV=FSMinusV/Sigma
+            else if (twoSnucl.eq.2) then
+              FSPlusV=FSPlusV/SpinOneVec(i,:,:)
+              FSMinusV=FSMinusV/SpinOneVec(i,:,:)
+            else if (twoSnucl.eq.0) then
+              FSPlusV=FSPlusV/SpinZeroVec(i,:,:)!Trivial in this case
+              FSMinusV=FSMinusV/SpinZeroVec(i,:,:)
+            end if
+            Result(ieps,:,:)=(K1N/2.d0)*(E_prot*FSPlusV + E_neut*FSMinusV)*(10**3)
+
+            do ii = -twoSnucl, twoSnucl
+            do jj = -twoSnucl, twoSnucl
+              if (Result(ieps,ii,jj).ne.Result(ieps,ii,jj) ) then
+                Result(ieps,ii,jj)=c0 !If its NaN from dividing by zero, set it to zero
+              end if
+            end do  
+            end do
+
+
             write(outUnitno,*) ""
             write(outUnitno,'(A)') "############################################"
             write(outUnitno,'(A,I1,",",I1,",",I1,A)') "eps=", int(eps(ieps,:)), " Result"
             write(*,*) ""
             write(*,'(A)') "############################################"
             write(*,'(A,I1,",",I1,",",I1,A)') "eps=", int(eps(ieps,:)), " Result"
-            call ResultWrite(FSPlusV,FSMinusV,Sigma,twoSnucl,outUnitno)
+
+            if (twoSnucl.eq.1) then
+              call ResultWrite(FSPlusV,FSMinusV,Sigma,twoSnucl,outUnitno)
+            else if (twoSnucl.eq.2) then
+              call ResultWrite(FSPlusV,FSMinusV,SpinOneVec,twoSnucl,outUnitno)
+            else if  (twoSnucl.eq.0) then
+              call ResultWrite(FSPlusV,FSMinusV,SpinZeroVec,twoSnucl,outUnitno)
+            end if
             end do!ieps
 
+            if (twoSnucl.eq.1) then
+              ! write(*,*) "Result(1,1,-1)=", Result(1,1,-1) 
+              ! write(*,*) "Result(2,-1,1)=", Result(2,-1,1) 
+              aveE0=(real(Result(1,1,-1))+real(Result(2,-1,1)))/2.d0
+            else if (twoSnucl.eq.2) then
+              aveE0=(real(Result(1,2,0))+aimag(Result(2,0,2)))/2.d0
+            else if  (twoSnucl.eq.0) then
+              aveE0=(real(Result(1,0,0))+aimag(Result(2,0,0)))/2.d0
+              write(*,*) ""
+            end if
 
-c           write(*,*) "Lenkewitz Thesis 3He result:"
-c           write(*,*) "F^S+V=", -0.065, "and F^S-V=",1.801
-c           write(*,*) ""
             write(*,*) ""
-            write(*,'(A)') "Lenkewitz 2011 paper 3He result"
-            write(*,'(A)') "F_T^S+V=0.017 and F_T^S-V=1.480"
-            write(*,'(A)') "F_L^S+V=-0.079 and F_L^S-V=1.479"
-
+            write(*,*) ""
             write(outUnitno,*) ""
-            write(outUnitno,'(A)') "Lenkewitz 2011 paper 3He result"
-            write(outUnitno,'(A)') "F_T^S+V=0.017 and F_T^S-V=1.480"
-            write(outUnitno,'(A)') "F_L^S+V=-0.079 and F_L^S-V=1.479"
+            write(outUnitno,*) ""
+            write(*,'(A)') "Result is in units of 10^-3/M_pi^+"
+            write(*,'(A,F24.19)') "Average E_0+^1N=",aveE0
+            write(outUnitno,'(A)') "Result is in units of 10^-3/M_pi^+"
+            write(outUnitno,'(A,F12.5)') "Average E_0+^1N=",aveE0
+
+            call outputroutine(outUnitno,twoSnucl,extQnumlimit,
+     &           Result,verbosity)
+
+            ! In units of m_pi^+
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     be a good boy and deallocate arrays. Compilers do that automatically for simple programs. Better safe than sorry.
             deallocate (FSMinusV,FSPlusV, STAT=test ) ! test becomes nonzero if this fails
@@ -447,56 +543,75 @@ c40   format(A,2F18.13)
       
       end PROGRAM
 
-c     Custom subroutine to write to both stdout and output file
-      subroutine writetoall(outUnitno, message)
-      implicit none
-      integer, intent(in) :: outUnitno
-      character(*), intent(in) :: message
-      
-      write(*,*) message
-      write(outUnitno,*) message
-      end subroutine
-
       subroutine ResultWrite(FPlus,FMinus,Sigma,twoSnucl,outUnitno)
+c     TODO: Generalize this so it works with twoSnucl=0 and twoSnucl=1
+c     Should work for twoSnucl=1 case right now, as long as the correct Sigma matrix is passed
       implicit none
+      include '../common-densities/constants.def'
       integer twoSnucl, outUnitno
       complex*16, intent(in) :: FPlus(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
       complex*16, intent(in) :: FMinus(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
-      complex*16, intent(in) :: Sigma(-1:1,-1:1)  ! (ms3p,ms3): sigma-z
+      complex*16, intent(in) :: Sigma(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)  ! (ms3p,ms3): sigma-z
       integer i, j
-      character (len=26) fmt
+      character (len=29) fmt
 
-      fmt='(A,I0,A,I0,A,F8.4,SP,F8.4)'
+      write(*,*) "twoSnucl=", twoSnucl 
+      if (twoSnucl.ne.0) then!Actually want to see the zeros in this case
+      fmt='(A,I0,A,I0,A,F8.4,SP,F8.4,A)'
+      fmt='(A,I0,A,I0,A,F8.4,SP,F8.4,A)'
+        do i=-twoSnucl,twoSnucl
+        do j=-twoSnucl,twoSnucl
+          if ((Sigma(i,j).ne.c0).and.(FMinus(i,j).ne.c0)) then
+          if (FMinus(i,j).eq.FMinus(i,j)) then
+                  WRITE(*,fmt) 'FMinus(', i, ',', j, ') = ', FMinus(i,j),'i'!/Sigma(i,j),'j'
+          end if
+          end if        
+        end do
+        end do
 
-      do i=-twoSnucl,twoSnucl
-      do j=-twoSnucl,twoSnucl
-        if (Sigma(i,j).ne.cmplx(0.d0,0.d0,kind=16)) then
-                WRITE(*,fmt) 'FMinus(', i, ',', j, ') = ', FMinus(i,j)/Sigma(i,j)
-        end if        
-      end do
-      end do
+        do i=-twoSnucl,twoSnucl
+        do j=-twoSnucl,twoSnucl
+          if ((Sigma(i,j).ne.c0).and.(FPlus(i,j).ne.c0)) then
 
-      do i=-twoSnucl,twoSnucl
-      do j=-twoSnucl,twoSnucl
-        if (Sigma(i,j).ne.cmplx(0.d0,0.d0,kind=16)) then
-                WRITE(*,fmt) 'FPlus(', i, ',', j, ') = ', FPlus(i,j)/Sigma(i,j)
-        end if        
-      end do
-      end do
-      
-      do i=-twoSnucl,twoSnucl
-      do j=-twoSnucl,twoSnucl
-        if (Sigma(i,j).ne.cmplx(0.d0,0.d0,kind=16)) then
-                WRITE(outUnitno,fmt) 'FMinus(', i, ',', j, ') = ', FMinus(i,j)/Sigma(i,j)
-        end if        
-      end do
-      end do
+          if (FPlus(i,j).eq.FPlus(i,j)) then
+                  WRITE(*,fmt) 'FPlus(', i, ',', j, ') = ', FPlus(i,j),'i'!/Sigma(i,j),'j'
+          end if
+          end if        
+        end do
+        end do
+        
+        do i=-twoSnucl,twoSnucl
+        do j=-twoSnucl,twoSnucl
+          if ((Sigma(i,j).ne.c0).and.(FMinus(i,j).ne.c0)) then
+          if (FMinus(i,j).eq.FMinus(i,j)) then
+                  WRITE(outUnitno,fmt) 'FMinus(', i, ',', j, ') = ', FMinus(i,j),'i'!/Sigma(i,j),'j'
+          end if 
+          end if        
+        end do
+        end do
 
-      do i=-twoSnucl,twoSnucl
-      do j=-twoSnucl,twoSnucl
-        if (Sigma(i,j).ne.cmplx(0.d0,0.d0,kind=16)) then
-                WRITE(outUnitno,fmt) 'FPlus(', i, ',', j, ') = ', FPlus(i,j)/Sigma(i,j)
-        end if        
-      end do
-      end do
+        do i=-twoSnucl,twoSnucl
+        do j=-twoSnucl,twoSnucl
+          if ((Sigma(i,j).ne.c0).and.(FPlus(i,j).ne.c0)) then
+          if (FPlus(i,j).eq.FPlus(i,j)) then
+                  WRITE(outUnitno,fmt) 'FPlus(', i, ',', j, ') = ', FPlus(i,j),'i'!/Sigma(i,j),'j'
+          end if
+          end if        
+        end do
+        end do
+      else
+      ! fmt='(A,I0,A,I0,A,F8.12,SP,F8.12,A)'
+      fmt='(A,I0,A,I0,A,F8.4,SP,F8.4,A)'
+        do i=-twoSnucl,twoSnucl
+        do j=-twoSnucl,twoSnucl
+                  WRITE(*,fmt) 'FMinus(', i, ',', j, ') = ', FMinus(i,j),'i'!/Sigma(i,j),'j'
+        end do
+        end do
+
+        do i=-twoSnucl,twoSnucl
+        do j=-twoSnucl,twoSnucl
+                  WRITE(*,fmt) 'FPlus(', i, ',', j, ') = ', FPlus(i,j),'i'!/Sigma(i,j),'j'
+        end do
+        end do
+      end if
       end subroutine
