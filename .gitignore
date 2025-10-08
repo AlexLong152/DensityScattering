@@ -12,12 +12,12 @@
 *~
 *.mod
 *.tmp
-*.h5
 *.gz
 *.log
 *.aux
 *.synctex.gz
-
+*__pycache__/
+.pyinput-*
 #Exclude the executables
 common-densities/2Ndensity-module/testcompdens
 onebodyvia1Ndensity/onebodyvia1Ndensity
