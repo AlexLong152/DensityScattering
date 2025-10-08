@@ -22,17 +22,20 @@ poleDict["Lneut"] = -2.41
 
 
 def main():
-    # folder = "/home/alexander/Dropbox/PionPhotoProduction/results-3He/2bod/132MeV/"
-    # oBod = r"/home/alexander/Dropbox/PionPhotoProduction/results-3He/1bod/onebody-3He.132MeV-060deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG0.000setNtotmaxomegaH.Odelta3-.denshash=05f72a107e3a46d351fe3f69dc7be6fbadc6440909fad9737bd01af00c6cd79a.v2.0.dat"
-    # tBod = r"/home/alexander/Dropbox/PionPhotoProduction/results-3He/2bod/132MeV/twobody-3He.132MeV-060deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG0.000setNtotmax00omegaH00.Odelta2-j12max=2-.denshash=e8f1ba5e7fafac8431e05ae0e6b63381f668664f52d39abfcea0830f420f4706.v2.0.dat"
+    # folder = r"/home/alexander/OneDrive/densities-4He/1Ndensities/133MeV/"
+    # files = [folder + f for f in listdir(folder) if isfile(join(folder, f))]
+    # TwoBod_getQnums(files[0])
+    run3He()
 
+
+def run3He():
     folder = r"/home/alexander/Dropbox/PionPhotoProduction/results-3He/"
     oBodFiles = [
         "onebody-3He.132MeV-060deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG0.000setNtotmax00omegaH00.Odelta3-.denshash=3bd9b5d55f401de84f369724cdeb02eb176fda6928c442e1611c2ba14efdbc8b.v2.0.dat",
         "onebody-3He.132MeV-060deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG0.000setNtotmax00omegaH00.Odelta3-.denshash=fac31e8f17bc2b1a6d84411b408e05cca71aae63c04be8f6fbf3ba311acb45a3.v2.0.dat",
     ]
     oBodFiles = [folder + r"1bod/132MeV/" + f for f in oBodFiles]
-
+    print("oBodFiles[0]=", oBodFiles[0])
     tBodFiles = [
         "twobody-3He.132MeV-060deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG0.000setNtotmax00omegaH00.Odelta2-j12max=2-.denshash=e8f1ba5e7fafac8431e05ae0e6b63381f668664f52d39abfcea0830f420f4706.v2.0.dat",
         "twobody-3He.132MeV-060deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG0.000setNtotmax00omegaH00.Odelta2-j12max=2-.denshash=7215fbef6c42aa1ac62c6e1948b052adddcb9b1043996bc9654f23ee00588d72.v2.0.dat",
@@ -106,6 +109,30 @@ def TwoBod_AveAndSpread(folder, verbose=False):
 
 
 def TwoBod_getQnums(path):
+    """
+    Gets the transverse quantum numbers of pion photoproduction
+    """
+    nuc = ID_nuc(path)
+    mat = rd.getQuantNums(path)["MatVals"]
+    match nuc:
+        case "3He":
+            valuesA = np.array([-1 * mat[0, 1, 0].real, mat[1, 0, 1].imag])
+            valueA = np.mean(valuesA)
+            valueB = -1 * mat[2, 0, 0].real
+            return valueA, valueB
+        case "4He":
+            breakpoint()
+            print("impliment me")
+            assert False
+        case "6Li":
+            print("impliment me")
+            assert False
+
+
+def TwoBod_getQnums_Longitud(path):
+    """
+    Gets the longitudinal quantum numbers of pion photoproduction
+    """
     mat = rd.getQuantNums(path)["MatVals"]
 
     valuesA = np.array([-1 * mat[0, 1, 0].real, mat[1, 0, 1].imag])
@@ -121,6 +148,23 @@ def readOneBod(path):
     content = content.split("\n")
     content = float(content[0])
     return content
+
+
+def ID_nuc(path):
+    path = path.split(r"/")
+    name = path[-1]
+    subString = name.split("body")[1]
+    checkStr = subString.split("MeV")[0]
+
+    match checkStr:
+        case s if "3He" in s:
+            return "3He"
+        case s if "4He" in s:
+            return "4He"
+        case s if "6Li" in s:
+            return "6Li"
+        case _:
+            raise ValueError(f"checkString={checkStr} did not match pattern")
 
 
 if __name__ == "__main__":

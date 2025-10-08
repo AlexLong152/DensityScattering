@@ -63,9 +63,13 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     output to file
       do extQnum=1,extQnumlimit
          do twoMzp=twoSnucl,-twoSnucl,-2
+            ! do twoMz=twoSnucl,-twoSnucl,-2
+            !    write (outUnitno,*) Result(extQnum,twoMzp,twoMz)
+            ! end do              ! twoMz
             do twoMz=twoSnucl,-twoSnucl,-2
-               write (outUnitno,*) Result(extQnum,twoMzp,twoMz)
-            end do              ! twoMz
+                  write (outUnitno,'(A,I4,A,I4,A,I4,A,F24.19,SP,F24.19," i")') !E30.19 for exponential form 0.123.....E-56
+     &                 "Result(exQnum=",extQnum,",twoMzp=",twoMzp,", twoMz=",twoMz,"): ",Result(extQnum,twoMzp,twoMz)
+               end do           ! extQnum
          end do                 ! twoMzp
       end do                    ! extQnum
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc 

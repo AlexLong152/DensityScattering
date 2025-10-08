@@ -84,7 +84,7 @@ c
       
       ! real*8 FT_sPlus, FT_sMinus, FL_sPlus, FL_sMinus
       real*8 E_prot, E_neut, L_prot, L_neut, K1N
-      real*8 E1N        
+      ! real*8 E1N        
 
       real*8 thetaLow,thetaHigh,thetaInterval
       integer calctype,frame,Nangles,Nenergy,ienergy,j ! number of energies/angles; index for energies/angles
@@ -141,7 +141,7 @@ c     projections of target nucleus' in-spin, out-spin
 c     hgrie June 2014: added variable twoMzplimit; changed by flag "nosymmetry" in input file.
 c     Value twoMzplimit = 0 calculates half of the amplitudes, the other amps then from symmetry
 c     Value twoMzplimit = -twoSnucl calculates all amplitudes
-      integer twoMzplimit
+      ! integer twoMzplimit
       
 c     integer twoMzlimit ! for symmetry calculation: Mzp>=0 *and* for Mzp=0, only Mz>=0, else Mz between +Snucl and -Snucl
       real*8 frac
@@ -170,7 +170,7 @@ c     At the moment, L1N & ML1N are meaningless (L=ML=0), but they are implement
       integer,parameter :: L1Nmax=0    
       integer L1N, ML1N
       complex*16, allocatable :: Result(:,:,:) ! extQnum from 1 to extQnumlimit; twoMzp from -twoSnucl to twoSnucl, stepsize 2; twoMz from -twoSnucl to twoSnucl, stepsize 2; rest blank.
-      real*8 aveE0,aveL0
+      real*8 aveE0!,aveL0
       complex*16 :: tmpPlus(-1:1, -1:1)
       complex*16 tmpMinus(-1:1, -1:1)
       integer variedA           !BS: integer variedA to indicate which A is varied by calctype=VaryA
@@ -231,7 +231,7 @@ c     if you have 1 argument, write it to inputfile, otherwise stop
       end if
       lab=1
       cm=2 
-      frame=2 !TODO: fix this so that it actually reads from the file
+      frame=2 !Assume CM frame
 c     
 c     
 c**********************************************************************
@@ -265,6 +265,9 @@ c---- Variable to control Feynman quadrature settings------------------------
       if (test .ne. 0) stop "*** ERROR: Could not close input file!!! Aborting."
 c
       open(unit=outUnitno, file=outfile, status='unknown', iostat=test,iomsg=errmsg)
+
+      write(*,*) "Pion Photoproduction, onebody, at threshold"
+      write(outUnitno,*) "Pion Photoproduction, onebody, at threshold"
       if (test .ne. 0) stop "*** ERROR: In main, could not open output file!!! Aborting."
 
       write(*,*) "densityFileName=", densityFileName 
@@ -501,10 +504,18 @@ c           tmpPlus and tmpMinus combines spin and isospin part of diagrams
             write(*,'(A)') "Result is in units of 10^-3/M_pi^+"
             write(*,'(A,F24.19)') "Average E_0+^1N=",aveE0
             write(outUnitno,'(A)') "Result is in units of 10^-3/M_pi^+"
-            write(outUnitno,'(A,F12.5)') "Average E_0+^1N=",aveE0
+            write(outUnitno,'(A,F24.19)') "Average E_0+^1N=",aveE0
 
+            call secondOutput(Result,extQnumlimit,twoSnucl,outUnitno)
+
+            write(*,*) ""
+            write(outUnitno,*) ""
+
+            write(*,'(A)') "Repeated output for automatted file reading"
+            write(outUnitno,'(A)')"Repeated output for automatted file reading" 
             call outputroutine(outUnitno,twoSnucl,extQnumlimit,
      &           Result,verbosity)
+
 
             ! In units of m_pi^+
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -543,9 +554,27 @@ c40   format(A,2F18.13)
       
       end PROGRAM
 
+      subroutine secondOutput(Result,extQnumlimit,twoSnucl,outUnitno)
+      implicit none
+      include '../common-densities/constants.def'
+      integer twoSnucl, outUnitno,extQnumlimit
+      complex*16, intent(in) :: Result(1:extQnumlimit,-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
+      integer i, j,k
+      ! character (len=29) fmt
+
+      do k=1,extQnumlimit
+      do i=twoSnucl,-twoSnucl,-2
+      do j=twoSnucl, -twoSnucl,-2
+        write(*,*) Result(k,i,j)
+        write(outUnitno,*) Result(k,i,j)
+      end do
+      end do
+      end do 
+      end subroutine
+
+
+
       subroutine ResultWrite(FPlus,FMinus,Sigma,twoSnucl,outUnitno)
-c     TODO: Generalize this so it works with twoSnucl=0 and twoSnucl=1
-c     Should work for twoSnucl=1 case right now, as long as the correct Sigma matrix is passed
       implicit none
       include '../common-densities/constants.def'
       integer twoSnucl, outUnitno
@@ -555,9 +584,9 @@ c     Should work for twoSnucl=1 case right now, as long as the correct Sigma ma
       integer i, j
       character (len=29) fmt
 
-      write(*,*) "twoSnucl=", twoSnucl 
+
+      ! write(*,*) "twoSnucl=", twoSnucl 
       if (twoSnucl.ne.0) then!Actually want to see the zeros in this case
-      fmt='(A,I0,A,I0,A,F8.4,SP,F8.4,A)'
       fmt='(A,I0,A,I0,A,F8.4,SP,F8.4,A)'
         do i=-twoSnucl,twoSnucl
         do j=-twoSnucl,twoSnucl
@@ -611,6 +640,18 @@ c     Should work for twoSnucl=1 case right now, as long as the correct Sigma ma
         do i=-twoSnucl,twoSnucl
         do j=-twoSnucl,twoSnucl
                   WRITE(*,fmt) 'FPlus(', i, ',', j, ') = ', FPlus(i,j),'i'!/Sigma(i,j),'j'
+        end do
+        end do
+
+        do i=-twoSnucl,twoSnucl
+        do j=-twoSnucl,twoSnucl
+                  WRITE(outUnitno,fmt) 'FMinus(', i, ',', j, ') = ', FMinus(i,j),'i'!/Sigma(i,j),'j'
+        end do
+        end do
+
+        do i=-twoSnucl,twoSnucl
+        do j=-twoSnucl,twoSnucl
+                  WRITE(outUnitno,fmt) 'FPlus(', i, ',', j, ') = ', FPlus(i,j),'i'!/Sigma(i,j),'j'
         end do
         end do
       end if
