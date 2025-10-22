@@ -1,5 +1,5 @@
 rm *.tmp
-clear;
+clear
 make clean
 cp Makefile makedebug
 #replace -O optimizeation with no optimization at all for better debugging

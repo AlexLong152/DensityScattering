@@ -140,6 +140,11 @@ c             write(*,*) "reset k"
       kVec=(/0.d0,0.d0,k/)
       kpVec=(/0.d0,kpAbs*sin(thetacm), kpAbs*cos(thetacm)/)!without loss of generality - phi undetermined
 
+      if (abs(Epion-sqrt(mPion**2+kpsq)).ge.1) then
+        write(*,*) "something wrong in kinematics"
+        stop
+      end if
+
       if (kpsq.lt.-10) then
           write(*,*) "kp^2<0 -> given masses/energy are incompatable"
           write(*,*) "This error should have been caught already.... something went wrong"
