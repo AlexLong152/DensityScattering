@@ -25,10 +25,49 @@ c     twoSmax/twoMz dependence: none, only on quantum numbers of (12) subsystem
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       
+
+      subroutine StaticKernelEasym(Kernel,
+     &     factor,qVec,qpVec,pVec,
+     &     Sp,S,extQnumlimit,verbosity)
+      !B.31 from Lenkewitz thesis
+      implicit none
+      include '../common-densities/constants.def'
+
+      complex*16,intent(inout) :: Kernel(1:extQnumlimit,0:1,-1:1,0:1,-1:1)
+      real*8,intent(in)  :: factor
+      real*8,intent(in)  :: qVec(3),qpVec(3),pVec(3)
+      integer,intent(in) :: Sp,S
+      integer,intent(in) :: extQnumlimit
+      integer,intent(in) :: verbosity
+
+      real*8 eps(3,3), epsVec(3)
+      integer ieps
+      complex*16 hold(0:1,-1:1,0:1,-1:1)
+      complex*16 Ihold
+      external Ihold
+c     real*8 tmpVec(3),kCrossEps(3)
+      integer Msp,Ms
+
+      eps = RESHAPE((/1,0,0,0,1,0,0,0,1/),(/3,3/))
+      hold=c0
+
+      do ieps=1,3
+        epsVec=eps(ieps,:)
+        call singlesigmaasy(hold,qpVec(1),qpVec(2),qpVec(3),Sp,S,verbosity)
+        do Msp=-Sp,Sp
+        do Ms=-S,S
+             Kernel(ieps,Sp,Msp,S,Ms) = Kernel(ieps,Sp,Msp,S,Ms) + factor*(
+     &        hold(Sp,Msp,S,Ms)*dot_product(epsVec,qVec+qpVec))
+        end do
+        end do  
+
+      end do
+      end subroutine StaticKernelEasym 
+
       subroutine StaticKernelDasym(Kernel,
      &     factor,qVec,ppVec,kVec,
      &     Sp,S,extQnumlimit,verbosity)
-      !B.31 from Lenkewitz thesis
+      !B.32 from Lenkewitz thesis
       implicit none
       include '../common-densities/constants.def'
 
@@ -54,8 +93,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       do ieps=1,3
         epsVec=eps(ieps,:)
         call cross(qVec-kVec,epsVec,kCrossEps)
-        kCrossEps=kCrossEps*(1+kappanu)
-        call doublesigmaasy(hold,tmpVec(1),tmpVec(2),tmpVec(3),qVec(1),qVec(2),qVec(3))
+        call doublesigmaasy(hold,kCrossEps(1),kCrossEps(2),kCrossEps(3),qVec(1),qVec(2),qVec(3))
         do Msp=-Sp,Sp
         do Ms=-S,S
              Kernel(ieps,Sp,Msp,S,Ms) = Kernel(ieps,Sp,Msp,S,Ms) + factor*(ci*hold(Sp,Msp,S,Ms)
@@ -64,9 +102,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
         end do  
 
       end do
-      if (verbosity.eq.1000) continue ! unused variable, kept for future use
       end subroutine StaticKernelDasym 
-
 
       subroutine StaticKernelCasym(Kernel,
      &     factor,qVec,ppVec,kVec,
@@ -98,17 +134,17 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
         epsVec=eps(ieps,:)
         call cross(kVec,epsVec,kCrossEps)
         kCrossEps=kCrossEps*(1+kappanu)
-        call doublesigmaasy(hold,tmpVec(1),tmpVec(2),tmpVec(3),qVec(1),qVec(2),qVec(3))
+        call doublesigmasym(hold,kCrossEps(1),kCrossEps(2),kCrossEps(3),qVec(1),qVec(2),qVec(3))
         do Msp=-Sp,Sp
         do Ms=-S,S
              Kernel(ieps,Sp,Msp,S,Ms) = Kernel(ieps,Sp,Msp,S,Ms) + factor*(ci*hold(Sp,Msp,S,Ms)
      &      +Ihold(Sp,Msp,S,Ms)*2.d0*dot_product(epsVec,tmpVec))
         end do
-        end do  
+        end do
 
-      if (verbosity.eq.1000) continue ! unused variable, kept for future use
       end do
 
+      if (verbosity.eq.1000) continue ! unused variable, kept for future use
       end subroutine StaticKernelCasym 
 
       subroutine StaticKernelBasym(Kernel,

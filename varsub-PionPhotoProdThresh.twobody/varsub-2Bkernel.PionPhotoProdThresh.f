@@ -189,15 +189,14 @@ c     call getDiagABfinite(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,kpVec,ppV
       !    return
       ! end if
       Kernel2B(diagNumber,:,:,:,:,:)=KernelA
-      ! write(*,*) "calctype=", calctype 
-      if (calctype.eq.Odelta3) return
+      if (calctype.eq.Odelta2) return
 
       !StaticDiags O(q^4) uses some variable substitution as diagAB
       !would need to reassign ppVecs(diagNumber,:), and diagNumber if this wasn't the case
       call getStaticDiags(KernelStatic,pVec,uVec,kVec,kpVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
-      Kernel2B(diagNumber,:,:,:,:,:)=Kernel2B(diagNumber,:,:,:,:,:)+KernelStatic
+      Kernel2B(diagNumber,:,:,:,:,:)=Kernel2B(diagNumber,:,:,:,:,:)+KernelStatic*(-1/(3.d0*mNucl*mpi))
 
-      if (calctype.eq.Odelta4) return
+      if (calctype.eq.Odelta4) return 
       end
 
 
@@ -226,6 +225,7 @@ c     Internal variables
       external vecsquare
       logical Nancheck
 
+      Kerneltmp=c0
       useTransform=.true.
       if (useTransform) then
 c       uVec=pVec-ppVec+kVec/2!-> ppVec= pVec-uVec+kVec/2 -> jacobian on the integration gives a factor of -1
@@ -249,15 +249,35 @@ c       uVec=pVec-ppVec+kVec/2!-> ppVec= pVec-uVec+kVec/2 -> jacobian on the int
       unitsFact=(2*Pi)**3/HC
       factor=-1*(-1)**(t12)*unitsFact
 
-      factorAsym=(factor*(1-2.d0*ga*ga))*(1+2*(dot_product(qVec,pVec)/vecsquare(qVec)))
+      factorAsym=factor*(1-2.d0*ga*ga)*(1.d0+2.d0*(dot_product(qVec,ppVec)/vecsquare(qVec)))
       factorBsym=2.d0*factor* (1/vecsquare(qVec))
       factorCsym=2.d0*factor*(1/(vecsquare(qVec)+mpi*mpi))
-      factorDsym=-1.d0*(1-2*ga*ga)*(1/(vecsquare(qpVec)+mpi*mpi))*
-     & (1 + (2*dot_product(qVec,pVec)/vecSquare(qVec)))
+
+      factorDsym = factor * (2.d0*ga*ga) * (1.d0 / (vecsquare(qVec) + mpi*mpi))
+
+      factorEsym=factor*(-1.d0+2*ga*ga)*(1.d0+2.d0*(dot_product(qVec,pVec)/vecsquare(qVec)))
+     & *(1/(vecsquare(qpVec)+mpi**2))
+
       factorAasy=factorAsym
       factorBasy=factorBsym
       factorCasy=factorCsym
       factorDasy=factorDsym
+      factorEasy=factorEsym
+      ! write(*,*) "In static"
+c     write(*,*) "1-2.d0*ga*ga=", 1-2.d0*ga*ga 
+c     write(*,*) "qVec=", qVec 
+c     write(*,*) "ppVec=", ppVec 
+c     write(*,*) "dot_product(qVec,ppVec)=", dot_product(qVec,ppVec) 
+c     write(*,*) "vecsquare(qVec)=", vecsquare(qVec) 
+c     write(*,*) "dot_product(qVec,ppVec)/vecsquare(qVec)=", dot_product(qVec,ppVec)/vecsquare(qVec) 
+c     write(*,*) "(1-2.d0*ga*ga)*(1.d0+2.d0*(dot_product(qVec,ppVec)/vecsquare(qVec)))",
+c    &  (1-2.d0*ga*ga)*(1.d0+2.d0*(dot_product(qVec,ppVec)/vecsquare(qVec)))
+c     write(*,*) "factorAsym=", factorAsym !Issue with factorAsym maybe
+c     write(*,*) "factorBsym=", factorBsym 
+c     write(*,*) "factorCsym=", factorCsym 
+c     write(*,*) "factorDsym=", factorDsym 
+c     write(*,*) ""
+c     write(*,*) ""
 
       if ((t12 .eq. t12p) .and. (mt12 .eq. 0) .and.(mt12p .eq. 0)) then
          if (s12p .eq. s12) then ! s12-s12p=0 => l12-l12p is even; spin symmetric part only
@@ -283,7 +303,7 @@ c       uVec=pVec-ppVec+kVec/2!-> ppVec= pVec-uVec+kVec/2 -> jacobian on the int
               stop
             end if
             call StaticKernelCsym(Kerneltmp,
-     &           factorBsym, qVec,
+     &           factorCsym, qVec,
      &           ppVec,kVec,
      &           s12p,s12,extQnumlimit,verbosity)
 
@@ -292,7 +312,7 @@ c       uVec=pVec-ppVec+kVec/2!-> ppVec= pVec-uVec+kVec/2 -> jacobian on the int
               stop
             end if
             call StaticKernelDsym(Kerneltmp,
-     &           factorBsym, qVec,
+     &           factorDsym, qVec,
      &           ppVec,kVec,
      &           s12p,s12,extQnumlimit,verbosity)
 
@@ -300,49 +320,72 @@ c       uVec=pVec-ppVec+kVec/2!-> ppVec= pVec-uVec+kVec/2 -> jacobian on the int
               write(*,*) "NaN on Diag Dsym"
               stop
             end if
-         else                   ! s12 question: s12-s12p=±1 => l12-l12p is odd; spin anti-symmetric part only
 
-            call StaticKernelAasym(Kerneltmp,
-     &           factorAsym,!qVec,pVec,
+            call StaticKernelEsym(Kerneltmp,
+     &           factorEsym, qVec,
+     &           qpVec,pVec,
      &           s12p,s12,extQnumlimit,verbosity)
 
             if(Nancheck(Kerneltmp)) then
-              write(*,*) "NaN on Diag A asym"
+              write(*,*) "NaN on Diag Dsym"
               stop
             end if
-            call StaticKernelBasym(Kerneltmp,
+
+         else                   ! s12 question: s12-s12p=±1 => l12-l12p is odd; spin anti-symmetric part only
+
+              call StaticKernelAasym(Kerneltmp,
+     &           factorAsym,!qVec,pVec,
+     &           s12p,s12,extQnumlimit,verbosity)
+      
+              if(Nancheck(Kerneltmp)) then
+                write(*,*) "NaN on Diag A asym"
+                stop
+              end if
+              call StaticKernelBasym(Kerneltmp,
      &           factorBsym, qVec,
      &           pVec,kVec,
      &           s12p,s12,extQnumlimit,verbosity)
-
-            if(Nancheck(Kerneltmp)) then
-              write(*,*) "NaN on Diag B asym"
-              stop
-            end if
-            call StaticKernelCasym(Kerneltmp,
-     &           factorBsym, qVec,
+      
+              if(Nancheck(Kerneltmp)) then
+                write(*,*) "NaN on Diag B asym"
+                stop
+              end if
+              call StaticKernelCasym(Kerneltmp,
+     &           factorCasy, qVec,
      &           ppVec,kVec,
      &           s12p,s12,extQnumlimit,verbosity)
 
-            if(Nancheck(Kerneltmp)) then
-              write(*,*) "NaN on Diag C asym"
-              stop
-            end if
-            call StaticKernelDasym(Kerneltmp,
-     &           factorBsym, qVec,
+              if(Nancheck(Kerneltmp)) then
+                write(*,*) "NaN on Diag C asym"
+                stop
+              end if
+              call StaticKernelDasym(Kerneltmp,
+     &           factorDasy, qVec,
      &           ppVec,kVec,
      &           s12p,s12,extQnumlimit,verbosity)
+      
+              if(Nancheck(Kerneltmp)) then
+                write(*,*) "NaN on Diag D asym"
+                stop
+              end if
 
-            if(Nancheck(Kerneltmp)) then
-              write(*,*) "NaN on Diag D asym"
-              stop
-            end if
+            call StaticKernelEasym(Kerneltmp,
+     &           factorEsym, qVec,
+     &           qpVec,pVec,
+     &           s12p,s12,extQnumlimit,verbosity)
+
+              if(Nancheck(Kerneltmp)) then
+                write(*,*) "NaN on Diag E asym"
+                stop
+              end if
          end if                 ! s12 question
       else                      ! t12!=t12p
          continue
 c     diagrams (A/B) have no components with t12!=t12p. 
       end if                    !t12 question
       end subroutine getStaticDiags
+
+
 
       logical function NanCheck(Kerneltmp)
 
@@ -352,11 +395,11 @@ c     diagrams (A/B) have no components with t12!=t12p.
 
       NanCheck=.false.
       do i = 1, 3
-      do S=0, 1
-      do Ms = -1, 1
       do Sp=0,1
       do Msp=-1,1
-        if(Kerneltmp(i,S,Ms,Sp,Msp).ne.Kerneltmp(i,S,Ms,Sp,Msp)) then
+      do S=0, 1
+      do Ms = -1, 1
+        if(Kerneltmp(i,Sp,Msp,S,Ms).ne.Kerneltmp(i,Sp,Msp,S,Ms)) then
         NanCheck=.true.
         end if
       end do
