@@ -21,6 +21,15 @@ onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f)) and f[-3:] ==
 
 
 def main():
+    file1 = r"/home/alexander/OneDrive/DensityScattering/varsub-PionPhotoProdThresh.twobody/Out-No-static.dat"
+    file2 = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/2bod/60MeV/twobody-6Li.060MeV-180deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG1.880setNtotmax14omegaH18.Odelta2-j12max=2-.denshash=0580caf788c054fd7c2ce946d49030d91120d46c0671f1f274704d5be9bf1aa0.v2.0.dat"
+    for f in [file1, file2]:
+        tmp = getQuantNums(f)["MatVals"]
+        print(tmp)
+        print(50 * "%")
+
+
+def main2():
     breakStr = 20 * "#" + "\n"
     breakStr = breakStr + breakStr
 
@@ -82,46 +91,61 @@ def getQuantNums(filename, returnMat=True):
                 if "(" in lines[i]:
                     indx = i
                     break
+                # print("lines[i]=\n", lines[i])
+                # print("indx=", indx)
             if indx == -1:
                 raise BadDataError(f"Bad file {filename}")
 
             # print("filename=", filename)
             lines = lines[indx:]
             lines = "".join(lines)
+
             lines = lines.split("=")
-            # print("lines[0]=", lines[0])
+            lines = lines[0]
+
+            lines = lines.split("%")
             lines = lines[0]
             lines = lines.replace("(", "")
             lines = lines.split(")")
-            lines = np.array([x.strip() for x in lines if x.strip() != ""])
+            lines = np.array(
+                [x.strip() for x in lines if x.strip() != "" and "Repeated" not in x]
+            )
             vals = np.zeros(len(lines), dtype=np.complex128)
             for i in range(len(vals)):
-                tmp = lines[i].split(",")
-                try:
-                    vals[i] = float(tmp[0]) + 1j * float(tmp[1])
-                except ValueError:
-                    return None
-        out["MatVals"] = vals2matrix(filename, vals)
+                if "," in lines[i]:
+                    tmp = lines[i].split(",")
+                    # print("tmp=", tmp)
+                    # print("vals=\n", vals, "\n")
+                    try:
+                        vals[i] = float(tmp[0]) + 1j * float(tmp[1])
+                    except ValueError:
+                        return None
+                else:
+                    tmp = lines[i].strip().replace("i", "j")
+                    vals[i] = complex(tmp)
+
+        denfilename = densityFileName(filename)
+        out["MatVals"] = vals2matrix(denfilename, vals)
 
     out["name"] = filename
     out["file"] = filename
 
-    out["hash"] = getHash(filename)
+    out["hash"] = getHash(denfilename)
 
-    out["omega"] = getOmega(filename)
-    out["energy"] = getOmega(filename)
+    out["omega"] = getOmega(denfilename)
+    out["energy"] = getOmega(denfilename)
 
-    out["theta"] = getTheta(filename)
-    out["angle"] = getTheta(filename)
+    out["theta"] = getTheta(denfilename)
+    out["angle"] = getTheta(denfilename)
 
-    out["Ntotmax"] = getNtotmax(filename)
-    out["omegaH"] = getOmegaH(filename)
-    out["lambda"] = getLambda(filename)
-    out["lambdaCut"] = getLambda(filename)
+    out["Ntotmax"] = getNtotmax(denfilename)
+    out["omegaH"] = getOmegaH(denfilename)
+    out["lambda"] = getLambda(denfilename)
+    out["lambdaCut"] = getLambda(denfilename)
     # print("filename=", filename)
-    out["lambdaSRG"] = getLambdaSRG(filename)
-    out["numBodies"] = getNumBodies(filename)
-    out["Odelta"] = getOdelta(filename)
+    out["lambdaSRG"] = getLambdaSRG(denfilename)
+    out["numBodies"] = getNumBodies(denfilename)
+    out["Odelta"] = getOdelta(denfilename)
 
     # print("len(vals)=", len(vals))
     # print(np.shape(out["MatVals"]))
@@ -133,8 +157,36 @@ class BadDataError(Exception):
         super().__init__(message)
 
 
+def densityFileName(filename):
+    """
+    Gets the density file name from input file
+    """
+    substr = r"**************************************************"
+    with open(filename, "r") as f:
+        contents = f.read()
+        contents = contents.split(substr)[-1]
+        contents = contents.split("\n")
+        # magic number comes from input file density being on 6th line of input file
+        # for i, line in enumerate(contents):
+        #     print(i, ":", line)
+        for line in contents:
+            if "denshash" in line:
+                inFile = line
+                break
+        # inFile = contents[4]
+        inFile = inFile.split(r"/")[-1]
+        # print("boop")
+        # print("inFile=", inFile)
+        return inFile
+
+
 def vals2matrix(filename, vals):
     name = filename.split(r"/")[-1]
+
+    # if "6Li" in filename or "4He" in name or "3He" in name:
+    #     tmpName = name
+    # else:
+    #     tmpName = getNucFromInputFile(filename)
 
     match name:
         case _ if "6Li" in name:
@@ -144,6 +196,7 @@ def vals2matrix(filename, vals):
         case _ if "3He" in name:
             twoSpin = 1
         case _:
+            print("readDensity.py:198 filename=", filename)
             raise ValueError("Nucleus not found")
 
     # if twoSpin==1:

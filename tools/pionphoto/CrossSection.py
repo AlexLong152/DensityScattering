@@ -77,8 +77,8 @@ def getResult(oFiles, tFiles, nuc):
 
     # print("E0=", f"{E0} +/- {E0Spread}   10^-3/m_pi^+ units")
     # print("Scattering length=", f"{len} +/- {lenSpread}   10^-6/m^2_pi^+ units")
-    print(f"E0 = {E0:.3f} +/- {E0Spread:.3f}   10^-3/m_pi^+ units")
-    print(f"Scattering length = {len:.3f} +/- {lenSpread:.3f}   10^-6/m^2_pi^+ units\n")
+    print(f"E0 = {E0:.8f} +/- {E0Spread:.8f}   10^-3/m_pi^+ units")
+    print(f"Scattering length = {len:.8f} +/- {lenSpread:.8f}   10^-6/m^2_pi^+ units\n")
 
     valsA = []
     valsB = []
@@ -105,13 +105,16 @@ def getResult(oFiles, tFiles, nuc):
         print(FormFacts.real)
         print("CHECK: Do you need to get real part or imag part?")
         assert False
+
     means = np.mean(FormFacts, axis=0)
     maxs = np.max(FormFacts, axis=0)
     mins = np.min(FormFacts, axis=0)
     assert np.allclose(means.imag, 0, atol=1e-5)
+
     means = means.real
     spreads = (maxs - mins).real
-    outStrs = ["F_T^{S+V}", "F_T^{S−V}", "F_L^{S+V}", "F_L^{S−V}"]
+    outStrs = ["F_T^{S-V}", "F_T^{S+V}", "F_L^{S-V}", "F_L^{S+V}"]
+
     for s, val, uncer in zip(outStrs, means, spreads):
         print(f"{s} | {val:8.4f} +/-{uncer:8.4f}")
     print("\nTwobody Results")

@@ -19,11 +19,25 @@ Really there should be three seperate values for running the
 varyA, Odelta3, and Odelta2 scripts but theres not need to fix it for now 
 """
 
-folder = r"/home/alexander/OneDrive/densities-4He/1Ndensities/133MeV/"
-outfolder = r"/home/alexander/Dropbox/PionPhotoProduction/results-4He/133MeV/1bod/"
+
+# folder = r"/home/alexander/OneDrive/densities-4He/1Ndensities/133MeV/"
+# outfolder = r"/home/alexander/Dropbox/PionPhotoProduction/results-4He/133MeV/1bod/"
+
+# folder = r"/home/alexander/OneDrive/densities-3He/1Ndensities/132MeV/"
+# outfolder = r"/home/alexander/Dropbox/PionPhotoProduction/results-3He/1bod/132MeV/"
+
+folder = r"/home/alexander/OneDrive/densities-6Li/1Ndensities/133MeV/"
+outfolder = r"/home/alexander/Dropbox/PionPhotoProduction/results-6Li/133MeV/1bod/"
+
 basefile = ".pyinput.dat"  # system auto creates this file
 
-omega = 132.62
+omega = 0
+if "4He" in folder:
+    omega = 132.62
+elif "3He" in folder:
+    omega = 131.857
+else:
+    omega = 133.389
 # Add slashes to the end of the folder names in case the user forgot
 if folder[-1] != r"/":
     folder += r"/"

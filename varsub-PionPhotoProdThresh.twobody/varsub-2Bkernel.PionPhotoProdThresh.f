@@ -194,7 +194,7 @@ c     call getDiagABfinite(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,kpVec,ppV
       !StaticDiags O(q^4) uses some variable substitution as diagAB
       !would need to reassign ppVecs(diagNumber,:), and diagNumber if this wasn't the case
       call getStaticDiags(KernelStatic,pVec,uVec,kVec,kpVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
-      Kernel2B(diagNumber,:,:,:,:,:)=Kernel2B(diagNumber,:,:,:,:,:)+KernelStatic*(-1/(3.d0*mNucl*mpi))
+      Kernel2B(diagNumber,:,:,:,:,:)=Kernel2B(diagNumber,:,:,:,:,:)+KernelStatic*(-1/(4.d0*mNucl*mpi))
 
       if (calctype.eq.Odelta4) return 
       end
@@ -286,98 +286,54 @@ c     write(*,*) ""
      &           factorAsym,!qVec,pVec,
      &           s12p,s12,extQnumlimit,verbosity)
 
-            if(Nancheck(Kerneltmp)) then
-              write(*,*) "NaN on Diag Asym"
-              stop
-            end if
-
             call StaticKernelBsym(Kerneltmp,
      &           factorBsym, qVec,
      &           pVec,kVec,
      &           s12p,s12,extQnumlimit,verbosity)
 
-            if(Nancheck(Kerneltmp)) then
-              write(*,*) "factorBsym=", factorBsym 
-              write(*,*) "Kerneltmp=", Kerneltmp 
-              write(*,*) "NaN on Diag Bsym"
-              stop
-            end if
             call StaticKernelCsym(Kerneltmp,
      &           factorCsym, qVec,
      &           ppVec,kVec,
      &           s12p,s12,extQnumlimit,verbosity)
 
-            if(Nancheck(Kerneltmp)) then
-              write(*,*) "NaN on Diag Csym"
-              stop
-            end if
             call StaticKernelDsym(Kerneltmp,
      &           factorDsym, qVec,
      &           ppVec,kVec,
      &           s12p,s12,extQnumlimit,verbosity)
-
-            if(Nancheck(Kerneltmp)) then
-              write(*,*) "NaN on Diag Dsym"
-              stop
-            end if
 
             call StaticKernelEsym(Kerneltmp,
      &           factorEsym, qVec,
      &           qpVec,pVec,
      &           s12p,s12,extQnumlimit,verbosity)
 
-            if(Nancheck(Kerneltmp)) then
-              write(*,*) "NaN on Diag Dsym"
-              stop
-            end if
 
          else                   ! s12 question: s12-s12p=±1 => l12-l12p is odd; spin anti-symmetric part only
+
 
               call StaticKernelAasym(Kerneltmp,
      &           factorAsym,!qVec,pVec,
      &           s12p,s12,extQnumlimit,verbosity)
       
-              if(Nancheck(Kerneltmp)) then
-                write(*,*) "NaN on Diag A asym"
-                stop
-              end if
               call StaticKernelBasym(Kerneltmp,
      &           factorBsym, qVec,
      &           pVec,kVec,
      &           s12p,s12,extQnumlimit,verbosity)
       
-              if(Nancheck(Kerneltmp)) then
-                write(*,*) "NaN on Diag B asym"
-                stop
-              end if
               call StaticKernelCasym(Kerneltmp,
      &           factorCasy, qVec,
      &           ppVec,kVec,
      &           s12p,s12,extQnumlimit,verbosity)
 
-              if(Nancheck(Kerneltmp)) then
-                write(*,*) "NaN on Diag C asym"
-                stop
-              end if
               call StaticKernelDasym(Kerneltmp,
      &           factorDasy, qVec,
      &           ppVec,kVec,
      &           s12p,s12,extQnumlimit,verbosity)
-      
-              if(Nancheck(Kerneltmp)) then
-                write(*,*) "NaN on Diag D asym"
-                stop
-              end if
 
             call StaticKernelEasym(Kerneltmp,
      &           factorEsym, qVec,
      &           qpVec,pVec,
      &           s12p,s12,extQnumlimit,verbosity)
 
-              if(Nancheck(Kerneltmp)) then
-                write(*,*) "NaN on Diag E asym"
-                stop
-              end if
          end if                 ! s12 question
       else                      ! t12!=t12p
          continue

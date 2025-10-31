@@ -20,7 +20,7 @@ varyA, Odelta3, and Odelta2 scripts but theres not need to fix it for now
 """
 
 # Ideally you should only have to change the folder and outfolder variables
-energy = 100
+energy = 60
 folder = rf"/home/alexander/OneDrive/densities-6Li/1Ndensities/{energy}MeV/"
 outfolder = rf"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/{energy}MeV/"
 runStandard = True  # runs Odelta2/3 if true, if false only runs varyA

@@ -14,7 +14,9 @@ from pathlib import Path
 basefile = ".pyinput.dat"  # system auto creates this file
 
 # input folder with densities
-folder=r"/home/alexander/OneDrive/densities-3He/2Ndensities/132MeV""
+folder = r"/home/alexander/OneDrive/densities-3He/2Ndensities/60MeV/"
+
+folder = r"/home/alexander/OneDrive/densities-6Li/2Ndensities/60MeV/"
 outputfolder = (
     r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/2bod/60MeV/"
 )

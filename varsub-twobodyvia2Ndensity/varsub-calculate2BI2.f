@@ -189,11 +189,7 @@ c                             stop
                                    Int(diagNum,extQnum,ml12p,ml12) = Int(diagNum,extQnum,ml12p,ml12)+Yl12(ml12)*Yl12pstar*
      &                              angweight12(ith,iphi)*angweight12(jth,jphi)*Kernel2B(diagNum,extQnum,s12p,msp,s12,ms)*
      &                                  tmpRho
-c    &                                  *(ppAbs/HC)**2!Original working line with HC**1 in varsub-finalstatesums
-c    &                                  (1/HC)**2!explcit cancel
-c    &                                  (1/HC)**2!explcit cancel
-c    &                                  (uVecRs(ip12p)/HC)**2!implcit cancel
-c   need ppAbs**2 here if you don't explicitly cancel it in 2Bkernel
+c                                   Would need ppAbs**2 here if it wasn't in varsub-finalstatesums.f already
                                 end do!extQnum   
                            end do!diagNum
                         end do  ! jphi

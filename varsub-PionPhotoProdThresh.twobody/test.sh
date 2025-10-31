@@ -6,6 +6,4 @@ make clean
 make
 chmod +x run.twobodyvia2Ndensity.PionPhotoProdThresh
 
-# if no arguments then run input.dat
-./run.twobodyvia2Ndensity.PionPhotoProdThresh input.dat
-# ./run.twobodyvia2Ndensity.PionPhotoProdThresh tIn.dat
+./run.twobodyvia2Ndensity.PionPhotoProdThresh tIn.dat

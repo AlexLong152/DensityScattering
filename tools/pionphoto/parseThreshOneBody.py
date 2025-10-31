@@ -2,6 +2,7 @@ import re
 import numpy as np
 from typing import Dict
 from copy import copy
+import os
 
 
 def main():
@@ -14,6 +15,7 @@ def main():
     print(10 * "\n")
     for k, v in d.items():
         print(f"{k}: {v}")
+    os.system(f"cat {testfile}")
 
 
 def He3Parse(filepath):

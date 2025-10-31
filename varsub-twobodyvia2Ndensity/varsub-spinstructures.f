@@ -56,6 +56,19 @@ c
 c     Order of arguments is
 c     hold(Sp,Msp,S,Ms)
 
+!       subroutine singlesigmaCross(hold,vec,Sp,S,verbosity)
+! c     calculates (σ1+σ2)\times vec
+! c     hold has a new index, since this returns a vector
+!       implicit none
+!
+!       include '../common-densities/constants.def'
+!       real*8,intent(out) :: hold(1:3,0:1,-1:1,0:1,-1:1)
+!       real*8, intent(in) :: vec(3)
+!       integer i
+!
+!       hold(i)
+!       end subroutine singsigmaCross
+
       subroutine twosigmas(hold,A,Sp,S,verbosity)
 c     Calculates part of spin structure <Sp,mp|σ1.A σ2.A|S,m>
       implicit none

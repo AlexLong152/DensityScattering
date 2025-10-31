@@ -38,43 +38,27 @@ def main():
     eps = 2
 
     thetas = np.array([1, 40, 55, 75, 90, 110, 125, 145, 159, 180])
-    theta_mask = [(df["theta"] - theta).abs() < eps for theta in thetas]
-    theta_mask = np.logical_or.reduce(theta_mask)
+    energies = np.array([60])
 
-    energies = np.array([133])
     omega_masks = [(df["omega"] - e).abs() < eps for e in energies]
     omega_mask = np.logical_or.reduce(omega_masks)
-
-    thetas = np.array([1, 40, 55, 75, 90, 110, 125, 145, 159, 180])
     theta_masks = [(df["theta"] - t).abs() < eps for t in thetas]
     theta_mask = np.logical_or.reduce(theta_masks)
 
-    # select = (
-    #     (df["N"] == 2)
-    #     & (df["Z"] == 2)
-    #     & omega_mask
-    #     & ((df["LambdaNN"] == 450) | (df["LambdaNN"] == 500))
-    #     & ((df["lambdaSRGNN"] == 1.880) | (df["lambdaSRGNN"] == 2.236))
-    #     & (df["Nmax"] == 14)
-    #     & ((df["OmegaHO"] == 18) | (df["OmegaHO"] == 16))
-    #     & theta_mask
-    # )
-    #
-
-    thetas = np.array([60])
-    theta_mask = [(df["theta"] - theta).abs() < eps for theta in thetas]
-    theta_mask = np.logical_or.reduce(theta_mask)
     select = (
         (df["N"] == 3)
         & (df["Z"] == 3)
         & omega_mask
-        # & ((df["LambdaNN"] == 450) | (df["LambdaNN"] == 500))
-        # & ((df["lambdaSRGNN"] == 1.880) | (df["lambdaSRGNN"] == 2.236))
+        & (df["kind"] == "one")
+        & ((df["LambdaNN"] == 450) | (df["LambdaNN"] == 500))
+        &
+        # (df["lambdaSRGNN"] == 3.0)
+        # | (df["lambdaSRGNN"] == 2.236)
+        (df["lambdaSRGNN"] == 1.880)
         & (df["Nmax"] == 14)
-        & (df["OmegaHO"] == 18)
+        & (df["OmegaHO"] == 14)
         # & theta_mask
     )
-
     df = df[select]
 
     colsel = [

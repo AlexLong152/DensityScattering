@@ -37,7 +37,7 @@ def main():
     onebody_dir = f"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/{energy}MeV/"
 
     lambdaSRGs = np.array([1.880, 2.236, 3.00])
-    lambdaCut = 450
+    lambdaCut = 500
     omegaHs = np.array([14, 16, 18])
     markers = ["x", ",", "o", "v", "1", "*", "D"]
     out = {}
@@ -72,7 +72,7 @@ def main():
 
                         out[(lambdaSRG, omegaH, Ntot, theta)] = ccVal
                         print(
-                            f"{lambdaSRG:10} {omegaH:10} {Ntot:8} {theta:8} {ccVal:12}"
+                            f"{lambdaSRG:10} {omegaH:10} {Ntot:8} {theta:8}   {ccVal:8}"
                         )
                     except FileNotFoundError:
                         # print(
@@ -234,8 +234,6 @@ def main():
                 for j, Ntot in enumerate(Ntotmaxs):
                     try:
                         val = out[(lambdaSRG, omegaH, Ntot, theta)]
-                        if val is None:
-                            continue
                         if not legendPlotted:
                             ax.scatter(
                                 Ntot,

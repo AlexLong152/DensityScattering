@@ -148,7 +148,7 @@ c
       integer Anucl             ! target nucleus mass number
       integer twoSnucl          ! 2 x target nucleus spin
       real*8 Mnucl               ! mass of target nucleus
-      
+      integer ii,jj,kk 
       character*500 outfile
       character*500 densityFileName,originaldensityFileName ! second for multiple energies or angles
       
