@@ -1,0 +1,9 @@
+CrossSection.py
+pyproject.toml
+readDensity.py
+setup.cfg
+myphysics_local.egg-info/PKG-INFO
+myphysics_local.egg-info/SOURCES.txt
+myphysics_local.egg-info/dependency_links.txt
+myphysics_local.egg-info/requires.txt
+myphysics_local.egg-info/top_level.txt

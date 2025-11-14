@@ -1,7 +1,17 @@
-  (2.90156798327806387E-010,-1.25026476151257615E-009)
-             (-0.26407921935877843,2.4502276962101095)
-             (0.26407921935877843,-2.4502276962101095)
-  (3.09978557579138059E-011,-2.88236703602229305E-010)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+(  0.20718044295554350E-01+0.46153191975451171E-02i)
+(  0.16913417989308555E+01+0.17743605377452848E+00i)
+(  0.16913417989308555E+01+0.17743605377452848E+00i)
+( -0.20718044295554350E-01-0.46153191975451171E-02i)
+( -0.21918794036734912E-10+0.20381412703385227E-09i)
+( -0.18543326318806058E+00+0.17272410533656799E+01i)
+(  0.18543326318806058E+00-0.17272410533656799E+01i)
+( -0.21918794036734912E-10+0.20381412703385227E-09i)
+( -0.17152822453035235E+01-0.18276964029985862E+00i)
+( -0.20718044091740221E-01-0.46153191756263231E-02i)
+( -0.20718043955864136E-01-0.46153191610137940E-02i)
+(  0.17152822453035235E+01+0.18276964029985862E+00i)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     Lowest beam energy           =    131.80000000000001      MeV
     Highest beam energy          =    131.80000000000001      MeV
     Energy step from low to high =    10.000000000000000      MeV
@@ -11,11 +21,11 @@
  First take on output filename (placeholders to be replaced below): 
        output.dat
  First take on density filename (placeholders to be replaced below): 
-       /home/alexander/OneDrive/densities-3He/1Ndensities/3He-59.98=theta-131.857=MeV-onebody.h5
+       /home/alexander/OneDrive/densities-3He/1Ndensities/132MeV/onebody-3He.132MeV-060deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG0.000setNtotmax00omegaH00.denshash=3bd9b5d55f401de84f369724cdeb02eb176fda6928c442e1611c2ba14efdbc8b.v2.0.h5
    Target Nucleus: 3He, Anucl =  3, spin Snucl =  1/2 , mass Mnucl =  2808.400    MeV
  Input and output in centre-of-mass frame.
- Number of external quantum numbers set to extQnumlimit =    1
- Calculate all   4 amplitudes independently, not using symmetry() of process.
+ Number of external quantum numbers set to extQnumlimit =    3
+ Calculate all  12 amplitudes independently, not using symmetry() of process.
  O(e²delta³)=O(epsilon³) calculation.
    Delta and DeltaPi parts of static scalar polarisabilities are subtracted.
    Delta parameters:
@@ -28,7 +38,7 @@
  ADDITIONAL COMMENTS:_v2.0
  Write output to file: output.dat
     Now looking for density file...
-    Density file name generated from energy & angle: /home/alexander/OneDrive/densities-3He/1Ndensities/3He-59.98=theta-131.857=MeV-onebody.h5
+    Density file name generated from energy & angle: /home/alexander/OneDrive/densities-3He/1Ndensities/132MeV/onebody-3He.132MeV-060deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG0.000setNtotmax00omegaH00.denshash=3bd9b5d55f401de84f369724cdeb02eb176fda6928c442e1611c2ba14efdbc8b.v2.0.h5
        Density file exists, good.
  *********************** 1N DENSITY MATRIX PARAMETERS ***************************
 j12max_rho = ****
@@ -171,29 +181,42 @@ Calculation of rho for ...
  Computed above are Form Factors of Nucleon, normalised to F(q²=0)=1 for A=3,4; =2S+1 else.
  Computing Form Factors of N, normalised to F_pairs(q²=0)=1.
  Total # nucleons:  3    n              p              nucleons
-  Form Factors:          0.276776       0.533427       0.810202
-  Eff. # nucleons:       0.830327       1.600280       2.430607
+  Form Factors:          0.277090       0.534717       0.811808
+  Eff. # nucleons:       0.831271       1.604152       2.435423
     Energy and angle of 1Ndensity file match request.
- SAID data loaded with:          48 waves
-Result(exQnum=   1,twoMzp=   1, twoMz=   1):    0.0000000002901567983  -0.0000000012502647615 i
-Result(exQnum=   1,twoMzp=   1, twoMz=  -1):   -0.2640792193587784276  +2.4502276962101094959 i
-Result(exQnum=   1,twoMzp=  -1, twoMz=   1):    0.2640792193587784276  -2.4502276962101094959 i
-Result(exQnum=   1,twoMzp=  -1, twoMz=  -1):    0.0000000000309978558  -0.0000000002882367036 i
-Mathematica-friendly output: all  1* 4 =    4 amplitudes (some related by symmetries):
+ omega=   131.80000000000001     
+ 
+SAID data loaded with: 48 waves
+Using 5 Partial Waves (maximum l value)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Result(extQnum=   1,twoMzp=   1, twoMz=   1):    0.0207180442955543498  +0.0046153191975451171 i
+Result(extQnum=   1,twoMzp=   1, twoMz=  -1):    1.6913417989308554557  +0.1774360537745284794 i
+Result(extQnum=   1,twoMzp=  -1, twoMz=   1):    1.6913417989308554557  +0.1774360537745284794 i
+Result(extQnum=   1,twoMzp=  -1, twoMz=  -1):   -0.0207180442955543498  -0.0046153191975451171 i
+Result(extQnum=   2,twoMzp=   1, twoMz=   1):   -0.0000000000219187940  +0.0000000002038141270 i
+Result(extQnum=   2,twoMzp=   1, twoMz=  -1):   -0.1854332631880605819  +1.7272410533656799014 i
+Result(extQnum=   2,twoMzp=  -1, twoMz=   1):    0.1854332631880605819  -1.7272410533656799014 i
+Result(extQnum=   2,twoMzp=  -1, twoMz=  -1):   -0.0000000000219187940  +0.0000000002038141270 i
+Result(extQnum=   3,twoMzp=   1, twoMz=   1):   -1.7152822453035234673  -0.1827696402998586211 i
+Result(extQnum=   3,twoMzp=   1, twoMz=  -1):   -0.0207180440917402210  -0.0046153191756263231 i
+Result(extQnum=   3,twoMzp=  -1, twoMz=   1):   -0.0207180439558641363  -0.0046153191610137940 i
+Result(extQnum=   3,twoMzp=  -1, twoMz=  -1):    1.7152822453035234673  +0.1827696402998586211 i
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Mathematica-friendly output: all  3* 4 =   12 amplitudes (some related by symmetries):
     [Sequence: extQnum∈[1;extQnumlimit] (outmost), Mzp∈[S;-S], Mz∈[S;-S] (innermost)]
-         {+.290156798327806387*10^(-09)-.125026476151257615*10^(-08)*I,-.264079219358778428*10^(+00)+.245022769621010950*10^(+01)*I,+.264079219358778428*10^(+00)-.245022769621010950*10^(+01)*I,+.309978557579138059*10^(-10)-.288236703602229305*10^(-09)*I}
+         {+.207180442955543498*10^(-01)+.461531919754511709*10^(-02)*I,+.169134179893085546*10^(+01)+.177436053774528479*10^(+00)*I,+.169134179893085546*10^(+01)+.177436053774528479*10^(+00)*I,-.207180442955543498*10^(-01)-.461531919754511709*10^(-02)*I,-.219187940367349121*10^(-10)+.203814127033852266*10^(-09)*I,-.185433263188060582*10^(+00)+.172724105336567990*10^(+01)*I,+.185433263188060582*10^(+00)-.172724105336567990*10^(+01)*I,-.219187940367349121*10^(-10)+.203814127033852266*10^(-09)*I,-.171528224530352347*10^(+01)-.182769640299858621*10^(+00)*I,-.207180440917402210*10^(-01)-.461531917562632305*10^(-02)*I,-.207180439558641363*10^(-01)-.461531916101379398*10^(-02)*I,+.171528224530352347*10^(+01)+.182769640299858621*10^(+00)*I}
  *** Wrote output to file: output.dat
  Remember to change the value of the energy to match the density 
-Production date: 2025-06-18 11:29:28-04:00
-Real Time used: 0 seconds on host alexander-Desktop
+Production date: 2025-11-14 11:50:59-05:00
+Real Time used: 1 seconds on host alexander-Desktop
 **************************************************
 *********            INPUT FILE          *********
 **************************************************
 131.8 131.8 10                           omegaLow, omegaHigh, omegaStep
 60 60 15                             thetaLow, thetaHigh, thetaStep
 output.dat
-'/home/alexander/OneDrive/densities-3He/1Ndensities/3He-59.98=theta-131.857=MeV-onebody.h5'
-cm_symmetry_verbos_extQnumlimit=1                    frame, symmetry, verbosity of STDOUT
+'/home/alexander/OneDrive/densities-3He/1Ndensities/132MeV/onebody-3He.132MeV-060deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG0.000setNtotmax00omegaH00.denshash=3bd9b5d55f401de84f369724cdeb02eb176fda6928c442e1611c2ba14efdbc8b.v2.0.h5'
+cm_symmetry_verbos_extQnumlimit=3                    frame, symmetry, verbosity of STDOUT
 Odelta3                              Calctype -- VaryAXN varies NucelonN's amplitude AX (N=p,n; X=1-6)
 32			             number of points Nx in Feynman parameter integration
 COMMENTS:_v2.0

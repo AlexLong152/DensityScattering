@@ -1,70 +1,42 @@
-c ================================
-c Poles Functions for SAID Data Analysis
-c ================================
-      subroutine getCrossSec(sqrtS, x, nuc, crossSec, mNucl,twoSnucl)
+      subroutine TraceFromMats(Mats,trace)
+
       implicit none
-c     Input parameters
-      double precision sqrtS, x, mNucl
-      character*10 nuc
-      integer twoSnucl
-c     Return value
-      double precision crossSec
-
-c     External function
-      double precision vecAbs
-c     Internal variables
-      double precision S
-      double precision qVec(3), kVec(3)
-      integer i,j
-
-      double complex Mmat(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
-      double complex MmatDag(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
-      double complex MmatSquare(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
-c     integer*8 theta
-
-
       include '../common-densities/constants.def'
-c     write(*,*) "Warning, this cross section function only works for spin 1/2 right now"
-      S=sqrtS*sqrtS
-      
-      call getKinematics(sqrtS, x, nuc, S, kVec, qVec, mNucl)
-      call getRawM(sqrtS, x, nuc, Mmat, mNucl, twoSnucl,sqrtS)
-      ! call printmat(Mmat,"Mmat")
+      complex*16 Mats(3,-1:1,-1:1), Mat(-1:1,-1:1),MatDag(-1:1,-1:1)
+      complex*16 matSquare(-1:1,-1:1)
+      real*8, intent(out):: trace
+      integer i,j,k,ii
+      trace=c0
 
-c     write(*,'(A,E30.25)') "For x=",x
+      do i=1,3
+        Mat=Mats(i,:,:)
 
-c     call dag(Mmat, MmatDag,-twoSnucl,twoSnucl)
-      do i = -twoSnucl, twoSnucl
-      do j = -twoSnucl, twoSnucl
-        Mmatdag(i,j)=dconjg(Mmat(j,i))
-      end do
-      end do
+        do j = -1, 1
+        do k = -1, 1
+          MatDag(j,k)=dconjg(Mat(k,j))
+        end do
+        end do
 
-      MmatSquare=matmul(Mmat,MmatDag)
+c       Compute M*M† for this polarization
+        matSquare=matmul(mat,MatDag)
 
+c       Add trace of this polarization's contribution
+        do ii=-1,1
+          trace=trace+real(matSquare(ii,ii),8)
+        end do!ii
 
-      crossSec=0.d0
-      do i=-twoSnucl,twoSnucl! take the trace
-        crossSec=crossSec+real(MmatSquare(i,i),8)
-      end do
-
-c     crossSec=real(MmatSquare(1,1)+MmatSquare(2,2),8)!Trace
-      crossSec=crossSec*vecAbs(qVec)/vecAbs(kVec)
-      crossSec=crossSec*0.25*(HC*HC/(64*S*pi*pi))
-c     write(*,*) "crossSec=", crossSec 
-      crossSec=crossSec/100
-      crossSec=crossSec/(10.d0**(-6.d0))
-
+      end do!i
       end subroutine
 
 
-      subroutine getRawM(sqrtS, x, nucs, Mout, mNucl,twoSnucl,sqrtSReal)
+      subroutine getRawM(sqrtS, x, nucs, Mout, mNucl,twoSnucl,sqrtSReal,
+     &                   MaxEll,epsVec)
 c     Get the raw matrix element.
-c     
+c
 c     Parameters
 c     ----------
 c     sqrtS: double precision
-c         The equivalent sqrtS for the kinetmatics we have 
+c         The equivalent sqrtS for the kinetmatics we have
 c         if the reaction was single nucleon scattering
 c     x: double precision
 c         x=cos(theta)
@@ -76,6 +48,8 @@ c     mNucl: double precision
 c         Mass of the nucleon
 c     sqrtS: double precision
 c         The square root of the Mandelstam variable S
+c     MaxEll: integer
+c         Maximum ell value for pole summation
 c     ==================================================
       implicit none
       include '../common-densities/constants.def'
@@ -83,7 +57,7 @@ c     ==================================================
 c     Input parameters
       double precision sqrtS, x, mNucl,sqrtSReal
       character*3 nucs
-      integer twoSnucl
+      integer twoSnucl, MaxEll
       
 c     Output parameter
       complex*16, intent(out) :: Mout(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
@@ -94,8 +68,10 @@ c     Local variables
 
       double precision S
       double precision kVec(3), qVec(3)
-      double complex epsVecs(2,3)
-      double complex eps(3)
+c     double complex epsVecs(2,3)
+      complex*16, intent(in) :: epsVec(3)
+
+c     double complex eps(3)
       double precision coefs(3)
       double precision prefactor
       character*10 targets(3)
@@ -104,29 +80,30 @@ c     Local variables
       double complex polContribution(2,2)
       double complex fResult(2,2)
       double complex scaled(2,2)
-      integer i, j, k
+      integer  j, k
       double precision sqrtTwo
       
 c     Get kinematics
       
 
 c     Define polarization vectors (normalized by sqrt(2))
-      sqrtTwo = sqrt(2.0d0)
+c     sqrtTwo = sqrt(2.0d0)
 c     There are two epsilon vectors, left and right circularly polarized
 c     eps=(-1,-i,0), eps=(1,-i,0)
 
-      epsVecs(1,1) = dcmplx(-1.0d0, 0.0d0) / sqrtTwo
-      epsVecs(1,2) = dcmplx(0.0d0, -1.0d0) / sqrtTwo
-      epsVecs(1,3) = dcmplx(0.0d0, 0.0d0) / sqrtTwo
-      
-      epsVecs(2,1) = dcmplx(1.0d0, 0.0d0) / sqrtTwo
-      epsVecs(2,2) = dcmplx(0.0d0, -1.0d0) / sqrtTwo
-      epsVecs(2,3) = dcmplx(0.0d0, 0.0d0) / sqrtTwo
-      
+c     epsVecs(1,1) = dcmplx(-1.0d0, 0.0d0) / sqrtTwo
+c     epsVecs(1,2) = dcmplx(0.0d0, -1.0d0) / sqrtTwo
+c     epsVecs(1,3) = dcmplx(0.0d0, 0.0d0) / sqrtTwo
+c     
+c     epsVecs(2,1) = dcmplx(1.0d0, 0.0d0) / sqrtTwo
+c     epsVecs(2,2) = dcmplx(0.0d0, -1.0d0) / sqrtTwo
+c     epsVecs(2,3) = dcmplx(0.0d0, 0.0d0) / sqrtTwo
+c     write(*,*) "poles.f:134 epsVec=", epsVec 
 c     Define target types
       targets(1) = 'p12'
       targets(2) = 'n12'
       targets(3) = '32q'
+      sqrtTwo=2**(0.5d0)
       
 c     Set coefficients based on reaction type
       if (nucs .eq. 'pp0') then
@@ -167,16 +144,16 @@ c     Initialize Mmat
       Mmat = dcmplx(0.0d0, 0.0d0)
       
 c     Loop over polarizations
-      do i = 1, 2
+c     do i = 1, 2
 c         Initialize this polarization's contribution
-          polContribution = dcmplx(0.0d0, 0.0d0)
-          
-c         Loop over targets
-          do j = 1, 3
+      polContribution = dcmplx(0.0d0, 0.0d0)
+      
+c     Loop over targets
+      do j = 1, 3
 c             Calculate F for this target/polarization
-              targ=targets(j)
-              eps=epsVecs(i,:)
-              call f(x, sqrtS, qVec, kVec, eps, targ, fResult)
+          targ=targets(j)
+c         eps=epsVecs(i,:)
+          call f(x, sqrtS, qVec, kVec, epsVec, targ, fResult, MaxEll)
 c             write(*,*) "poles.f:156 fResult=", fResult 
 c             write(*,*) "in getRawM"
 c             write(*,*) "x,sqrtS=",x, sqrtS 
@@ -196,31 +173,40 @@ c             end do
 c             write(*,*) "End getRawM prints"
 c             stop
 
-              
+          
 c             Scale by coefficient
-              do k = 1, 2
-                  scaled(k,:) = fResult(k,:) * coefs(j)
-              enddo
-              
-c             Add to this polarization's contribution
-              polContribution = polContribution + scaled
-          enddo
-          
-c         Apply prefactor to this polarization's contribution
           do k = 1, 2
-              polContribution(k,:) = polContribution(k,:) * prefactor
+              scaled(k,:) = fResult(k,:) * coefs(j)
           enddo
           
-c         Add to total matrix
-          Mmat = Mmat + polContribution
+c             Add to this polarization's contribution
+          polContribution = polContribution + scaled
       enddo
+      
+c         Apply prefactor to this polarization's contribution
+      do k = 1, 2
+          polContribution(k,:) = polContribution(k,:) * prefactor
+      enddo
+      
+c         Add to total matrix
+      Mmat = Mmat + polContribution
+c     enddo
       
 c     Cast the "regular" matricies generated from f to the spin indicies 
 c     we assigned in main
+
+c     sigmaX(1, 1) = dcmplx(0.0d0, 0.0d0)!mapping is defined by
+c     sigmaX(1, 2) = dcmplx(1.0d0, 0.0d0)
+c     sigmaX(2, 1) = dcmplx(1.0d0, 0.0d0)
+c     sigmaX(2, 2) = dcmplx(0.0d0, 0.0d0)
+    
       Mout(-1,-1)=Mmat(1,1)
       Mout(-1,1)=Mmat(1,2)
       Mout(1,-1)=Mmat(2,1)
       Mout(1,1)=Mmat(2,2)
+c     write(*,*) "poles.f 292"
+c     call printmat(Mout,"Mout")
+c     stop
       return
       end subroutine
 
@@ -234,7 +220,7 @@ c     we assigned in main
         do j = -1, 1,2
 c         write(*,'(A,"(",I1,",",I1,")=",F15.13,1x,F15.13,"j")')
 c    &       trim(name), i, j, real(mat(i,j)), aimag(mat(i,j))
-          write(*,'(A,"(",I1,",",I1,")=",E18.10,1x,E18.10,"j")')
+          write(*,'(A,"(",I2,",",I2,")=",E18.10,1x,E18.10,"j")')
      &       trim(name), i, j, real(mat(i,j)), aimag(mat(i,j))
 
         end do 
@@ -244,7 +230,7 @@ c    &       trim(name), i, j, real(mat(i,j)), aimag(mat(i,j))
 
 
 c     ==================================================
-      subroutine f(x, sqrtS, qVec, kVec, epsVec, target, result)
+      subroutine f(x, sqrtS, qVec, kVec, epsVec, target, result, MaxEll)
 c     Calculate F term for given inputs
 c     Valid targets are: "p12", "n12", "32q"
 c     ==================================================
@@ -255,6 +241,7 @@ c     Input parameters
 
       double complex epsVec(3), qVecComplex(3)
       character*10 target
+      integer MaxEll
       double complex result(2, 2)
       
 c     Local variables
@@ -289,12 +276,17 @@ c     Calculate F terms
       if (qAbs.eq.0) then
         !Trick here, just change qAbs, but not q, so that the other terms vanish
         !And we don't get a divide by zero issue
-        qAbs=1.d0 
+        qAbs=1.d0
       end if
-      call getF(x, sqrtS, 1, target, f1)
-      call getF(x, sqrtS, 2, target, f2)
-      call getF(x, sqrtS, 3, target, f3)
-      call getF(x, sqrtS, 4, target, f4)
+      f1=cmplx(0.d0,KIND=8)
+      f2=cmplx(0.d0,KIND=8)
+      f3=cmplx(0.d0,KIND=8)
+      f4=cmplx(0.d0,KIND=8)
+      call getF(x, sqrtS, 1, target, f1, MaxEll)
+      call getF(x, sqrtS, 2, target, f2, MaxEll)
+      call getF(x, sqrtS, 3, target, f3, MaxEll)
+      call getF(x, sqrtS, 4, target, f4, MaxEll)
+
 c     write(*,*) "f1=", f1 
 c     write(*,*) "f2=", f2 
 c     write(*,*) "f3=", f3 
@@ -302,12 +294,6 @@ c     write(*,*) "f4=", f4
 c     Calculate cross product of kVec and epsVec
       call crossProduct(kVec, epsVec, crossTmp)
       
-c     Calculate dot product of qVec and epsVec
-c     dotP = qVec(1)*real(epsVec(1)) + qVec(2)*real(epsVec(2)) 
-c    &     + qVec(3)*real(epsVec(3))
-c     do i = 1, 3
-c     qVecComplex=complex(qVec,0.d0)
-c     end do
       qVecComplex=dcmplx(qVec,0.d0)
 
       epsDotP=dot_product(qVec,epsVec)
@@ -361,15 +347,16 @@ c     stop
       end
 
 c     ==================================================
-      subroutine getF(x, sqrtS, fi, target, result)
+      subroutine getF(x, sqrtS, fi, target, result, MaxEll)
 c     Calculate F value for given index
 c     x=cos(theta)
 c     Fi is which F value is being use, i=1,2,3,4
+c     MaxEll: maximum ell value for summation
 c     ==================================================
       implicit none
 c     Input parameters
       double precision x, sqrtS
-      integer fi
+      integer fi, MaxEll
       character*10 target
       double complex result
       
@@ -385,9 +372,9 @@ c     External functions
       
 c     Initialize result
       result = dcmplx(0.0d0, 0.0d0)
-      
+
 c     Calculate sum over ell
-      do ell = 0, 4
+      do ell = 0, MaxEll
         call getPoles(target, ell, sqrtS, 
      &               ePlus, mPlus, eMinus, mMinus)
         
@@ -626,7 +613,7 @@ c     Calculate pion energy
       Epi = (S + mPion**2 - mNucl**2) / (2.0d0 * sqrtS)
 
 c     write(*,*) "Epi-mPion=", Epi-mPion 
-      if ((Epi.ge.(mPion-2.d0)).and.(Epi.le.mPion+2.d0)) then
+      if ((Epi.ge.(mPion-5.d0)).and.(Epi.le.mPion+5.d0)) then
         Epi=mPion!Just assuume the user meant to input threshold energy
       end if
       

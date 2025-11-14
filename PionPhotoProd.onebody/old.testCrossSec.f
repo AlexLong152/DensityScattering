@@ -10,12 +10,15 @@ c**********************************************************************
       real*8 masses(2)
       real*8 x,sqrtS,crossSec, omegalab,ccVal
       real*8 ccs(19)
-      integer theta,i,j
+      integer theta,i,j,MaxEll
       character(len=3) :: nucs(2)
       character*3 nuc
       masses=(/mProton,mNeutron/)
       nucs(1)="pp0"
       nucs(2)="nn0"
+
+c     Set maximum ell value for pole summation
+      MaxEll = 4
 
       do i=1,2
       write(*,*) ""
@@ -78,7 +81,7 @@ c     sqrtS=omega+sqrt(omega*omega+mNucl*mNucl)
       do theta=0,180,10
         j=1+theta/10
         x=cos(real(theta,8)*Pi/180.d0)
-        call getCrossSec(sqrtS,x,nuc,crossSec,mNucl,1)
+        call getCrossSec(sqrtS,x,nuc,crossSec,mNucl,1,MaxEll)
         ccVal=ccs(j)
         write(*,'(A,I4,A,F8.6,A,F8.6,A,F8.4,A,F8.3,A)')  'theta=',theta, ', cross sec=',crossSec,' Exp cc=',ccVal, ' ----- Expermental diff=',ccVal-crossSec,
      &     '-->',100*(ccVal-crossSec)/ccVal,'% error'

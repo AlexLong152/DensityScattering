@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: myphysics-local
+Version: 0.1.0
+Summary: Cross Section and Density Calculation Helpers
+Author: Alexander Long
+Requires-Python: >=3.8
+Requires-Dist: numpy
+Requires-Dist: h5py

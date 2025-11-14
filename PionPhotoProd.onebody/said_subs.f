@@ -346,8 +346,8 @@ c     Close the file
       
 c     Mark the data as loaded
       said_data_loaded = .true.
-      
-      write(*,*) 'SAID data loaded with:', wave_count, 'waves'
+      write(*,*) "" 
+      write(*,"(A,I3,A)") 'SAID data loaded with:', wave_count, ' waves'
       
       return
       end

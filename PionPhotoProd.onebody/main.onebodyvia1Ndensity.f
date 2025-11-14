@@ -104,7 +104,7 @@ c     onebody knows only about 1N amplitude's Feynman parameter integration
 c     
       integer Nx                ! grid size 
       real*8 xq(Nxmax),wx(Nxmax)! points & weights
-      
+      complex*16 eps(3,3)
 c     
 c----------------------------------------------------------------------
 c     
@@ -184,7 +184,7 @@ c     0: do not delete; 1: delete un-gz'd file; 2: delete downloaded and un-gz'd
       character*3 nuc
       character piCharges(3)
       character isospin2Str(-1:1)
-      integer lab, cm
+      integer lab, cm, MaxEll
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     end OF VARIABLE DECLARATIONS, BEGINNING OF CODING
@@ -242,6 +242,7 @@ c     hgrie June 2017: keep original filename: needed for replacements of energy
 
       thetaL=0.d0
       thetacm=0.d0
+      MaxEll=4 ! MaxEll from 0 to 4
       
 c     Initialize pion photoproduction data
 c     Setting up quadratures for the Feynman integrals
@@ -317,7 +318,7 @@ c**********************************************************************
 c     hgrie May 2018: read 1N density
             call read1Ndensity(densityFileName,Anucl,twoSnucl,omega,thetacm,verbosity)
             outputMat=c0
-            nuc='pp0'
+            nuc='###'!pp0 for example, there is definetly a more effecient way to do this than strings... too bad!
             piCharges(1)="-"
             piCharges(2)="0"
             piCharges(3)="+"
@@ -331,7 +332,8 @@ c           Below is not the "real" value of mandalstam sqrtS, this is the value
 c           of the equivalent sqrtS for the kinematics of the poles, this value
 c           picks out which pole to load
             sqrtS=omega+sqrt(omega*omega+Mnucleon*Mnucleon)
-c           write(*,*) "extQnumlimit=", extQnumlimit 
+c           write(*,*) "extQnumlimit=", extQnumlimit   
+            eps = RESHAPE((/1,0,0,0,1,0,0,0,1/),(/3,3/))
             do extQnum=1,extQnumlimit
             do rindx=1,maxrho1bindex
                 CALL get1Nqnnum(rindx,twom1N,twomt1N,twoMz,twom1Np,twomt1Np,twoMzp,L1N,ML1N)
@@ -341,13 +343,14 @@ c           write(*,*) "extQnumlimit=", extQnumlimit
                   nuc(2:2)=isospin2Str(twomt1Np)
                   ! nuc(3:3)=piCharges(extQnum)
                   nuc(3:3)="0" !only looking at neutral pion photoproduction
-                  call getRawM(sqrtS,x , nuc, Mmat, Mnucl, twoSnucl,sqrtSReal)
+                  call getRawM(sqrtS,x , nuc, Mmat, Mnucl, twoSnucl,sqrtSReal,MaxEll,eps(extQnum,:))
                   outputMat(extQnum,twoMzp,twoMz)= outputMat(extQnum,twoMzp,twoMz)+
-     &                            Anucl*rho1b(rindx)*Mmat(twom1Np,twom1N)!Argument order?
+     &                            Anucl*rho1b(rindx)*Mmat(twom1Np,twom1N)*(cmplx(0.d0,-1.d0,KIND=8))
+c    &                            Anucl*rho1b(rindx)*Mmat(twoMzp,twoMz)*(cmplx(0.d0,-1.d0))
                 end if 
             end do              !rindx   
             end do             !extQnum
-
+            write(*,"(A,I2,A)") "Using", MaxEll+1, " Partial Waves (maximum l value)"
             call outputroutine(outUnitno,twoSnucl,extQnumlimit,
      &           outputMat,verbosity)
 

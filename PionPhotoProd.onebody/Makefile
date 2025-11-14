@@ -53,7 +53,7 @@ INCS    := \
 # ─── final executable ─────────────────────────────────────────────────────────
 COMMAND := onebodyvia1Ndensity
 
-.PHONY: all clean test
+.PHONY: all clean test check
 
 all: $(COMMAND)
 
@@ -64,13 +64,20 @@ $(COMMAND): $(OBJS)
 # Define test objects excluding the main program object
 TEST_OBJS := $(filter-out main.onebodyvia1Ndensity.o, $(OBJS))
 
-test: testCrossSec.o $(TEST_OBJS)
-	$(FC) -o testCrossSec testCrossSec.o $(TEST_OBJS) $(LDFLAGS)
-	chmod +x testCrossSec
+# test: testCrossSec.o $(TEST_OBJS)
+# 	$(FC) -o testCrossSec testCrossSec.o $(TEST_OBJS) $(LDFLAGS)
+# 	chmod +x testCrossSec
+
+# Define check objects excluding the main program object
+CHECK_OBJS := $(filter-out main.onebodyvia1Ndensity.o, $(OBJS))
+
+check: testing.o $(CHECK_OBJS)
+	$(FC) -o CheckCrossSec testing.o $(CHECK_OBJS) $(LDFLAGS)
+	chmod +x CheckCrossSec
 
 # compile any .f → .o if sources or .def files change
 %.o: %.f $(INCS)
 	$(FC) $(FFLAGS) $< -o $@
 
 clean:
-	rm -f $(OBJS) $(COMMAND) testCrossSec testCrossSec.o
+	rm -f $(OBJS) testing.o $(COMMAND) testCrossSec testCrossSec.o CheckCrossSec

@@ -202,7 +202,9 @@ def getMSquare(sqrtS, x, nucs, data):
 
     _, kVec, qVec = getKinematics(sqrtS, x, nucs)
 
-    epsVecs = np.array([[-1, -1j, 0], [1, -1j, 0]]) / np.sqrt(2)
+    # Use 3 linear polarizations (x, y, z) to match Fortran implementation
+    epsVecs = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=complex)
+    epsVecs = np.array([[1, 0, 0], [0, 1, 0]], dtype=complex)
     targets = ["p12", "n12", "32q"]
 
     if nucs == "pp0":
@@ -218,7 +220,7 @@ def getMSquare(sqrtS, x, nucs, data):
 
     # Initialize the total squared amplitude
     # Prefactor for the amplitude
-     
+
     # Remember to square then sum not sum then square
     prefactor = 8 * np.pi * sqrtS
     MSquare = np.zeros((2, 2), dtype=complex)
@@ -232,8 +234,8 @@ def getMSquare(sqrtS, x, nucs, data):
 
         # now square _that_ one, sum over final spins, then add to sumMSq
         Mpol_ms = Mpol @ Mpol.conjugate().T
-        sumMSq += np.trace(Mpol_ms).real
-
+        trace = np.trace(Mpol_ms).real
+        sumMSq += trace
     return sumMSq
     # MSquare = np.sum(Mtmp_MS).real  # both are equivalent, trace is slightly more accurate with floating point
     # MSquare now contains the sum over the two photon polarizations of |M|^2.
@@ -407,7 +409,9 @@ def F(x, sqrtS, qVec, kVec, epsVec, data, target):
     F1Term = matDotVec(sigVec, epsVec) * F1 * 1j
 
     F2 = getF(x, sqrtS, data, 2, target=target)
-    F2Term = matDotVec(sigVec, qVec) @ matDotVec(sigVec, np.cross(kVec, epsVec)) * F2 #operator @ is dot product
+    F2Term = (
+        matDotVec(sigVec, qVec) @ matDotVec(sigVec, np.cross(kVec, epsVec)) * F2
+    )  # operator @ is dot product
     F2Term = F2Term / (vecAbs(qVec) * vecAbs(kVec))
 
     F3 = getF(x, sqrtS, data, 3, target=target)
@@ -568,22 +572,22 @@ def parseSpinString(spinString):
     """
     # Extract the angular momentum letter
     letter = spinString[0].upper()  # 'S','P','D','F',...
-    
+
     # Map letter -> L
     L_map = {"S": 0, "P": 1, "D": 2, "F": 3, "G": 4, "H": 5}
     if letter not in L_map:
         return None
     ell = L_map[letter]
-    
+
     # Extract the numerical part (could be 11, 111, 31, 311, etc.)
-    match = re.match(r'[SDPFGH](\d+)([a-zA-Z][a-zA-Z])', spinString)
+    match = re.match(r"[SDPFGH](\d+)([a-zA-Z][a-zA-Z])", spinString)
     if not match:
         return None
-    
+
     # The numerical part could now be like '11', '111', '31', '311'
     num_part = match.group(1)
     subChan = match.group(2)  # e.g. 'pE', 'nE', etc.
-    
+
     # Handle cases with 2-digit J values (like H111, H311)
     if len(num_part) == 3:
         # For formats like H111, H311 - first digit is 2*I, last two digits are 2*J
@@ -1232,7 +1236,7 @@ def legP(x, n, deriv=0):
             case 5:
                 return (1 / 8) * (15 * x - 70 * x**3 + 63 * x**5)
             case 6:
-                return (1/16) * (231* x**6 - 315 * x**4 + 105* x**2 - 5)
+                return (1 / 16) * (231 * x**6 - 315 * x**4 + 105 * x**2 - 5)
             case _:
                 raise ValueError(f"legendreP not implimented for given n={n}")
     elif deriv == 1:
@@ -1255,7 +1259,7 @@ def legP(x, n, deriv=0):
             case 5:
                 return (15 - 210 * x**2 + 315 * x**4) / 8
             case 6:
-                return (693*x**5)/8 - (315*x**3)/4 + (105*x)/8
+                return (693 * x**5) / 8 - (315 * x**3) / 4 + (105 * x) / 8
             case _:
                 raise ValueError(f"legendreP not implimented for given n={n}")
     elif deriv == 2:
@@ -1279,7 +1283,7 @@ def legP(x, n, deriv=0):
             case 5:
                 return (-420 * x + 1260 * x**3) / 8
             case 6:
-                return (3465*x**4)/8 - (945*x**2)/4 + 105/8
+                return (3465 * x**4) / 8 - (945 * x**2) / 4 + 105 / 8
             case _:
                 raise ValueError(f"legendreP not implimented for given n={n}")
     # print("deriv=", deriv)
