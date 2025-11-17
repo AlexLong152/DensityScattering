@@ -42,36 +42,48 @@ c
       integer,intent(in) :: verbosity
       
       integer :: extQnum,twoMzp,twoMz
-c     
+c     integer i
 c**********************************************************************
 c     
       if (verbosity.eq.1000) continue
       
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     output as human readable number to stdout            
-      if (verbosity.ge.0) then
-      do extQnum=1,extQnumlimit
-         do twoMzp=twoSnucl,-twoSnucl,-2
-            do twoMz=twoSnucl,-twoSnucl,-2
-                  write (*,'(A,I4,A,I4,A,I4,A,F24.19,SP,F24.19," i")') !E30.19 for exponential form 0.123.....E-56
-     &                 "Result(exQnum=",extQnum,",twoMzp=",twoMzp,", twoMz=",twoMz,"): ",Result(extQnum,twoMzp,twoMz)
-               end do           ! extQnum
-            end do              ! twoMz
-         end do                 ! twoMzp
-      end if                    ! verbosity
+c     if (verbosity.ge.0) then
+c     write(*,'(A)') REPEAT("%",100) 
+c     do extQnum=1,extQnumlimit
+c        do twoMzp=twoSnucl,-twoSnucl,-2
+c           do twoMz=twoSnucl,-twoSnucl,-2
+c                 write (*,'(A,I4,A,I4,A,I4,A,F24.19,SP,F24.19," i")') !E30.19 for exponential form 0.123.....E-56
+c    &                 "Result(extQnum=",extQnum,",twoMzp=",twoMzp,", twoMz=",twoMz,"): ",Result(extQnum,twoMzp,twoMz)
+c
+c                 write (*,'(F24.19,SP,F24.19," i")') !E30.19 for exponential form 0.123.....E-56
+c    &                 Result(extQnum,twoMzp,twoMz)
+c              end do           ! extQnum
+c           end do              ! twoMz
+c        end do                 ! twoMzp
+c     end if                    ! verbosity
+c
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc      
-c     output to file
+c     output to file !This should be taken care of by run.system file
+
+      write(*,'(A)') REPEAT("%",100) 
+      write(outUnitno,'(A)') REPEAT("%",100) 
       do extQnum=1,extQnumlimit
          do twoMzp=twoSnucl,-twoSnucl,-2
             ! do twoMz=twoSnucl,-twoSnucl,-2
             !    write (outUnitno,*) Result(extQnum,twoMzp,twoMz)
             ! end do              ! twoMz
             do twoMz=twoSnucl,-twoSnucl,-2
-                  write (outUnitno,'(A,I4,A,I4,A,I4,A,F24.19,SP,F24.19," i")') !E30.19 for exponential form 0.123.....E-56
-     &                 "Result(exQnum=",extQnum,",twoMzp=",twoMzp,", twoMz=",twoMz,"): ",Result(extQnum,twoMzp,twoMz)
+                  write(outUnitno,'("( ",E24.17,SP,E24.17,"i)")') Result(extQnum,twoMzp,twoMz)
+                  write (*,'(A,I4,A,I4,A,I4,A,F24.19,SP,F24.19," i")') !outputs to top of file
+     &                 "Result(extQnum=",extQnum,",twoMzp=",twoMzp,", twoMz=",twoMz,"): ",Result(extQnum,twoMzp,twoMz)
                end do           ! extQnum
          end do                 ! twoMzp
       end do                    ! extQnum
+
+      write(*,'(A)') REPEAT("%",100) 
+      write(outUnitno,'(A)') REPEAT("%",100) 
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc 
 c     hgrie Aug 2020: if so wanted, output first independent MEs also to screen in a form that can directly be pasted into mathematica
       if (verbosity.ge.0) call outputtomath(Result,twoSnucl,extQnumlimit,verbosity)

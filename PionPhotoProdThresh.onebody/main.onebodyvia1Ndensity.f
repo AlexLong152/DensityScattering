@@ -169,8 +169,8 @@ c     At the moment, L1N & ML1N are meaningless (L=ML=0), but they are implement
 
       integer,parameter :: L1Nmax=0    
       integer L1N, ML1N
-      complex*16, allocatable :: Result(:,:,:) ! extQnum from 1 to extQnumlimit; twoMzp from -twoSnucl to twoSnucl, stepsize 2; twoMz from -twoSnucl to twoSnucl, stepsize 2; rest blank.
-      real*8 aveE0!,aveL0
+      complex*16, allocatable :: Result(:,:,:),ScatMat(:,:,:) ! extQnum from 1 to extQnumlimit; twoMzp from -twoSnucl to twoSnucl, stepsize 2; twoMz from -twoSnucl to twoSnucl, stepsize 2; rest blank.
+      real*8 aveE0,PlusConst,MinusConst,aveL0
       complex*16 :: tmpPlus(-1:1, -1:1)
       complex*16 tmpMinus(-1:1, -1:1)
       integer variedA           !BS: integer variedA to indicate which A is varied by calctype=VaryA
@@ -190,12 +190,18 @@ c     0: do not delete; 1: delete un-gz'd file; 2: delete downloaded and un-gz'd
       complex*16 :: sigmay(-1:1,-1:1) ! (ms3p,ms3): sigma-y
       complex*16 :: sigmaz(-1:1,-1:1)  ! (ms3p,ms3): sigma-z
       complex*16 :: Sigma(-1:1,-1:1)  ! (ms3p,ms3): sigma-z
+      complex*16 :: tmp1(-1:1,-1:1) 
+      complex*16 :: tmp2(-1:1,-1:1) 
       complex*16 :: SigmaVec(3,-1:1,-1:1)
+
+      complex*16 :: Opermat(-1:1,-1:1) 
 
       complex*16 :: SpinOnex(-2:2,-2:2)  ! (ms3p,ms3): sigma-x
       complex*16 :: SpinOney(-2:2,-2:2) ! (ms3p,ms3): sigma-y
       complex*16 :: SpinOnez(-2:2,-2:2)  ! (ms3p,ms3): sigma-z
       complex*16 :: SpinOneVec(3,-2:2,-2:2)
+      complex*16, allocatable :: SpinVec(:,:,:)
+      complex*16, allocatable :: SpinVec2D(:,:) ! Temporary for contiguous slice
       complex*16 :: factorx,factory
 
       complex*16 :: SpinZerox(-0:0,-0:0)  ! (ms3p,ms3): sigma-x
@@ -211,6 +217,7 @@ c     0: do not delete; 1: delete un-gz'd file; 2: delete downloaded and un-gz'd
       real*8 eps(3,3)
       integer ieps
       integer ii, jj
+      complex*16 NonZeroAve
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     end OF VARIABLE DECLARATIONS, BEGINNING OF CODING
@@ -266,12 +273,8 @@ c---- Variable to control Feynman quadrature settings------------------------
 c
       open(unit=outUnitno, file=outfile, status='unknown', iostat=test,iomsg=errmsg)
 
-      write(*,*) "Pion Photoproduction, onebody, at threshold"
-      write(outUnitno,*) "Pion Photoproduction, onebody, at threshold"
       if (test .ne. 0) stop "*** ERROR: In main, could not open output file!!! Aborting."
 
-      write(*,*) "densityFileName=", densityFileName 
-      write(outUnitno,*) "densityFileName=", densityFileName 
       call makeoutputfilename(outfile,calctype,nucleus,descriptors,densityFileName,variedA,
      &     Elow,Ehigh,Einterval,thetaLow,thetaHigh,thetaInterval,verbosity)
 c**********************************************************************
@@ -347,7 +350,7 @@ c**********************************************************************
             allocate(FSPlusV(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
             allocate(FSMinusV(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
             allocate(Result(1:extQnumlimit,-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
-
+            allocate(ScatMat(1:extQnumlimit,-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
             FSPlusV=c0
             FSMinusV=c0
             Result=c0
@@ -425,13 +428,29 @@ c**********************************************************************
 c     hgrie May 2018: read 1N density
             call read1Ndensity(densityFileName,Anucl,twoSnucl,omega,thetacm,verbosity)
 
+            E_prot = -1.16E-3
+            E_neut = 2.13E-3
+            L_prot = -1.35E-3
+            L_neut = -2.41E-3
 c           tmpPlus and tmpMinus combines spin and isospin part of diagrams
             tmpPlus = Iden+sigmaz
             tmpMinus = Iden-sigmaz
             eps = RESHAPE((/1,0,0,0,1,0,0,0,1/),(/3,3/))
+
+            if (twoSnucl.eq.1) then
+              SpinVec=SigmaVec
+            else if (twoSnucl.eq.2) then
+              SpinVec=SpinOneVec
+            else if (twoSnucl.eq.0) then
+              SpinVec=SpinZeroVec
+            end if
             do ieps=1,3
             FSMinusV=c0
             FSPlusV=c0
+
+            if (allocated(SpinVec2D)) deallocate(SpinVec2D)
+            allocate(SpinVec2D(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
+            SpinVec2D = SpinVec(ieps,:,:)
             do rindx=1,maxrho1bindex
                     CALL get1Nqnnum(rindx,twom1N,twomt1N,twoMz,twom1Np,twomt1Np,twoMzp,L1N,ML1N)
                     If (L1N.eq.0) then
@@ -440,26 +459,46 @@ c           tmpPlus and tmpMinus combines spin and isospin part of diagrams
      &                          *tmpPlus(twomt1Np,twomt1N)
                         FSMinusV(twoMzp,twoMz)=FSMinusV(twoMzp,twoMz)+Anucl*rho1b(rindx)*Sigma(twom1Np,twom1N)
      &                          *tmpMinus(twomt1Np,twomt1N)
-                    end if ! L1N
+
+c                       tmp1=Anucl*rho1b(rindx)*Sigma(twom1Np,twom1N)*tmpPlus(twomt1Np,twomt1N)
+c                       tmp2=Anucl*rho1b(rindx)*Sigma(twom1Np,twom1N)*tmpMinus(twomt1Np,twomt1N)
+c                       write(*,"(A,I2,A,I2,A,I2)") "With twomt1N=",twomt1N, ", twomt1Np=",twomt1Np,", extQnum=",ieps
+c                       Opermat=SpinVec(ieps,:,:)
+c                       call printmat2(tmp1+tmp2,Opermat,"FSplusV")
+c                       call printmat2(tmp2,Opermat,"FSMinusV")
+c                       write(*,*) ""
+c                       write(*,*) "############################################################"
+
+                      PlusConst=NonZeroAve(FSPlusV,SpinVec2D,twoSnucl)
+                      MinusConst=NonZeroAve(FSMinusV,SpinVec2D,twoSnucl)
+                      if (ieps.ne.3) then
+                        operMat=(10**3)*K1N*SpinVec(ieps,:,:)*(E_prot*PlusConst+E_neut*MinusConst)!0.5 might come from spin
+                      else
+                        opermat=(10**3)*K1N*SpinVec(ieps,:,:)*(L_prot*PlusConst+L_neut*MinusConst)!0.5 might come from spin
+                      end if
+
+                    write(*,"(A,I2,A,I2,A,I2)") "With twomt1N=",twomt1N, ", twomt1Np=",twomt1Np,", extQnum=",ieps
+                    call printmat(opermat,"Mmat")
+                    write(*,'(A)') "############################################################"
+                              end if ! L1N
             end do              !rindx   
 
-            E_prot = -1.16E-3
-            E_neut = 2.13E-3
-            L_prot = -1.35E-3
-            L_neut = -2.41E-3
 
+            write(*,*) ""
             K1N= ((Mnucleon+mpi)/(Mnucl+mpi))*(mnucl/Mnucleon)
-            if (twoSnucl.eq.1) then
-              FSPlusV=FSPlusV/Sigma
-              FSMinusV=FSMinusV/Sigma
-            else if (twoSnucl.eq.2) then
-              FSPlusV=FSPlusV/SpinOneVec(i,:,:)
-              FSMinusV=FSMinusV/SpinOneVec(i,:,:)
-            else if (twoSnucl.eq.0) then
-              FSPlusV=FSPlusV/SpinZeroVec(i,:,:)!Trivial in this case
-              FSMinusV=FSMinusV/SpinZeroVec(i,:,:)
+
+            FSPlusV=FSPlusV/SpinVec(ieps,:,:)
+            FSMinusV=FSMinusV/SpinVec(ieps,:,:)
+
+c           Create contiguous 2D array to avoid temporary array warning
+            PlusConst=NonZeroAve(FSPlusV,SpinVec2D,twoSnucl)
+            MinusConst=NonZeroAve(FSMinusV,SpinVec2D,twoSnucl)
+            deallocate(SpinVec2D)
+            if (ieps.ne.3) then
+              Result(ieps,:,:)=(10**3)*K1N*SpinVec(ieps,:,:)*(E_prot*PlusConst+E_neut*MinusConst)!0.5 might come from spin
+            else
+              Result(ieps,:,:)=(10**3)*K1N*SpinVec(ieps,:,:)*(L_prot*PlusConst+L_neut*MinusConst)!0.5 might come from spin
             end if
-            Result(ieps,:,:)=(K1N/2.d0)*(E_prot*FSPlusV + E_neut*FSMinusV)*(10**3)
 
             do ii = -twoSnucl, twoSnucl
             do jj = -twoSnucl, twoSnucl
@@ -469,10 +508,6 @@ c           tmpPlus and tmpMinus combines spin and isospin part of diagrams
             end do  
             end do
 
-
-            write(outUnitno,*) ""
-            write(outUnitno,'(A)') "############################################"
-            write(outUnitno,'(A,I1,",",I1,",",I1,A)') "eps=", int(eps(ieps,:)), " Result"
             write(*,*) ""
             write(*,'(A)') "############################################"
             write(*,'(A,I1,",",I1,",",I1,A)') "eps=", int(eps(ieps,:)), " Result"
@@ -484,39 +519,37 @@ c           tmpPlus and tmpMinus combines spin and isospin part of diagrams
             else if  (twoSnucl.eq.0) then
               call ResultWrite(FSPlusV,FSMinusV,SpinZeroVec,twoSnucl,outUnitno)
             end if
+            ! Result(ieps,:,:)=(K1N/2.d0)*(E_prot*FSPlusV + E_neut*FSMinusV)*(10**3)
+            write(*,*) ""
+            write(*,'(A,F24.17)') "F_T^{S-V}=", MinusConst
+            write(*,'(A,F24.17)') "F_T^{S+V}=", PlusConst
             end do!ieps
 
             if (twoSnucl.eq.1) then
-              ! write(*,*) "Result(1,1,-1)=", Result(1,1,-1) 
-              ! write(*,*) "Result(2,-1,1)=", Result(2,-1,1) 
-              aveE0=(real(Result(1,1,-1))+real(Result(2,-1,1)))/2.d0
+              aveE0=(real(Result(1,1,-1))+aimag(Result(2,-1,1)))/2.d0
+              aveL0=real(Result(3,1,1))
             else if (twoSnucl.eq.2) then
+              write(*,*) "IMPLIMENT ME "
               aveE0=(real(Result(1,2,0))+aimag(Result(2,0,2)))/2.d0
             else if  (twoSnucl.eq.0) then
+              write(*,*) "IMPLIMENT ME "
               aveE0=(real(Result(1,0,0))+aimag(Result(2,0,0)))/2.d0
               write(*,*) ""
             end if
 
             write(*,*) ""
             write(*,*) ""
-            write(outUnitno,*) ""
-            write(outUnitno,*) ""
             write(*,'(A)') "Result is in units of 10^-3/M_pi^+"
-            write(*,'(A,F24.19)') "Average E_0+^1N=",aveE0
-            write(outUnitno,'(A)') "Result is in units of 10^-3/M_pi^+"
-            write(outUnitno,'(A,F24.19)') "Average E_0+^1N=",aveE0
+            write(*,'(A,F24.19,A)') "E_0+^1N=",aveE0, " (averaged)"
+            write(*,'(A,F24.19)') "L_0+^1N=",aveL0
 
-            call secondOutput(Result,extQnumlimit,twoSnucl,outUnitno)
+c           call secondOutput(Result,extQnumlimit,twoSnucl,outUnitno)
 
+            write(outUnitno,*) "cm omega=",omega, "thetacm=",thetacm
             write(*,*) ""
-            write(outUnitno,*) ""
-
-            write(*,'(A)') "Repeated output for automatted file reading"
-            write(outUnitno,'(A)')"Repeated output for automatted file reading" 
+            write(*,'(A)') "Scattering Matrix"
             call outputroutine(outUnitno,twoSnucl,extQnumlimit,
      &           Result,verbosity)
-
-
             ! In units of m_pi^+
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     be a good boy and deallocate arrays. Compilers do that automatically for simple programs. Better safe than sorry.
@@ -566,7 +599,6 @@ c40   format(A,2F18.13)
       do i=twoSnucl,-twoSnucl,-2
       do j=twoSnucl, -twoSnucl,-2
         write(*,*) Result(k,i,j)
-        write(outUnitno,*) Result(k,i,j)
       end do
       end do
       end do 
@@ -592,7 +624,7 @@ c40   format(A,2F18.13)
         do j=-twoSnucl,twoSnucl
           if ((Sigma(i,j).ne.c0).and.(FMinus(i,j).ne.c0)) then
           if (FMinus(i,j).eq.FMinus(i,j)) then
-                  WRITE(*,fmt) 'FMinus(', i, ',', j, ') = ', FMinus(i,j),'i'!/Sigma(i,j),'j'
+                  WRITE(*,fmt) 'FMinus[', i, ',', j, '] = ', FMinus(i,j),'i'!/Sigma(i,j),'j'
           end if
           end if        
         end do
@@ -603,56 +635,74 @@ c40   format(A,2F18.13)
           if ((Sigma(i,j).ne.c0).and.(FPlus(i,j).ne.c0)) then
 
           if (FPlus(i,j).eq.FPlus(i,j)) then
-                  WRITE(*,fmt) 'FPlus(', i, ',', j, ') = ', FPlus(i,j),'i'!/Sigma(i,j),'j'
+                  WRITE(*,fmt) 'FPlus[', i, ',', j, '] = ', FPlus(i,j),'i'!/Sigma(i,j),'j'
           end if
           end if        
         end do
         end do
         
-        do i=-twoSnucl,twoSnucl
-        do j=-twoSnucl,twoSnucl
-          if ((Sigma(i,j).ne.c0).and.(FMinus(i,j).ne.c0)) then
-          if (FMinus(i,j).eq.FMinus(i,j)) then
-                  WRITE(outUnitno,fmt) 'FMinus(', i, ',', j, ') = ', FMinus(i,j),'i'!/Sigma(i,j),'j'
-          end if 
-          end if        
-        end do
-        end do
-
-        do i=-twoSnucl,twoSnucl
-        do j=-twoSnucl,twoSnucl
-          if ((Sigma(i,j).ne.c0).and.(FPlus(i,j).ne.c0)) then
-          if (FPlus(i,j).eq.FPlus(i,j)) then
-                  WRITE(outUnitno,fmt) 'FPlus(', i, ',', j, ') = ', FPlus(i,j),'i'!/Sigma(i,j),'j'
-          end if
-          end if        
-        end do
-        end do
       else
       ! fmt='(A,I0,A,I0,A,F8.12,SP,F8.12,A)'
       fmt='(A,I0,A,I0,A,F8.4,SP,F8.4,A)'
         do i=-twoSnucl,twoSnucl
         do j=-twoSnucl,twoSnucl
-                  WRITE(*,fmt) 'FMinus(', i, ',', j, ') = ', FMinus(i,j),'i'!/Sigma(i,j),'j'
+                  WRITE(*,fmt) 'FMinus[', i, ',', j, '] = ', FMinus(i,j),'i'!/Sigma(i,j),'j'
         end do
         end do
 
         do i=-twoSnucl,twoSnucl
         do j=-twoSnucl,twoSnucl
-                  WRITE(*,fmt) 'FPlus(', i, ',', j, ') = ', FPlus(i,j),'i'!/Sigma(i,j),'j'
-        end do
-        end do
-
-        do i=-twoSnucl,twoSnucl
-        do j=-twoSnucl,twoSnucl
-                  WRITE(outUnitno,fmt) 'FMinus(', i, ',', j, ') = ', FMinus(i,j),'i'!/Sigma(i,j),'j'
-        end do
-        end do
-
-        do i=-twoSnucl,twoSnucl
-        do j=-twoSnucl,twoSnucl
-                  WRITE(outUnitno,fmt) 'FPlus(', i, ',', j, ') = ', FPlus(i,j),'i'!/Sigma(i,j),'j'
+                  WRITE(*,fmt) 'FPlus[', i, ',', j, '] = ', FPlus(i,j),'i'!/Sigma(i,j),'j'
         end do
         end do
       end if
       end subroutine
+
+      function NonZeroAve(FTerm,SpinMatrix,twoSnucl)
+c     Calculates the average of the FTerm matrix for the same indicies where SpinMatrix is non-zero
+      implicit none
+      include '../common-densities/constants.def'
+      integer, intent(in) :: twoSnucl
+      complex*16, intent(in) :: FTerm(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
+      complex*16, intent(in) :: SpinMatrix(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
+      complex*16 :: NonZeroAve
+      complex*16 :: sum_val
+      integer :: count_val
+      integer :: i, j
+
+      sum_val = 0.d0
+      count_val = 0
+
+      do i = -twoSnucl, twoSnucl
+         do j = -twoSnucl, twoSnucl
+            if (SpinMatrix(i,j) .ne. c0) then
+               sum_val = sum_val + FTerm(i,j)
+               count_val = count_val + 1
+            end if
+         end do
+      end do
+      if (count_val .gt. 0) then
+         NonZeroAve = sum_val / real(count_val)
+      else
+         NonZeroAve = 0.d0
+      end if
+
+      end function NonzeroAve
+
+      subroutine printmat(mat, name)
+      implicit none
+      double complex mat(-1:1,-1:1)
+      character(*) name
+      integer i, j
+
+      do i = -1, 1,2
+        do j = -1, 1,2
+c         write(*,'(A,"(",I1,",",I1,")=",F15.13,1x,F15.13,"j")')
+c    &       trim(name), i, j, real(mat(i,j)), aimag(mat(i,j))
+          write(*,'(A,"(",I2,",",I2,")=",E18.10,1x,E18.10,"j")')
+     &       trim(name), i, j, real(mat(i,j)), aimag(mat(i,j))
+
+        end do 
+      end do
+      write(*,*) "" 
+      end subroutine printmat

@@ -1,24 +1,39 @@
-#!/bin/bash
+#!/bin/tcsh -bf
 
-if [ $# -eq 0 ]; then
-    echo "Usage: $0 <input_file1> [input_file2] [input_file3] ..."
-    echo "Example: $0 input-400.dat input-450.dat input-500.dat"
-    exit 1
-fi
+# A bunch of files which MUST be present in home directory.
+# This should be hardwired better, maybe in Makefile. 
 
-for input_file in "$@"; do
-    if [ ! -f "$input_file" ]; then
-        echo "Warning: File '$input_file' not found, skipping..."
-        continue
-    fi
-    
-    echo "Processing $input_file..."
-    ./onebodyvia1Ndensity "$input_file"
-    
-    if [ $? -ne 0 ]; then
-        echo "Error processing $input_file"
-        exit 1
-    fi
-done
+if !(-f amplitudes.dat) `cp ../common-densities/density-modules/amplitudes.dat .`
+if !(-f book-para.dat) `cp ../common-densities/density-modules/book-para.dat .`
+if !(-f meshpoints.dat) `cp ../common-densities/density-modules/meshpoints.dat .`
+if !(-f parallel.dat) `cp ../common-densities/density-modules/parallel.dat .`
+if !(-f rmeshpoints.dat) `cp ../common-densities/density-modules/rmeshpoints.dat .`
 
-echo "All files processed successfully."
+
+set files = `ls $argv`
+
+echo "Input files:"
+echo $files
+echo ""
+
+foreach arg ( $files )
+	echo "***** Running input $arg."
+	set datestring = `date --rfc-3339=seconds`
+	set temp = `date +%s%N`
+	set startdatum = `date +%s`
+	./onebodyvia1Ndensity $arg | tee $temp.tmp
+	set enddatum = `date +%s`
+	set filename = `grep -e "Write output to file" $temp.tmp | sed s/Write\ output\ to\ file:\ //`
+        cat $temp.tmp >> $filename
+	echo "Production date: $datestring" >> $filename
+	set diffdatum = `expr $enddatum - $startdatum`
+	echo "Real Time used: $diffdatum seconds on host $HOST"
+	echo "Real Time used: $diffdatum seconds on host $HOST" >> $filename
+	echo "**************************************************" >> $filename
+        echo "*********            INPUT FILE          *********" >> $filename
+        echo "**************************************************" >> $filename
+        cat $arg >> $filename
+
+	rm -rf $temp.tmp
+end
+

@@ -71,13 +71,13 @@ TEST_OBJS := $(filter-out main.onebodyvia1Ndensity.o, $(OBJS))
 # Define check objects excluding the main program object
 CHECK_OBJS := $(filter-out main.onebodyvia1Ndensity.o, $(OBJS))
 
-check: testing.o $(CHECK_OBJS)
-	$(FC) -o CheckCrossSec testing.o $(CHECK_OBJS) $(LDFLAGS)
-	chmod +x CheckCrossSec
+test: testing.o $(CHECK_OBJS)
+	$(FC) -o TestCrossSec testing.o $(CHECK_OBJS) $(LDFLAGS)
+	chmod +x TestCrossSec
 
 # compile any .f → .o if sources or .def files change
 %.o: %.f $(INCS)
 	$(FC) $(FFLAGS) $< -o $@
 
 clean:
-	rm -f $(OBJS) testing.o $(COMMAND) testCrossSec testCrossSec.o CheckCrossSec
+	rm -f $(OBJS) testing.o $(COMMAND) testCrossSec testCrossSec.o TestCrossSec

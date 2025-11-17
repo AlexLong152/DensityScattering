@@ -45,21 +45,25 @@ def main():
     theta_masks = [(df["theta"] - t).abs() < eps for t in thetas]
     theta_mask = np.logical_or.reduce(theta_masks)
 
-    select = (
-        (df["N"] == 3)
-        & (df["Z"] == 3)
-        & omega_mask
-        & (df["kind"] == "one")
-        & ((df["LambdaNN"] == 450) | (df["LambdaNN"] == 500))
-        &
-        # (df["lambdaSRGNN"] == 3.0)
-        # | (df["lambdaSRGNN"] == 2.236)
-        (df["lambdaSRGNN"] == 1.880)
-        & (df["Nmax"] == 14)
-        & (df["OmegaHO"] == 14)
-        # & theta_mask
-    )
-    df = df[select]
+    # select = (
+    #     (df["N"] == 3)
+    #     & (df["Z"] == 3)
+    #     & omega_mask
+    #     & (df["kind"] == "one")
+    #     & ((df["LambdaNN"] == 450) | (df["LambdaNN"] == 500))
+    #     &
+    #     # (df["lambdaSRGNN"] == 3.0)
+    #     # | (df["lambdaSRGNN"] == 2.236)
+    #     (df["lambdaSRGNN"] == 1.880)
+    #     & (df["Nmax"] == 14)
+    #     & (df["OmegaHO"] == 14)
+    #     # & theta_mask
+    # )
+    # df = df[select]
+
+    df["addtime"] = pd.to_datetime(df["addtime"])
+    weeks_ago = pd.Timestamp.now() - pd.Timedelta(weeks=3)
+    df = df[df["addtime"] >= weeks_ago]
 
     colsel = [
         "E[MeV]",
@@ -82,12 +86,6 @@ def main():
     tmp = df[colsel]
     print(tmp[:10])
     print("\n")
-    """
-    df["addtime"] = pd.to_datetime(df["addtime"])
-    weeks_ago = pd.Timestamp.now() - pd.Timedelta(weeks=3)
-    df = df[df["addtime"] >= weeks_ago]
-    """
-
     # i = 1
     # for idx, row in df.iterrows():
     #     print("row=", idx, "hashname=", row["hashname"], "file number=", i)

@@ -43,7 +43,10 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       write(*,*) "      Alexander Long starting September 2025   "
       write(*,*)
       mPion=134.976d0
-      term1=Egamma*Egamma 
+c     write(*,*) "DEBUG KernelGreeting: Egamma=", Egamma
+c     write(*,*) "DEBUG KernelGreeting: Mnucl=", Mnucl
+c     write(*,*) "DEBUG KernelGreeting: mPion=", mPion
+      term1=Egamma*Egamma
 
       term2=-1*mPion**2*(Mnucl**2+Egamma**2-Egamma*sqrt(Mnucl**2+Egamma**2))
       term2=term2/Mnucl**2
@@ -51,10 +54,16 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       term3=(mPion**4)*(Mnucl**2+2*Egamma**2-2*Egamma*sqrt(Mnucl**2+Egamma**2))
       term3=term3/(4.d0*Mnucl**4)
       kSquare=term1+term2+term3
-      ! write(*,*) "varsub-2Bkernel.PionPion.f:54 Egamma=", Egamma 
-      ! write(*,*) "varsub-2Bkernel.PionPion.f:54 Mnucl=", Mnucl 
-      ! write(*,*) "varsub-2Bkernel.PionPion.f:55 kSquare=", kSquare 
+c     write(*,*) "kSquare=", kSquare 
+      if ((kSquare.lt.0).and.(kSquare.gt.-10.d0)) then
+        kSquare=0.d0
+      end if
+c     write(*,*) "DEBUG KernelGreeting: term1=", term1
+c     write(*,*) "DEBUG KernelGreeting: term2=", term2
+c     write(*,*) "DEBUG KernelGreeting: term3=", term3
+c     write(*,*) "DEBUG KernelGreeting: kSquare=", kSquare
       Eprobe=sqrt(kSquare + mPion**2)
+c     write(*,*) "DEBUG KernelGreeting: Eprobe=", Eprobe
       if (verbosity.eq.1000) continue
       end
 c     
@@ -102,7 +111,9 @@ cc            Multiplying by powers of HC translates into output of final MEs "R
 cc            EXAMPLE: Compton has twobody kernel in MeV^-4 (n=4) ==> result ME in MeV^-1. To convert to fm, multiply by HC.
 cc                     In Compton, that multiplication by HC isnot done in the fortran code, but later in the mathematica processing files.
 cc            EXAMPLE: Pion Photoproduction kernel has units MeV^-2 if the output should be the twobody functions f_TL.
-cc                     n=-2 => Results() output in MeV^1. But F_TL output in fm^-1, so divide here in kernel by HC to get fm^-1 units in Results().
+cc                     n=2 => Results() output in MeV^1. But F_TL output in fm^-1, so divide in kernel by HC to get fm^-1 units in Results().
+cc            EXAMPLE: Pion scattering has units of MeV^-2 (recall f_pi) has units of MeV.
+cc
 cc
 cc    (2π)³ is a factor of the twobody integration. TO INCLUDE IT OR NOT DEPENDS ON DEFINITIONS OF TWOBODY KERNELS!
 cc            In Compton, we insert it so that onebody and twobody Result() immediately hve same size and can be added: ottal=onebody+twobody. 
@@ -164,6 +175,7 @@ c!     real*8 qVec(3)
       complex*16 KernelA(1:extQnumlimit,0:1,-1:1,0:1,-1:1) !contribution just from diagram A
       real*8 m1,m2,m3,m4
       integer diagNum
+      real*8 sqrtS,prefactor
 c!     
       mPion=mpi0
       ppVecs=0.d0
@@ -182,11 +194,14 @@ c      !subroutine calculateqsmass is available for kpVec calculation
       m3=mNucl
       m4=mPion
       call calculateqs2Mass(pVec,ppVec,kVec,kpVec,m1,m2,m3,m4,thetacm,verbosity)
+      sqrtS=sqrt(mNucl*mNucl+k*k)+sqrt(mpion*mpion+k*k)
+      prefactor=8*Pi*sqrtS
       ! write(*,*) "varsub-2Bkernel.PionPion.f:184 extQnumlimit=", extQnumlimit 
       diagNumber=1
       call getDiagAB(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,kpVec,t12,t12p,
      &      mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
-      Kernel2B(diagNumber,:,:,:,:,:)=KernelA
+c     KernelA is in units MeV^-4, prefactor is units MeV -> Kernel2B in units MeV^-3 -> Result in units MeV^0
+      Kernel2B(diagNumber,:,:,:,:,:)=prefactor*KernelA
 
       end
 
@@ -223,13 +238,15 @@ c     write(*,*) "getDiagAB: extQnumlimit=", extQnumlimit, "s12p=", s12p, "s12="
           stop
       end if
 
-      ! write(*,*) "pVec=", pVec 
-      ! write(*,*) "kVec=", kVec 
-      ! write(*,*) "kpVec=", kpVec 
+c     write(*,*) "DEBUG INPUT: pVec=", pVec
+c     write(*,*) "DEBUG INPUT: uVec=", uVec
+c     write(*,*) "DEBUG INPUT: kVec=", kVec
+c     write(*,*) "DEBUG INPUT: kpVec=", kpVec
       useTransform=.true.
       if (useTransform) then
 c       uVec=qVec=pVec-ppVec+kVec/2+kpVec/2
         ppVec=pVec-uVec+(kVec+kpVec)/2
+c       write(*,*) "DEBUG: ppVec=", ppVec
         Jacobian=1.d0!check this
       else
           ppVec=uVec
@@ -238,13 +255,17 @@ c       uVec=qVec=pVec-ppVec+kVec/2+kpVec/2
 
       qVec=pVec-ppVec+kVec/2+kpVec/2 !=uVec
       qpVec=qVec-kVec
-      if (vecsquare(qVec-uVec).ge.1.0) then
-          write(*,*) "Error in getDiagAB: qVec-uVec too large:",vecsquare(qVec-uVec)
-          write(*,*) "qVec=", qVec 
-          write(*,*) "uVec=", uVec 
-          write(*,*) "kinemetics inconsistent,  stopping"
-          stop
-      end if
+c     if (vecsquare(qVec-uVec).ge.1.0) then
+c         write(*,*) "Error in getDiagAB: qVec-uVec too large:",vecsquare(qVec-uVec)
+c         write(*,*) "qVec=", qVec
+c         write(*,*) "uVec=", uVec
+c         write(*,*) "kinemetics inconsistent,  stopping"
+c         stop
+c     end if
+
+c     write(*,*) "DEBUG: qVec=", qVec
+c     write(*,*) "DEBUG: DOT_PRODUCT(qVec,qVec)=", DOT_PRODUCT(qVec,qVec)
+c     write(*,*) "DEBUG: |qVec|=", sqrt(DOT_PRODUCT(qVec,qVec))
 
       ! q0=(mPion**2 + DOT_PRODUCT(qVec,qVec))
       ! Epi=(mPion**2 + DOT_PRODUCT(kpVec,kpVec))
@@ -252,11 +273,12 @@ c       uVec=qVec=pVec-ppVec+kVec/2+kpVec/2
 c     fpi=92.42 defined in constants.def
 c     Define from BKM review 
       reducedMass=mpi0/mNucleon
-      prefactor=1/(32*(1+reducedMass)*(Pi*fpi)**4)
+c     prefactor=(1/(32*(1+reducedMass)*(Pi*fpi)**4))*((2*Pi)**3/HC)
+      prefactor=(1/(32*(1+reducedMass)*(Pi*fpi)**4))
       
-      factorAsym=-4*mpi0*mpi0*prefactor*(1/(DOT_PRODUCT(qVec,qVec)))
-      factorBsym=-1*gA*gA*prefactor/((DOT_PRODUCT(qVec,qVec)+mpi0**2))
-      factorCsym=gA*gA*prefactor*(1/((DOT_PRODUCT(qVec,qVec)+mpi0**2)**2))
+      factorAsym=-4*mpi0*mpi0*prefactor*(1/(DOT_PRODUCT(qVec,qVec)))*((-1)*(-1)**(t12))
+      factorBsym=-1*gA*gA*prefactor/((DOT_PRODUCT(qVec,qVec)+mpi0**2))*((2*t12*(t12+1))-3)
+      factorCsym=gA*gA*prefactor*(1/((DOT_PRODUCT(qVec,qVec)+mpi0**2)**2))*((2*t12*(t12+1))-3)
       ! factorDsym=-2*gA*gA*prefactor*mPion*mPion*(1/((DOT_PRODUCT(qVec,qVec)+mPion**2)**2))
 
 
@@ -278,8 +300,10 @@ c     Define from BKM review
             call CalcKernel2BAsym(Kerneltmp,
      &           factorAsym,
      &           s12p,s12,t12,mt12,extQnumlimit,verbosity)
+
             if (ANY(Kerneltmp.Ne.Kerneltmp)) then
               write(*,*) "Sym A Kernel contains NaN values"
+              write(*,*) "factorAsym=", factorAsym 
               stop
             end if
 
@@ -333,8 +357,8 @@ c           call CalcKernel2BDasy(Kernel2B,qVec,
 c    &           factorDsym,
 c    &           s12p,s12,mt12,extQnumlimit,verbosity)
          end if                 ! s12 question
-c     else                      ! t12!=t12p
-c        continue
+      else                      ! t12!=t12p
+        continue
       end if                    !t12 question
 
       ppVecA=ppVec

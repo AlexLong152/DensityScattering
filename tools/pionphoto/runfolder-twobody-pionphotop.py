@@ -14,8 +14,8 @@ from pathlib import Path
 numDiagrams = 1
 
 basefile = ".pyinput.dat"  # system auto creates this file
-folder = r"/home/alexander/OneDrive/densities-3He/2Ndensities/132MeV/"
-outputfolder = r"/home/alexander/Dropbox/PionPhotoProduction/results-3He/2bod/132MeV/"
+folder = r"/home/alexander/OneDrive/densities-3He/2Ndensities/132MeV/0deg/"
+outputfolder = r"/home/alexander/Dropbox/PionPion/results-3He/2bod/thresh/"
 
 if folder[-1] != r"/":
     folder += r"/"
@@ -63,9 +63,7 @@ def main():
         if not isfile(output):
             j += 1
             runfile = basefile[:-4] + "-" + str(i) + ".dat"  # input file for fortran
-            runcommand.append(
-                r'"./run.twobodyvia2Ndensity.PionPhotoProdThresh ' + runfile + r'"'
-            )
+            runcommand.append(r'"./run.twobodyvia2Ndensity.PionPion ' + runfile + r'"')
 
             system("cp " + basefile + " " + runfile)
             omega = str(getomega(f))

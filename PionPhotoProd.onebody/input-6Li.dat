@@ -1,7 +1,7 @@
-131.857 131.857 10                           omegaLow, omegaHigh, omegaStep
+133.389 131.389 10                           omegaLow, omegaHigh, omegaStep
 60 60 15                             thetaLow, thetaHigh, thetaStep
-output-3He-Above-Mmat-Printed.dat
-'/home/alexander/OneDrive/densities-3He/1Ndensities/132MeV/onebody-3He.132MeV-060deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG0.000setNtotmax00omegaH00.denshash=3bd9b5d55f401de84f369724cdeb02eb176fda6928c442e1611c2ba14efdbc8b.v2.0.h5'
+output-6Li.dat
+'/home/alexander/OneDrive/densities-6Li/1Ndensities/133MeV/onebody-6Li.133MeV-060deg.dens-chiralsmsN4LO+3nfN2LO-lambda400-lambdaSRG1.880setNtotmax14omegaH18.denshash=aa20d6e0796bc0cedd498a48c21eaee2c7a3fa323b983c39f0dfab0e444e66b3.v2.0.h5'
 cm_symmetry_verbos_extQnumlimit=3                    frame, symmetry, verbosity of STDOUT
 Odelta3                              Calctype -- VaryAXN varies NucelonN's amplitude AX (N=p,n; X=1-6)
 32			             number of points Nx in Feynman parameter integration

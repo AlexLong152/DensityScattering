@@ -220,6 +220,8 @@ c
       do Msp=-s12p,s12p
       do Ms=-s12,s12
             Kernel2B(extQnum,s12p,Msp,s12,Ms) = Kernel2B(extQnum,s12p,Msp,s12,Ms) + factor*hold(s12p,Msp,s12,Ms)*isospin
+            write(*,*) "pion isospin not implimented for diagram D, stopping"
+            stop
       end do
       end do
       end do 

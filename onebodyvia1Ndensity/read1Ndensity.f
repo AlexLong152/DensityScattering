@@ -66,9 +66,10 @@ c**********************************************************************
       
       character*500,intent(in) :: densityFileName  ! abuse of language: for Compton with density, this is name of density file
 
-      real*8,intent(in) :: omega, theta       ! energy (in MeV) and angle (in rad) of input file. Is input to subroutine
+      real*8,intent(in) :: theta! energy (in MeV) and angle (in rad) of input file. Is input to subroutine
                                 ! to check that they match what's available in 1Ndensity file. 
       
+      real*8,intent(inout) :: omega
       integer,intent(in) :: Anucl,twoSnucl
       
       integer,intent(in) :: verbosity              ! verbosity of stdoutout
@@ -88,7 +89,7 @@ c     following are local variables for possible cross checks below
       
       integer,parameter :: L1Nmax=1  ! hard-wired!
       integer L1N, ML1N              ! orb ang mom & projection of 1N operator
-      integer twomt1N,twom1N,twom1Np ! projections of single-nucleon's isospin, in-spin, out-spin
+      integer twomt1N,twom1N,twom1Np ! projections of single-nucleon's isospin, in-spin, out-spi,omegaDensityn
       integer twomt1Np               ! only for cross check: in Compton, twomt1Np = twomt1N
       integer twoMz,twoMzp
       integer rindx                  ! Andreas' index which combines all quantum numbers
@@ -218,6 +219,7 @@ c         end if
             stop
          else
             write(*,*)             "   Energy and angle of 1Ndensity file match request." 
+            omega=omval*hc
          end if
 
       if (verbosity.eq.1000) continue

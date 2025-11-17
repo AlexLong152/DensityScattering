@@ -107,7 +107,7 @@ def main():
         if j == 0:
             print("\n" + 100 * "#")
     fig.supxlabel(r"$\theta$")
-    fig.supylabel(r"$\mathrm{d} \sigma/\mathrm{d}\Omega$")
+    fig.supylabel(r"$\mathrm{d} \sigma/\mathrm{d}\Omega \;[\mu \mathrm{bn}]$")
     plt.show()
 
 
@@ -164,10 +164,11 @@ def resultOnly():
 
     omegaLab = 160
     poleData = ppl.SaidPoles()
-
+    print("\n")
+    print("Now printing results we have calculated from poles directly")
     for nuc in names:
         print(nuc)
-        print("theta, cross section")
+        print("Theta                Cross Section ")
         if nuc == "pp0":
             mNucl = 938.272
         else:
@@ -176,7 +177,7 @@ def resultOnly():
         for i, theta in enumerate(thetas):
             x = np.cos(theta * np.pi / 180)
             crossSec = ppl.calcCrossSection(sqrtS**2, x, nuc, poleData)
-            print(theta, "  ", crossSec)
+            print(f"{theta:3d}    --------    {crossSec:6.6f} [\u03bc barns]")
         print("\n" + 50 * "#")
 
 

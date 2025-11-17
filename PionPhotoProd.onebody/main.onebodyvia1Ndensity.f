@@ -307,7 +307,7 @@ c     define correct formats for energy and angle
 c     hgrie May 2018: outsourced into subroutine common-densities/makedensityfilename.f
             densityFileName = originaldensityFileName
 
-            allocate(Mmat(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
+            allocate(Mmat(-1:1,-1:1))
 
             allocate(outputMat(1:extQnumlimit,-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
             outputMat=c0
@@ -343,11 +343,15 @@ c           write(*,*) "extQnumlimit=", extQnumlimit
                   nuc(2:2)=isospin2Str(twomt1Np)
                   ! nuc(3:3)=piCharges(extQnum)
                   nuc(3:3)="0" !only looking at neutral pion photoproduction
-                  call getRawM(sqrtS,x , nuc, Mmat, Mnucl, twoSnucl,sqrtSReal,MaxEll,eps(extQnum,:))
+                  call getRawM(sqrtS,x , nuc, Mmat, Mnucl, sqrtSReal,MaxEll,eps(extQnum,:))
                   outputMat(extQnum,twoMzp,twoMz)= outputMat(extQnum,twoMzp,twoMz)+
      &                            Anucl*rho1b(rindx)*Mmat(twom1Np,twom1N)*(cmplx(0.d0,-1.d0,KIND=8))
 c    &                            Anucl*rho1b(rindx)*Mmat(twoMzp,twoMz)*(cmplx(0.d0,-1.d0))
-                end if 
+                    write(*,"(A,I2,A,I2,A,I2)") "With twomt1N=",twomt1N, ", twomt1Np=",twomt1Np,", extQnum=",extQnum
+                    call printmat(Mmat, "Mmat")
+                    write(*,*) ""
+                    write(*,*) "############################################################"
+                end if !L1N.eq.0
             end do              !rindx   
             end do             !extQnum
             write(*,"(A,I2,A)") "Using", MaxEll+1, " Partial Waves (maximum l value)"

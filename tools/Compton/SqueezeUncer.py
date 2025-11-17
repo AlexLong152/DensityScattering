@@ -31,14 +31,14 @@ def main():
 
     thetas = np.array([0, 40, 55, 75, 90, 110, 125, 145, 159, 180])
 
-    twobody_dir = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/chiralsmsN4LO+3nfN2LO-lambda550/twobody/"
-    onebody_dir = twobody_dir + r"../onebody/"
+    twobody_dir = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/2bod/60MeV/"
+    onebody_dir = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/1bod/60MeV/"
     # savefolder = twobody_dir + r"../results/"
     tmp = np.array(twobody_dir.split(r"/"))
     # title = tmp[-3]
     energy = 60
     lambdaSRG = 1.880
-    lambdaCut = 550
+    lambdaCut = 500
     omegaHs = np.array([10, 12, 14, 16, 18])
     markers = ["x", ",", "o", "v", "1", "*", "D"]
     out = {}
@@ -57,7 +57,7 @@ def main():
                         Ntotmax=Ntot,
                         omegaH=omegaH,
                     )
-                except ValueError:
+                except FileNotFoundError:
                     print(
                         f"Missing file for energy={energy}, angle={theta}, lambdaCut={lambdaCut}, lambdaSRG={lambdaSRG}, Ntotmax={Ntot}, omegaH={omegaH}"
                     )

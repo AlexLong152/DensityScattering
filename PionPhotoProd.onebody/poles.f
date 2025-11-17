@@ -29,7 +29,7 @@ c       Add trace of this polarization's contribution
       end subroutine
 
 
-      subroutine getRawM(sqrtS, x, nucs, Mout, mNucl,twoSnucl,sqrtSReal,
+      subroutine getRawM(sqrtS, x, nucs, Mout, mNucl,sqrtSReal,
      &                   MaxEll,epsVec)
 c     Get the raw matrix element.
 c
@@ -57,10 +57,10 @@ c     ==================================================
 c     Input parameters
       double precision sqrtS, x, mNucl,sqrtSReal
       character*3 nucs
-      integer twoSnucl, MaxEll
+      integer MaxEll
       
 c     Output parameter
-      complex*16, intent(out) :: Mout(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
+      complex*16, intent(out) :: Mout(-1:1,-1:1)
       
 c     Local variables
 
@@ -229,6 +229,7 @@ c    &       trim(name), i, j, real(mat(i,j)), aimag(mat(i,j))
       end subroutine printmat
 
 
+
 c     ==================================================
       subroutine f(x, sqrtS, qVec, kVec, epsVec, target, result, MaxEll)
 c     Calculate F term for given inputs
@@ -268,16 +269,17 @@ c     Initialize imaginary unit
 c     Calculate absolute values of vectors
       qAbs = vecAbs(qVec)
       kAbs = vecAbs(kVec)
-c     write(*,*) "kVec=", kVec 
-c     write(*,*) "qVec=", qVec 
-c     write(*,*) "qAbs=", qAbs  
-c     write(*,*) "kAbs=", kAbs 
+      f1Term=0.d0
+      f2Term=0.d0
+      f3Term=0.d0
+      f4Term=0.d0
 c     Calculate F terms
-      if (qAbs.eq.0) then
-        !Trick here, just change qAbs, but not q, so that the other terms vanish
-        !And we don't get a divide by zero issue
-        qAbs=1.d0
-      end if
+c     if (qAbs.eq.0) then
+c       !Trick here, just change qAbs, but not q, so that the other terms vanish
+c       !And we don't get a divide by zero issue
+c       qAbs=1.d0
+c     end if
+
       f1=cmplx(0.d0,KIND=8)
       f2=cmplx(0.d0,KIND=8)
       f3=cmplx(0.d0,KIND=8)
@@ -301,25 +303,25 @@ c     Calculate F1 term: vec · σ (epsVec dot product with Pauli matrices) * F1
       call complexVecDotSigma(epsVec, matRes1)
       
       f1Term = matRes1 * f1 * imag
-      
-c     Calculate F2 term: (qVec · σ) @ [(kVec × epsVec) · σ] * F2
-      call realVecDotSigma(qVec, matRes1)
-      call complexVecDotSigma(crossTmp, matRes2)
-c     call realVecDotSigma(crossTmp, matRes2)
+      if (qAbs.ne.0.d0) then!avoid divide by zero errors
+c       Calculate F2 term: (qVec · σ) @ [(kVec × epsVec) · σ] * F2
+        call realVecDotSigma(qVec, matRes1)
+        call complexVecDotSigma(crossTmp, matRes2)
 
       
-      f2Term=matmul(matRes1,matRes2)
-      f2Term = f2Term * f2 / (qAbs * kAbs)
+        f2Term=matmul(matRes1,matRes2)
+        f2Term = f2Term * f2 / (qAbs * kAbs)
       
-c     Calculate F3 term: 1j * (kVec · σ) * dot(qVec, epsVec) * F3
-      call realVecDotSigma(kVec, matRes1)
-      f3Term = matRes1 * imag * epsdotP * f3 / (qAbs * kAbs)
+c       Calculate F3 term: 1j * (kVec · σ) * dot(qVec, epsVec) * F3
+        call realVecDotSigma(kVec, matRes1)
+        f3Term = matRes1 * imag * epsdotP * f3 / (qAbs * kAbs)
       
 c     Calculate F4 term: 1j * (qVec · σ) * dot(qVec, epsVec) * F4
-      call realVecDotSigma(qVec, matRes1)
+        call realVecDotSigma(qVec, matRes1)
       
-      f4Term = matRes1 * imag * epsdotP * f4 / (qAbs * kAbs)
+        f4Term = matRes1 * imag * epsdotP * f4 / (qAbs * kAbs)
       
+      end if      
       result = f1Term + f2Term + f3Term + f4Term
       
 c     write(*,*) "In fortran f subroutine"

@@ -130,6 +130,7 @@ def main():
 def calcCrossSection(S, x, nucs, data):
     """
     Calculate the cross section for a given reaction.
+    Result is in microbarns
 
     Parameters
     -----------

@@ -78,7 +78,7 @@ c     Experimental cross section values for nn0 (neutron + gamma -> neutron + pi
         do ieps=1,3
           Mmat=c0
           epsVec=eps(:,ieps)
-          call getRawM(sqrtS, x, nuc, Mmat, mNucl, twoSnucl,sqrtS,MaxEll,epsVec)
+          call getRawM(sqrtS, x, nuc, Mmat, mNucl, sqrtS,MaxEll,epsVec)
           Mmats(ieps,:,:)=Mmat
 
         end do!extQnumlimit ieps loop
@@ -103,9 +103,9 @@ c       Get experimental value and compute percent difference
 
         if (t.eq.0) then
           write(*,'(A)') "theta   Cross Sec   Exp Val     " //
-     &                   "Diff      %Error"
+     &                   "Diff        %Error"
         end if
-        write(*,'(I3,4X,F8.6,4X,F8.6,4X,F8.6,4X,F6.3,A)')
+        write(*,'(I3,5X,F8.6,4X,F8.6,4X,F8.6,4X,F6.3,A)')
      &         int(theta), crossSec, ccExp, diff, pct_err, "%"
 
         thetaIdx = thetaIdx + 1
