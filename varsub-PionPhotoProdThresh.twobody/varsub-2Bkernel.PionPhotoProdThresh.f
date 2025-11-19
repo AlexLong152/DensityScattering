@@ -84,13 +84,14 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     twoSmax/twoMz dependence: none, only on quantum numbers of (12) subsystem
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cc    NOTE ON UNITS: hgrie Nov 2023
+cc    Units of momenta vectors in MeV
 cc    Overall units here determine the units of the total twobody output ME Result().
 cc            If kernel given in MeV^-n, then output ME will be given in MeV^(3-n). 
 cc            Multiplying by powers of HC translates into output of final MEs "Result" into powers of fm.
 cc            EXAMPLE: Compton has twobody kernel in MeV^-4 (n=4) ==> result ME in MeV^-1. To convert to fm, multiply by HC.
 cc                     In Compton, that multiplication by HC isnot done in the fortran code, but later in the mathematica processing files.
 cc            EXAMPLE: Pion Photoproduction kernel has units MeV^-2 if the output should be the twobody functions f_TL.
-cc                     n=-2 => Results() output in MeV^1. But F_TL output in fm^-1, so divide here in kernel by HC to get fm^-1 units in Results().
+cc                     n=2 => Results() output in MeV^1. But F_TL output in fm^-1, so divide here in kernel by HC to get fm^-1 units in Results().
 cc
 cc    (2π)³ is a factor of the twobody integration. TO INCLUDE IT OR NOT DEPENDS ON DEFINITIONS OF TWOBODY KERNELS!
 cc            In Compton, we insert it so that onebody and twobody Result() immediately hve same size and can be added: ottal=onebody+twobody. 
@@ -230,7 +231,7 @@ c     Internal variables
       if (useTransform) then
 c       uVec=pVec-ppVec+kVec/2!-> ppVec= pVec-uVec+kVec/2 -> jacobian on the integration gives a factor of -1
         ppVec=pVec-uVec+kVec/2
-        Jacobian=-1.d0!TODO: check if this is needed
+        Jacobian=1.d0!TODO: check if this is needed
       else
           ppVec=uVec
           Jacobian=1.d0

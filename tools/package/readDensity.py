@@ -146,7 +146,7 @@ def getQuantNums(filename, returnMat=True):
     out["lambdaSRG"] = getLambdaSRG(densityName)
     out["numBodies"] = getNumBodies(densityName)
     out["Odelta"] = getOdelta(densityName)
-
+    out["nuc"] = getNucName(filename)
     # print("len(vals)=", len(vals))
     # print(np.shape(out["MatVals"]))
     return out
@@ -180,6 +180,72 @@ def densityFileName(filename):
     return inFile
 
 
+def spin4Nuc(nuc):
+    """
+     Given the nucleus `nuc` as a string, returns the spin vector operator.
+
+       - 6Li  : spin 1   → 3 spin-1 matrices (3x3)
+       - 3He  : spin 1/2 → Pauli matrices / 2 (2x2)
+       - 4He  : spin 0   →
+
+
+     Parameters
+     ----------
+     nuc : str
+         The nucleus name as a string. Supported values are:
+         - "6Li": spin 1, returns the three 3×3 spin-1 matrices.
+         - "3He": spin 1/2, returns Pauli matrices divided by 2.
+         - "4He": spin 0, Spin operator isn't a thing return (1,1,1)
+
+    Returns
+     -------
+     numpy.ndarray
+         A length-3 array whose elements are the spin operator matrices
+         appropriate for the nuclear spin. For spin-0 (4He) the operator
+         is returned as the vector [1.0, 1.0, 1.0].
+    Raises
+    ------
+    ValueError
+        If the nucleus name is not recognized.
+    """
+
+    # Define reusable operators --------------------------------------
+    # Pauli matrices
+    sigma_x = np.array([[0, 1], [1, 0]], dtype=float)
+
+    sigma_y = np.array([[0, -1j], [1j, 0]], dtype=complex)
+
+    sigma_z = np.array([[1, 0], [0, -1]], dtype=float)
+
+    pauli_half = np.array([sigma_x / 2, sigma_y / 2, sigma_z / 2], dtype=complex)
+
+    # Spin-1 matrices (|1,0,-1> basis)
+    Sx = (1 / np.sqrt(2)) * np.array([[0, 1, 0], [1, 0, 1], [0, 1, 0]], dtype=float)
+
+    Sy = (1 / np.sqrt(2)) * np.array(
+        [[0, -1j, 0], [1j, 0, -1j], [0, 1j, 0]], dtype=complex
+    )
+
+    Sz = np.array([[1, 0, 0], [0, 0, 0], [0, -0, -1]], dtype=float)
+
+    spin1 = np.array([Sx, Sy, Sz], dtype=complex)
+
+    # ---------------------------------------------------------------
+
+    match nuc:
+        case "4He":
+            return np.array([1.0, 1.0, 1.0])
+
+        case "3He":
+            return pauli_half
+
+        case "6Li":
+            return spin1
+
+        case _:
+            raise ValueError(f"Unknown nucleus '{nuc}'")
+
+
 def vals2matrix(filename, vals):
     name = filename.split(r"/")[-1]
 
@@ -196,7 +262,7 @@ def vals2matrix(filename, vals):
         case _ if "3He" in name:
             twoSpin = 1
         case _:
-            print("readDensity.py:198 filename=", filename)
+            print("readDensity.py: function vals2matrix filename=", filename)
             raise ValueError("Nucleus not found")
 
     # if twoSpin==1:
@@ -231,11 +297,29 @@ def vals2matrix(filename, vals):
 
 
 def getStringbtwn(myString, prefix, suffix):
+    assert prefix in myString
+    assert suffix in myString
     myString = copy(myString)
     myString = " " + myString
     myString = myString.split(prefix)[1]
     myString = myString.split(suffix)[0]
     return myString
+
+
+def getNucName(filepath):
+    path = copy(filepath)
+    path = path.split(r"/")[-1]
+    name = getStringbtwn(path, "body", "MeV")
+
+    nuclei = ["6Li", "4He", "3He"]
+
+    for nuc in nuclei:
+        if nuc in name:
+            return nuc
+
+    print("readDensity.py:getNucName path=", path)
+    print("name=", name)
+    raise ValueError("Nucleus not found")
 
 
 def getOdelta(filename):
