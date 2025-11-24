@@ -69,8 +69,8 @@ c     Local variables for pattern matching
       
 c     Variables for linear interpolation
       integer idx1, idx2
-      double precision E1, E2, t
-      double complex amp1, amp2, amp_interp
+      double precision sqrtS1, sqrtS2
+      double complex amp1, amp2, amp_interp, t
       integer waveIndex
 
 c     Loop indices
@@ -205,20 +205,20 @@ c             If we get here, use the last point
 
 20          continue
 c           Get energy values and amplitudes at the two points
-            E1 = energy_data(waveIndex, idx1)
-            E2 = energy_data(waveIndex, idx2)
+            sqrtS1 = energy_data(waveIndex, idx1)
+            sqrtS2 = energy_data(waveIndex, idx2)
             amp1 = amplitude_data(waveIndex, idx1)
             amp2 = amplitude_data(waveIndex, idx2)
+c           write(*,*) "sqrtS1,sqrtS2,sqrtS=", sqrtS1,sqrtS2,sqrtS 
 
 c           Perform linear interpolation: y = y1 + (y2-y1)/(x2-x1) * (x-x1)
 c           Handle the case where E1 == E2 (exact match or outside range)
-            if (abs(E2 - E1) .lt. 1.0d-10) then
+            if (abs(sqrtS2 - sqrtS1) .lt. 1.0d-10) then
               amp_interp = amp1
             else
-c             Linear interpolation parameter: t = (sqrtS - E1) / (E2 - E1)
-              t = (sqrtS - E1) / (E2 - E1)
-c             Interpolate both real and imaginary parts
-              amp_interp = amp1 + t * (amp2 - amp1)
+c             Linear interpolation 
+              t = (amp1-amp2)/(sqrtS1-sqrtS2)
+              amp_interp = amp1  + t * (sqrtS-sqrtS1)
             endif
 
 c           Assign to the appropriate output variable
