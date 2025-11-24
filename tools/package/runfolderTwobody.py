@@ -13,6 +13,7 @@ from pathlib import Path
 # below is the .pyinput.dat file
 Odelta = -1
 j12max = -1
+EXTQNUMLIMIT = 3
 basefile = ".pyinput.dat"  # system auto creates this file
 # batch number is for when you want to run this multiple times without copying subfolders
 # just increment this number to avoid overwritng input files that are currently being used
@@ -96,6 +97,7 @@ def main(folder, outputfolder):
                 s = s.replace("YYY", theta)
                 s = s.replace("ODELTAVALUE", str(Odelta))
                 s = s.replace("J12MAXVALUE", str(j12max))
+                s = s.replace("EXTQNUMLIMIT", str(EXTQNUMLIMIT))
                 # s = s.replace("OUTPUT", r"'" + output + r"'")
                 s = s.replace("OUTPUT", output)
                 s = s.replace("INPUT", r"'" + path + r"'")
@@ -137,7 +139,7 @@ XXX XXX 10                   omegaLow, omegaHigh, omegaStep
 YYY YYY 15                             thetaLow, thetaHigh, thetaStep
 OUTPUT
 INPUT
-cm_ymmetry_verbos                     frame, symmetry, verbosity of STDOUT
+nosymmetry_verbos_extQnumlimit=EXTQNUMLIMIT                     frame, symmetry, verbosity of STDOUT
 OdeltaODELTAVALUE_j12max=J12MAXVALUE_numDiagrams=1 		    Calctype, maximal total ang mom in (12) subsystem, and number of diagrams
 14 2 		    		    NP12A, NP12B
 1.1 5.0 15.0 			    P12A, P12B, P12C

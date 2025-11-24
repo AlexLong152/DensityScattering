@@ -67,10 +67,12 @@ c     Local variables for pattern matching
       character*10 target_prefix
       real isospin
       
-c     Variables for finding closest energy
-      double precision minDiff, currDiff
-      integer minIndex, waveIndex
-      
+c     Variables for linear interpolation
+      integer idx1, idx2
+      double precision E1, E2, t
+      double complex amp1, amp2, amp_interp
+      integer waveIndex
+
 c     Loop indices
       integer i, j, k
       
@@ -173,28 +175,61 @@ c                 For M amplitudes, check for 'M' in target part
 c         No match found for this amplitude type
           cycle
           
-c         Found a match, now find the closest energy
+c         Found a match, now perform linear interpolation
 10        if (energy_counts(waveIndex) .gt. 0) then
-            minDiff = abs(energy_data(waveIndex, 1) - sqrtS)
-            minIndex = 1
-            
-            do k = 2, energy_counts(waveIndex)
-              currDiff = abs(energy_data(waveIndex, k) - sqrtS)
-              if (currDiff .lt. minDiff) then
-                minDiff = currDiff
-                minIndex = k
-              endif
-            enddo
-            
+c           Find the two closest energy points that bracket sqrtS
+c           First, check if sqrtS is outside the data range
+            if (sqrtS .le. energy_data(waveIndex, 1)) then
+c             Below the minimum energy, use first two points for extrapolation
+              idx1 = 1
+              idx2 = 2
+            else if (sqrtS .ge.
+     &               energy_data(waveIndex, energy_counts(waveIndex))) then
+c             Above the maximum energy, use the last point (no extrapolation)
+              idx1 = energy_counts(waveIndex)
+              idx2 = energy_counts(waveIndex)
+            else
+c             sqrtS is within the data range, find bracketing points
+              idx1 = 1
+              do k = 2, energy_counts(waveIndex)
+                if (energy_data(waveIndex, k) .ge. sqrtS) then
+                  idx2 = k
+                  idx1 = k - 1
+                  goto 20
+                endif
+              enddo
+c             If we get here, use the last point
+              idx1 = energy_counts(waveIndex)
+              idx2 = energy_counts(waveIndex)
+            endif
+
+20          continue
+c           Get energy values and amplitudes at the two points
+            E1 = energy_data(waveIndex, idx1)
+            E2 = energy_data(waveIndex, idx2)
+            amp1 = amplitude_data(waveIndex, idx1)
+            amp2 = amplitude_data(waveIndex, idx2)
+
+c           Perform linear interpolation: y = y1 + (y2-y1)/(x2-x1) * (x-x1)
+c           Handle the case where E1 == E2 (exact match or outside range)
+            if (abs(E2 - E1) .lt. 1.0d-10) then
+              amp_interp = amp1
+            else
+c             Linear interpolation parameter: t = (sqrtS - E1) / (E2 - E1)
+              t = (sqrtS - E1) / (E2 - E1)
+c             Interpolate both real and imaginary parts
+              amp_interp = amp1 + t * (amp2 - amp1)
+            endif
+
 c           Assign to the appropriate output variable
             if (i .eq. 1) then
-              Eplus = amplitude_data(waveIndex, minIndex)
+              Eplus = amp_interp
             else if (i .eq. 2) then
-              Mplus = amplitude_data(waveIndex, minIndex)
+              Mplus = amp_interp
             else if (i .eq. 3) then
-              Eminus = amplitude_data(waveIndex, minIndex)
+              Eminus = amp_interp
             else if (i .eq. 4) then
-              Mminus = amplitude_data(waveIndex, minIndex)
+              Mminus = amp_interp
             endif
           endif
         endif
@@ -510,7 +545,9 @@ c     Map letter to ell
       else if (letter .eq. 'G' .or. letter .eq. 'g') then
         ell = 4
       else
-        goto 100  ! Invalid letter
+        write(*,*) 'ERROR: Failed to parse spin string:', spinString
+        success = .false.
+        return
       endif
       
 c     Calculate isospin and J
@@ -524,7 +561,9 @@ c     Check if plusMinus is valid (J - ell = ±0.5)
       else if (abs(diff + 0.5) .lt. 0.01) then
         plusMinus = 'minus'
       else
-        goto 100  ! Invalid J-ell relationship
+        write(*,*) 'ERROR: Failed to parse spin string:', spinString
+        success = .false.
+        return
       endif
       
 c     Success!

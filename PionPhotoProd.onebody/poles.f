@@ -127,7 +127,9 @@ c     Set coefficients based on reaction type
           Mmat=c0
           return
       endif
-      
+c     Kinematics defined in terms of sqrtSReal, but the poles defined in
+c     Terms of the nucleON - photon system
+
       call getKinematics(sqrtSReal, x, nucs, S, kVec, qVec, mNucl)
       ! write(*,*) "In poles.f"
       ! write(*,*) "sqrtS=", sqrtS 
@@ -247,7 +249,8 @@ c     Input parameters
       
 c     Local variables
       double complex f1, f2, f3, f4
-      double complex f1Term(2, 2), f2Term(2,2)
+      double complex f1Term(2, 2)
+      double complex f2Term(2, 2)
       double complex f3Term(2, 2)
       double complex f4Term(2, 2)
       double complex crossTmp(3)
@@ -288,11 +291,12 @@ c     end if
       call getF(x, sqrtS, 2, target, f2, MaxEll)
       call getF(x, sqrtS, 3, target, f3, MaxEll)
       call getF(x, sqrtS, 4, target, f4, MaxEll)
+c     f2=cmplx(real(f1),0.d0)
+c     f2=cmplx(real(f2),0.d0)
+c     f3=cmplx(real(f3),0.d0)
+c     f4=cmplx(real(f4),0.d0)
 
-c     write(*,*) "f1=", f1 
-c     write(*,*) "f2=", f2 
-c     write(*,*) "f3=", f3 
-c     write(*,*) "f4=", f4 
+
 c     Calculate cross product of kVec and epsVec
       call crossProduct(kVec, epsVec, crossTmp)
       
@@ -308,21 +312,24 @@ c       Calculate F2 term: (qVec · σ) @ [(kVec × epsVec) · σ] * F2
         call realVecDotSigma(qVec, matRes1)
         call complexVecDotSigma(crossTmp, matRes2)
 
-      
+
         f2Term=matmul(matRes1,matRes2)
         f2Term = f2Term * f2 / (qAbs * kAbs)
-      
+
 c       Calculate F3 term: 1j * (kVec · σ) * dot(qVec, epsVec) * F3
         call realVecDotSigma(kVec, matRes1)
         f3Term = matRes1 * imag * epsdotP * f3 / (qAbs * kAbs)
-      
+
 c     Calculate F4 term: 1j * (qVec · σ) * dot(qVec, epsVec) * F4
         call realVecDotSigma(qVec, matRes1)
-      
+
         f4Term = matRes1 * imag * epsdotP * f4 / (qAbs * kAbs)
-      
+
+        result = f1Term + f2Term + f3Term + f4Term
+      else
+        result=f1Term
       end if      
-      result = f1Term + f2Term + f3Term + f4Term
+      
       
 c     write(*,*) "In fortran f subroutine"
 c     write(*,*) "target=", target 
@@ -364,13 +371,13 @@ c     Input parameters
       
 c     Local variables
       integer ell
-      double complex ePlus, mPlus, eMinus, mMinus  ! Must match type in getPoles
+c     double complex ePlus, mPlus, eMinus, mMinus  ! Must match type in getPoles
       double complex tmpF, dePlus, dmPlus, deMinus, dmMinus
       double precision legPVal
       
 c     External functions
       double precision legP  !defined in utility_suite.f
-      external legP, getPoles
+      external legP, getPoles !getPoles in said_subs.f
       
 c     Initialize result
       result = dcmplx(0.0d0, 0.0d0)
@@ -378,14 +385,16 @@ c     Initialize result
 c     Calculate sum over ell
       do ell = 0, MaxEll
         call getPoles(target, ell, sqrtS, 
-     &               ePlus, mPlus, eMinus, mMinus)
+     &               dePlus, dmPlus, deMinus, dmMinus)
         
-c       Convert from complex to double complex for consistency
-        dePlus = dcmplx(real(ePlus), aimag(ePlus))
-        dmPlus = dcmplx(real(mPlus), aimag(mPlus))
-        deMinus = dcmplx(real(eMinus), aimag(eMinus))
-        dmMinus = dcmplx(real(mMinus), aimag(mMinus))
-        
+c       dePlus = ePlus      
+c       dmPlus = mPlus
+c       deMinus = eMinus
+c       dmMinus = mMinus
+        deplus = dcmplx(real(deplus), 0.d0)
+        dmplus = dcmplx(real(dmplus), 0.d0)
+        deminus = dcmplx(real(deminus), 0.d0)
+        dmminus = dcmplx(real(dmminus), 0.d0)
         if (fi .eq. 1) then
 c         Case 1: (ell * mPlus + ePlus) * legP(x, ell + 1, deriv=1) +
 c                 ((ell + 1) * mMinus + eMinus) * legP(x, ell - 1, deriv=1)
@@ -614,15 +623,14 @@ c     Set photon momentum vector
 c     Calculate pion energy
       Epi = (S + mPion**2 - mNucl**2) / (2.0d0 * sqrtS)
 
-c     write(*,*) "Epi-mPion=", Epi-mPion 
-      if ((Epi.ge.(mPion-5.d0)).and.(Epi.le.mPion+5.d0)) then
-        Epi=mPion!Just assuume the user meant to input threshold energy
+      if (abs(Epi-mPion).le.2.5d0) then
+        Epi=mPion!Just assume the user meant to input threshold energy
       end if
-      
+
 c     Calculate absolute pion momentum
-c     write(*,*) "poles.f:627 Epi**2-mPion**2=", Epi**2-mPion**2 
+c     write(*,*) "poles.f:627 Epi**2-mPion**2=", Epi**2-mPion**2
       if (Epi.lt.mPion) then
-        write(*,*) "mPion=", mPion 
+        write(*,*) "mPion=", mPion
         write(*,*) "Epi=",Epi
         write(*,*) "Epi<mPion, stopping"
         stop

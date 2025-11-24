@@ -242,7 +242,7 @@ c     hgrie June 2017: keep original filename: needed for replacements of energy
 
       thetaL=0.d0
       thetacm=0.d0
-      MaxEll=4 ! MaxEll from 0 to 4
+      maxEll=4 ! MaxEll from 0 to 4
       
 c     Initialize pion photoproduction data
 c     Setting up quadratures for the Feynman integrals
@@ -327,11 +327,11 @@ c     hgrie May 2018: read 1N density
             isospin2Str(0)="#" !This should not happen
             isospin2Str(1)="p"
             x=cos(thetacm)
-            sqrtSReal=omega+sqrt(omega*omega+mNucl*mNucl)
 c           Below is not the "real" value of mandalstam sqrtS, this is the value
 c           of the equivalent sqrtS for the kinematics of the poles, this value
 c           picks out which pole to load
             sqrtS=omega+sqrt(omega*omega+Mnucleon*Mnucleon)
+            sqrtSReal=omega+sqrt(omega*omega+mNucl*mNucl)
 c           write(*,*) "extQnumlimit=", extQnumlimit   
             eps = RESHAPE((/1,0,0,0,1,0,0,0,1/),(/3,3/))
             do extQnum=1,extQnumlimit
@@ -343,14 +343,14 @@ c           write(*,*) "extQnumlimit=", extQnumlimit
                   nuc(2:2)=isospin2Str(twomt1Np)
                   ! nuc(3:3)=piCharges(extQnum)
                   nuc(3:3)="0" !only looking at neutral pion photoproduction
+
                   call getRawM(sqrtS,x , nuc, Mmat, Mnucl, sqrtSReal,MaxEll,eps(extQnum,:))
                   outputMat(extQnum,twoMzp,twoMz)= outputMat(extQnum,twoMzp,twoMz)+
      &                            Anucl*rho1b(rindx)*Mmat(twom1Np,twom1N)*(cmplx(0.d0,-1.d0,KIND=8))
-c    &                            Anucl*rho1b(rindx)*Mmat(twoMzp,twoMz)*(cmplx(0.d0,-1.d0))
-                    write(*,"(A,I2,A,I2,A,I2)") "With twomt1N=",twomt1N, ", twomt1Np=",twomt1Np,", extQnum=",extQnum
-                    call printmat(Mmat, "Mmat")
-                    write(*,*) ""
-                    write(*,*) "############################################################"
+c                   write(*,"(A,I2,A,I2,A,I2)") "With twomt1N=",twomt1N, ", twomt1Np=",twomt1Np,", extQnum=",extQnum
+c                   call printmat(Mmat, "Mmat")
+c                   write(*,*) ""
+c                   write(*,*) "############################################################"
                 end if !L1N.eq.0
             end do              !rindx   
             end do             !extQnum

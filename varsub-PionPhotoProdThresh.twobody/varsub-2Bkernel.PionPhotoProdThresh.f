@@ -231,7 +231,7 @@ c     Internal variables
       if (useTransform) then
 c       uVec=pVec-ppVec+kVec/2!-> ppVec= pVec-uVec+kVec/2 -> jacobian on the integration gives a factor of -1
         ppVec=pVec-uVec+kVec/2
-        Jacobian=1.d0!TODO: check if this is needed
+        Jacobian=-1.d0
       else
           ppVec=uVec
           Jacobian=1.d0
@@ -340,6 +340,8 @@ c     write(*,*) ""
          continue
 c     diagrams (A/B) have no components with t12!=t12p. 
       end if                    !t12 question
+c     Don't need to assign ppVec here because diagAB uses the same ppVec
+      Kerneltmp=Kerneltmp*Jacobian
       end subroutine getStaticDiags
 
 

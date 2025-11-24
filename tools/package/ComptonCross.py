@@ -620,6 +620,8 @@ def getStringBetween(s, prefix, suffix):
     Return the substring in `s` that is between `prefix` and `suffix`.
     If either is not found, return None.
     """
+    assert prefix in s
+    assert suffix in s
     start = s.find(prefix)
     if start == -1:
         return None

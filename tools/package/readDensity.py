@@ -124,7 +124,10 @@ def getQuantNums(filename, returnMat=True):
                     tmp = lines[i].strip().replace("i", "j")
                     vals[i] = complex(tmp)
 
-        densityName = densityFileName(filename)
+        try:
+            densityName = densityFileName(filename)
+        except UnboundLocalError:
+            densityName = filename
         out["MatVals"] = vals2matrix(densityName, vals)
 
     densityName = densityFileName(filename)
@@ -160,6 +163,7 @@ class BadDataError(Exception):
 def densityFileName(filename):
     """
     Gets the density file name from input file
+    if the input file exists at the end of the output file
     """
     substr = r"**************************************************"
     with open(filename, "r") as f:
@@ -169,12 +173,16 @@ def densityFileName(filename):
         # magic number comes from input file density being on 6th line of input file
         # for i, line in enumerate(contents):
         #     print(i, ":", line)
+        found = False
         for line in contents:
             if "denshash" in line:
                 inFile = line
+                found = True
                 break
-        # inFile = contents[4]
-        inFile = inFile.split(r"/")[-1]
+        if found:
+            inFile = inFile.split(r"/")[-1]
+        else:
+            inFile = filename
         # print("boop")
         # print("inFile=", inFile)
     return inFile
