@@ -466,28 +466,33 @@ c           tmpPlus and tmpMinus combines spin and isospin part of diagrams
             end if
 
             do rindx=1,maxrho1bindex
-                    CALL get1Nqnnum(rindx,twom1N,twomt1N,twoMz,twom1Np,twomt1Np,twoMzp,L1N,ML1N)
-                    If (L1N.eq.0) then
-                        Sigma=SigmaVec(ieps,:,:)
+               CALL get1Nqnnum(rindx,twom1N,twomt1N,twoMz,twom1Np,twomt1Np,twoMzp,L1N,ML1N)
+               If (L1N.eq.0) then
+                   Sigma=SigmaVec(ieps,:,:)
 
-                        FSPlusV(twoMzp,twoMz)=FSPlusV(twoMzp,twoMz)+Anucl*rho1b(rindx)*Sigma(twom1Np,twom1N)
-     &                          *tmpPlus(twomt1Np,twomt1N)
-                        FSMinusV(twoMzp,twoMz)=FSMinusV(twoMzp,twoMz)+Anucl*rho1b(rindx)*Sigma(twom1Np,twom1N)
-     &                          *tmpMinus(twomt1Np,twomt1N)
+                   FSPlusV(twoMzp,twoMz)=FSPlusV(twoMzp,twoMz)+Anucl*rho1b(rindx)*Sigma(twom1Np,twom1N)
+     &                     *tmpPlus(twomt1Np,twomt1N)
+                   FSMinusV(twoMzp,twoMz)=FSMinusV(twoMzp,twoMz)+Anucl*rho1b(rindx)*Sigma(twom1Np,twom1N)
+     &                     *tmpMinus(twomt1Np,twomt1N)
 
-                        PlusConst=Anucl*rho1b(rindx)*Sigma(twom1Np,twom1N)* tmpPlus(twomt1Np,twomt1N)
-                        MinusConst=Anucl*rho1b(rindx)*Sigma(twom1Np,twom1N)* tmpMinus(twomt1Np,twomt1N)
+                   PlusConst=rho1b(rindx)*Sigma(twom1Np,twom1N)* tmpPlus(twomt1Np,twomt1N)
+                   MinusConst=rho1b(rindx)*Sigma(twom1Np,twom1N)* tmpMinus(twomt1Np,twomt1N)
+                   tmp=(10**3)*K1N*(prot*PlusConst+neut*MinusConst)*Anucl!matrix element 
+                   Result(ieps,twoMzp,twoMz)= Result(ieps,twoMzp,twoMz)+tmp
+     &            
+                    if (tmp.ne.c0) then
 
-                        Result(ieps,twoMzp,twoMz)= Result(ieps,twoMzp,twoMz)+
-     &                    (10**3)*K1N*(prot*PlusConst+neut*MinusConst)
-                    tmp=(10**3)*K1N*(prot*PlusConst+neut*MinusConst)
-c                   if (tmp.ne.c0) then
-c                   write(*,"(A,' ',F11.8,1X,SP,F11.8,'i',SS,A,I4,A,I4)",advance='no')
-c    &                  "mat=", tmp, ",  rindx=", rindx, ",  extQnum=", ieps
-c
-c                   write(*,"(A,F10.8)") "   abs(rho1b(rindx)*mat)=  ",  abs(rho1b(rindx)*tmp)
-c                   end if
-                        end if ! L1N
+                    if (rindx.eq.1) then
+                      write(*,*) ""
+                      write(*,*) ""
+                    end if
+                    write(*,"(A,' ',F11.8,1X,SP,F11.8,'i',SS,A,I4,A,I4)",advance='no')
+     &                  "mat=", tmp, ",  rindx=", rindx, ",  extQnum=", ieps
+      
+                    write(*,"(A,F10.8)") "   abs(rho1b(rindx)*mat)=  ",  abs(rho1b(rindx)*tmp)
+                    end if
+              end if ! L1N
+
             end do              !rindx   
             FSPlusV=FSPlusV/SpinVec(ieps,:,:)
             FSMinusV=FSMinusV/SpinVec(ieps,:,:)
@@ -498,18 +503,9 @@ c           Create contiguous 2D array to avoid temporary array warning
 
             write(*,'(A)') "############################################"
             write(*,'(A,I1,",",I1,",",I1,A)') "eps=", int(eps(ieps,:)), " Result"
-c           if (twoSnucl.eq.1) then
-c             call ResultWrite(FSPlusV,FSMinusV,Sigma,twoSnucl,outUnitno)
-c           else if (twoSnucl.eq.2) then
-c             call ResultWrite(FSPlusV,FSMinusV,SpinOneVec,twoSnucl,outUnitno)
-c           else if  (twoSnucl.eq.0) then
-c             call ResultWrite(FSPlusV,FSMinusV,SpinZeroVec,twoSnucl,outUnitno)
-c           end if
             call ResultWrite(FSPlusV,FSMinusV,SpinVec2D,twoSnucl,outUnitno)
             write(*,*) ""
             if (ieps.ne.3) then
-c             write(*,'(A,F10.6)') "F_T^{S-V}=", MinusConst 
-c             write(*,'(A,F10.6)') "F_T^{S+V}=", PlusConst 
               write(*,'(A,F10.6)',advance='no') "F_T^{S-V}=", MinusConst 
               write(*,'(A,F10.6)') "F_T^{S+V}=", PlusConst 
             else

@@ -363,14 +363,19 @@ c           write(*,*) "extQnumlimit=", extQnumlimit
 
                   call getRawM(sqrtS,x , nuc, Mmat, Mnucl, sqrtSReal,MaxEll,eps(extQnum,:))
 c                 call getRawM(sqrtS-5.593d0,x , nuc, Mmat, Mnucl, sqrtSReal,MaxEll,eps(extQnum,:))
-                  outputMat(extQnum,twoMzp,twoMz)= outputMat(extQnum,twoMzp,twoMz)+
-     &                            Anucl*rho1b(rindx)*Mmat(twom1Np,twom1N)*(cmplx(0.d0,-1.d0,KIND=8))
-                    tmpMat=Mmat(twom1Np,twom1N)*(-1.d0*ci)
-c                   if (tmpMat.ne.0.d0) then
-c                   write(*,"(A,' ',F11.8,1X,SP,F11.8,'i',SS,1X,A,I4,A,I2)",advance='no')
-c    &                      "mat=", tmpMat, ", rindx=", rindx, ",  extQnum=", extQnum
-c                   write(*,"(A,F10.8)") "   abs(rho1b(rindx)*mat)=  ",  abs(rho1b(rindx)*tmpMat)
-c                   end if
+
+                  tmpMat= Anucl*rho1b(rindx)*Mmat(twom1Np,twom1N)*(cmplx(0.d0,-1.d0,KIND=8))!matrix element
+                  outputMat(extQnum,twoMzp,twoMz)= outputMat(extQnum,twoMzp,twoMz)+tmpMat
+
+                  if (rindx.eq.1) then
+                    write(*,*) ""
+                    write(*,*) ""
+                  end if
+                  if (tmpMat.ne.0.d0) then
+                  write(*,"(A,' ',F11.8,1X,SP,F11.8,'i',SS,1X,A,I4,A,I2)",advance='no')
+     &                    "mat=", tmpMat, ", rindx=", rindx, ",  extQnum=", extQnum
+                  write(*,"(A,F10.8)") "   abs(rho1b(rindx)*mat)=  ",  abs(rho1b(rindx)*tmpMat)
+                  end if!tmpMat
                 end if !L1N.eq.0
             end do              !rindx   
             end do             !extQnum
