@@ -26,7 +26,7 @@ c       Nucleon mass parameter (needed for CM energy conversion)
         double precision, parameter :: mN = Mnucleon  ! Average nucleon mass from constants.def
         
 c       Units conversion factor
-        double precision, parameter :: UNITS_FACTOR = 1.0d0 / (HC * 1000.0d0)
+        double precision, parameter :: UNITS_FACTOR = 1.0d0 / (1000.0d0)
       end module said_data_cache
 
 c     Implementation of the getPoles function that uses cached SAID data
@@ -241,13 +241,15 @@ c     This allows for cases like ell=0 with minus amplitudes, which are physical
      &    Mplus .eq. dcmplx(0.0d0, 0.0d0) .and.
      &    Eminus .eq. dcmplx(0.0d0, 0.0d0) .and.
      &    Mminus .eq. dcmplx(0.0d0, 0.0d0)) then
-        write(*,*) 'WARNING: No amplitude data found for:'
-        write(*,*) '  target = ', target_str
-        write(*,*) '  ell = ', ell
-        write(*,*) '  sqrtS = ', sqrtS
-        write(*,*) 'This may be normal for certain combinations'
-        write(*,*) 'Returning zero amplitudes'
-      endif
+      if(ell.ne.4) then
+          write(*,*) 'WARNING: No amplitude data found for:'
+          write(*,*) '  target = ', target_str
+          write(*,*) '  ell = ', ell
+          write(*,*) '  sqrtS = ', sqrtS
+          write(*,*) 'This may be normal for certain combinations'
+          write(*,*) 'Returning zero amplitudes'
+        end if !TODO: check this ell=4 case, make sure we aren't missing poles
+      end if
       
 c     Final values are returned through the arguments
       return

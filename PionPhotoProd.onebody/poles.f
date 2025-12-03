@@ -267,8 +267,10 @@ c     External functions
 c     External declarations for getF (with correct type declarations)
       external getF
       
+      include '../common-densities/constants.def'
+
 c     Initialize imaginary unit
-      imag = dcmplx(0.0d0, 1.0d0)
+      
 c     Calculate absolute values of vectors
       qAbs = vecAbs(qVec)
       kAbs = vecAbs(kVec)
@@ -291,10 +293,10 @@ c     end if
       call getF(x, sqrtS, 2, target, f2, MaxEll)
       call getF(x, sqrtS, 3, target, f3, MaxEll)
       call getF(x, sqrtS, 4, target, f4, MaxEll)
-c     f2=cmplx(real(f1),0.d0)
-c     f2=cmplx(real(f2),0.d0)
-c     f3=cmplx(real(f3),0.d0)
-c     f4=cmplx(real(f4),0.d0)
+      f1=cmplx(real(f1),0.d0)
+      f2=cmplx(real(f2),0.d0)
+      f3=cmplx(real(f3),0.d0)
+      f4=cmplx(real(f4),0.d0)
 
 
 c     Calculate cross product of kVec and epsVec
@@ -304,9 +306,11 @@ c     Calculate cross product of kVec and epsVec
 
       epsDotP=dot_product(qVec,epsVec)
 c     Calculate F1 term: vec · σ (epsVec dot product with Pauli matrices) * F1 * 1j
+c     write(*,*) "epsVec=", real(epsVec)
       call complexVecDotSigma(epsVec, matRes1)
-      
-      f1Term = matRes1 * f1 * imag
+
+      f1Term = matRes1 * f1 * ci
+
       if (qAbs.ne.0.d0) then!avoid divide by zero errors
 c       Calculate F2 term: (qVec · σ) @ [(kVec × epsVec) · σ] * F2
         call realVecDotSigma(qVec, matRes1)
@@ -318,16 +322,18 @@ c       Calculate F2 term: (qVec · σ) @ [(kVec × epsVec) · σ] * F2
 
 c       Calculate F3 term: 1j * (kVec · σ) * dot(qVec, epsVec) * F3
         call realVecDotSigma(kVec, matRes1)
-        f3Term = matRes1 * imag * epsdotP * f3 / (qAbs * kAbs)
+        f3Term = matRes1 * ci * epsdotP * f3 / (qAbs * kAbs)
 
 c     Calculate F4 term: 1j * (qVec · σ) * dot(qVec, epsVec) * F4
         call realVecDotSigma(qVec, matRes1)
 
-        f4Term = matRes1 * imag * epsdotP * f4 / (qAbs * kAbs)
+        f4Term = matRes1 * ci * epsdotP * f4 / (qAbs * kAbs)
 
         result = f1Term + f2Term + f3Term + f4Term
+        result=result/HC
       else
         result=f1Term
+        result=result/HC
       end if      
       
       
@@ -372,7 +378,7 @@ c     Input parameters
 c     Local variables
       integer ell
 c     double complex ePlus, mPlus, eMinus, mMinus  ! Must match type in getPoles
-      double complex tmpF, dePlus, dmPlus, deMinus, dmMinus
+      double complex tmpF, ePlus, mPlus, eMinus, mMinus
       double precision legPVal
       
 c     External functions
@@ -385,31 +391,31 @@ c     Initialize result
 c     Calculate sum over ell
       do ell = 0, MaxEll
         call getPoles(target, ell, sqrtS, 
-     &               dePlus, dmPlus, deMinus, dmMinus)
+     &               ePlus, mPlus, eMinus, mMinus)
         
-c       dePlus = ePlus      
-c       dmPlus = mPlus
-c       deMinus = eMinus
-c       dmMinus = mMinus
-        deplus = dcmplx(real(deplus), 0.d0)
-        dmplus = dcmplx(real(dmplus), 0.d0)
-        deminus = dcmplx(real(deminus), 0.d0)
-        dmminus = dcmplx(real(dmminus), 0.d0)
+c       ePlus = ePlus      
+c       mPlus = mPlus
+c       eMinus = eMinus
+c       mMinus = mMinus
+c       eplus = dcmplx(real(eplus), 0.d0)
+c       mplus = dcmplx(real(mplus), 0.d0)
+c       eminus = dcmplx(real(eminus), 0.d0)
+c       mminus = dcmplx(real(mminus), 0.d0)
         if (fi .eq. 1) then
 c         Case 1: (ell * mPlus + ePlus) * legP(x, ell + 1, deriv=1) +
 c                 ((ell + 1) * mMinus + eMinus) * legP(x, ell - 1, deriv=1)
           legPVal = legP(x, ell + 1, 1)
-          tmpF = (ell * dmPlus + dePlus) * legPVal
+          tmpF = (ell * mPlus + ePlus) * legPVal
           
           legPVal = legP(x, ell - 1, 1)
-          tmpF = tmpF + ((ell + 1) * dmMinus + deMinus) * legPVal
+          tmpF = tmpF + ((ell + 1) * mMinus + eMinus) * legPVal
           
           result = result + tmpF
           
         else if (fi .eq. 2) then
 c         Case 2: ((ell + 1) * mPlus + (ell * mMinus)) * legP(x, ell, deriv=1)
           legPVal = legP(x, ell, 1)
-          tmpF = ((ell + 1) * dmPlus + (ell * dmMinus)) * legPVal
+          tmpF = ((ell + 1) * mPlus + (ell * mMinus)) * legPVal
           
           result = result + tmpF
           
@@ -417,17 +423,17 @@ c         Case 2: ((ell + 1) * mPlus + (ell * mMinus)) * legP(x, ell, deriv=1)
 c         Case 3: (ePlus - mPlus) * legP(x, ell + 1, deriv=2) +
 c                 (eMinus + mMinus) * legP(x, ell - 1, deriv=2)
           legPVal = legP(x, ell + 1, 2)
-          tmpF = (dePlus - dmPlus) * legPVal
+          tmpF = (ePlus - mPlus) * legPVal
           
           legPVal = legP(x, ell - 1, 2)
-          tmpF = tmpF + (deMinus + dmMinus) * legPVal
+          tmpF = tmpF + (eMinus + mMinus) * legPVal
           
           result = result + tmpF
           
         else if (fi .eq. 4) then
 c         Case 4: (mPlus - ePlus - mMinus - eMinus) * legP(x, ell, deriv=2)
           legPVal = legP(x, ell, 2)
-          tmpF = (dmPlus - dePlus - dmMinus - deMinus) * legPVal
+          tmpF = (mPlus - ePlus - mMinus - eMinus) * legPVal
           
           result = result + tmpF
           
@@ -456,26 +462,25 @@ c     Local variables
       double complex sigVec(3, 2, 2)
       external matDotVec
       
+      include '../common-densities/constants.def'
+
 c     Define Pauli matrices
-      sigmaX(1, 1) = dcmplx(0.0d0, 0.0d0)
+      sigmaX=c0
+      sigmaY=c0
+      sigmaZ=c0
+
       sigmaX(1, 2) = dcmplx(1.0d0, 0.0d0)
       sigmaX(2, 1) = dcmplx(1.0d0, 0.0d0)
-      sigmaX(2, 2) = dcmplx(0.0d0, 0.0d0)
       
-      sigmaY(1, 1) = dcmplx(0.0d0, 0.0d0)
       sigmaY(1, 2) = dcmplx(0.0d0, -1.0d0)
       sigmaY(2, 1) = dcmplx(0.0d0, 1.0d0)
-      sigmaY(2, 2) = dcmplx(0.0d0, 0.0d0)
       
       sigmaZ(1, 1) = dcmplx(1.0d0, 0.0d0)
-      sigmaZ(1, 2) = dcmplx(0.0d0, 0.0d0)
-      sigmaZ(2, 1) = dcmplx(0.0d0, 0.0d0)
       sigmaZ(2, 2) = dcmplx(-1.0d0, 0.0d0)
-      
 c     Populate Pauli vector
-      sigVec(1, 1:2, 1:2) = sigmaX(1:2, 1:2)
-      sigVec(2, 1:2, 1:2) = sigmaY(1:2, 1:2)
-      sigVec(3, 1:2, 1:2) = sigmaZ(1:2, 1:2)
+c     sigVec(1, 1:2, 1:2) = sigmaX(1:2, 1:2)
+c     sigVec(2, 1:2, 1:2) = sigmaY(1:2, 1:2)
+c     sigVec(3, 1:2, 1:2) = sigmaZ(1:2, 1:2)
       
 c     Perform matrix-vector multiplication
       call matDotVec(sigVec, vec, result)
@@ -495,58 +500,31 @@ c     Input parameters
       
 c     Local variables
       double complex sigmaX(2, 2), sigmaY(2, 2), sigmaZ(2, 2)
-      double complex sigVec(3, 2, 2), tmpVec(3)
       double precision realVec(3)
       integer i
       external matDotVec
       
+      include '../common-densities/constants.def'
 c     Define Pauli matrices
-      sigmaX(1, 1) = dcmplx(0.0d0, 0.0d0)
+      sigmaX=c0
+      sigmaY=c0
+      sigmaZ=c0
+
       sigmaX(1, 2) = dcmplx(1.0d0, 0.0d0)
       sigmaX(2, 1) = dcmplx(1.0d0, 0.0d0)
-      sigmaX(2, 2) = dcmplx(0.0d0, 0.0d0)
       
-      sigmaY(1, 1) = dcmplx(0.0d0, 0.0d0)
       sigmaY(1, 2) = dcmplx(0.0d0, -1.0d0)
       sigmaY(2, 1) = dcmplx(0.0d0, 1.0d0)
-      sigmaY(2, 2) = dcmplx(0.0d0, 0.0d0)
       
       sigmaZ(1, 1) = dcmplx(1.0d0, 0.0d0)
-      sigmaZ(1, 2) = dcmplx(0.0d0, 0.0d0)
-      sigmaZ(2, 1) = dcmplx(0.0d0, 0.0d0)
       sigmaZ(2, 2) = dcmplx(-1.0d0, 0.0d0)
       
 c     Populate Pauli vector
-      sigVec(1, 1:2, 1:2) = sigmaX(1:2, 1:2)
-      sigVec(2, 1:2, 1:2) = sigmaY(1:2, 1:2)
-      sigVec(3, 1:2, 1:2) = sigmaZ(1:2, 1:2)
+c     sigVec(1, 1:2, 1:2) = sigmaX(1:2, 1:2)
+c     sigVec(2, 1:2, 1:2) = sigmaY(1:2, 1:2)
+c     sigVec(3, 1:2, 1:2) = sigmaZ(1:2, 1:2)
       
-c     Handle complex vector by using real part with matDotVec
-c     First handle real part
-      do i = 1, 3
-        realVec(i) = dreal(vec(i))
-      end do
-      
-c     Initialize result
-      result = dcmplx(0.0d0, 0.0d0)
-      
-c     Compute real part contribution
-      call matDotVec(sigVec, realVec, result)
-      
-c     Now add imaginary part manually (since matDotVec only handles real vectors)
-      do i = 1, 3
-        tmpVec(i) = dcmplx(0.0d0, 1.0d0) * dimag(vec(i))
-      end do
-      
-c     Manually add the imaginary part contributions
-      result(1, 2) = result(1, 2) + tmpVec(1)
-      result(2, 1) = result(2, 1) + tmpVec(1)
-      
-      result(1, 2) = result(1, 2) + tmpVec(2) * dcmplx(0.0d0, -1.0d0)
-      result(2, 1) = result(2, 1) + tmpVec(2) * dcmplx(0.0d0, 1.0d0)
-      
-      result(1, 1) = result(1, 1) + tmpVec(3)
-      result(2, 2) = result(2, 2) - tmpVec(3)
+      result=vec(1)*sigmaX+vec(2)*sigmaY+vec(3)*sigmaZ
       
       return
       end
@@ -624,6 +602,7 @@ c     Calculate pion energy
       Epi = (S + mPion**2 - mNucl**2) / (2.0d0 * sqrtS)
 
       if (abs(Epi-mPion).le.2.5d0) then
+c       write(*,*) "Set to zero"
         Epi=mPion!Just assume the user meant to input threshold energy
       end if
 

@@ -83,7 +83,7 @@ c
       real*8 Egamma,kgamma,thetaL,thetacm,Elow,Ehigh,Einterval
       
       ! real*8 FT_sPlus, FT_sMinus, FL_sPlus, FL_sMinus
-      real*8 E_prot, E_neut, L_prot, L_neut, K1N
+      real*8 E_prot, E_neut, L_prot, L_neut, K1N, prot,neut
       ! real*8 E1N        
 
       real*8 thetaLow,thetaHigh,thetaInterval
@@ -169,8 +169,10 @@ c     At the moment, L1N & ML1N are meaningless (L=ML=0), but they are implement
 
       integer,parameter :: L1Nmax=0    
       integer L1N, ML1N
-      complex*16, allocatable :: Result(:,:,:),ScatMat(:,:,:) ! extQnum from 1 to extQnumlimit; twoMzp from -twoSnucl to twoSnucl, stepsize 2; twoMz from -twoSnucl to twoSnucl, stepsize 2; rest blank.
-      real*8 aveE0,PlusConst,MinusConst,aveL0
+      complex*16, allocatable :: Result(:,:,:)
+c     complex*16, allocatable :: Result2(:,:,:)
+      real*8 aveE0,aveL0
+      complex*16 PlusConst,MinusConst
       complex*16 :: tmpPlus(-1:1, -1:1)
       complex*16 tmpMinus(-1:1, -1:1)
       integer variedA           !BS: integer variedA to indicate which A is varied by calctype=VaryA
@@ -193,8 +195,10 @@ c     0: do not delete; 1: delete un-gz'd file; 2: delete downloaded and un-gz'd
       complex*16 :: tmp1(-1:1,-1:1) 
       complex*16 :: tmp2(-1:1,-1:1) 
       complex*16 :: SigmaVec(3,-1:1,-1:1)
+      complex*16 tmp
 
       complex*16 :: Opermat(-1:1,-1:1) 
+      complex*16 :: Mmat(-1:1,-1:1) 
 
       complex*16 :: SpinOnex(-2:2,-2:2)  ! (ms3p,ms3): sigma-x
       complex*16 :: SpinOney(-2:2,-2:2) ! (ms3p,ms3): sigma-y
@@ -350,7 +354,6 @@ c**********************************************************************
             allocate(FSPlusV(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
             allocate(FSMinusV(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
             allocate(Result(1:extQnumlimit,-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
-            allocate(ScatMat(1:extQnumlimit,-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
             FSPlusV=c0
             FSMinusV=c0
             Result=c0
@@ -432,6 +435,7 @@ c     hgrie May 2018: read 1N density
             E_neut = 2.13E-3
             L_prot = -1.35E-3
             L_neut = -2.41E-3
+            K1N= ((Mnucleon+mpi)/(Mnucl+mpi))*(mnucl/Mnucleon)
 c           tmpPlus and tmpMinus combines spin and isospin part of diagrams
             tmpPlus = Iden+sigmaz
             tmpMinus = Iden-sigmaz
@@ -444,86 +448,76 @@ c           tmpPlus and tmpMinus combines spin and isospin part of diagrams
             else if (twoSnucl.eq.0) then
               SpinVec=SpinZeroVec
             end if
+            result=c0
+
+            if (allocated(SpinVec2D)) deallocate(SpinVec2D)
+            allocate(SpinVec2D(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
             do ieps=1,3
             FSMinusV=c0
             FSPlusV=c0
 
-            if (allocated(SpinVec2D)) deallocate(SpinVec2D)
-            allocate(SpinVec2D(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
             SpinVec2D = SpinVec(ieps,:,:)
+            if (ieps.ne.3) then
+              prot=E_prot
+              neut=E_neut
+            else
+              prot=L_prot
+              neut=L_neut
+            end if
+
             do rindx=1,maxrho1bindex
                     CALL get1Nqnnum(rindx,twom1N,twomt1N,twoMz,twom1Np,twomt1Np,twoMzp,L1N,ML1N)
                     If (L1N.eq.0) then
                         Sigma=SigmaVec(ieps,:,:)
+
                         FSPlusV(twoMzp,twoMz)=FSPlusV(twoMzp,twoMz)+Anucl*rho1b(rindx)*Sigma(twom1Np,twom1N)
      &                          *tmpPlus(twomt1Np,twomt1N)
                         FSMinusV(twoMzp,twoMz)=FSMinusV(twoMzp,twoMz)+Anucl*rho1b(rindx)*Sigma(twom1Np,twom1N)
      &                          *tmpMinus(twomt1Np,twomt1N)
 
-c                       tmp1=Anucl*rho1b(rindx)*Sigma(twom1Np,twom1N)*tmpPlus(twomt1Np,twomt1N)
-c                       tmp2=Anucl*rho1b(rindx)*Sigma(twom1Np,twom1N)*tmpMinus(twomt1Np,twomt1N)
-c                       write(*,"(A,I2,A,I2,A,I2)") "With twomt1N=",twomt1N, ", twomt1Np=",twomt1Np,", extQnum=",ieps
-c                       Opermat=SpinVec(ieps,:,:)
-c                       call printmat2(tmp1+tmp2,Opermat,"FSplusV")
-c                       call printmat2(tmp2,Opermat,"FSMinusV")
-c                       write(*,*) ""
-c                       write(*,*) "############################################################"
+                        PlusConst=Anucl*rho1b(rindx)*Sigma(twom1Np,twom1N)* tmpPlus(twomt1Np,twomt1N)
+                        MinusConst=Anucl*rho1b(rindx)*Sigma(twom1Np,twom1N)* tmpMinus(twomt1Np,twomt1N)
 
-                      PlusConst=NonZeroAve(FSPlusV,SpinVec2D,twoSnucl)
-                      MinusConst=NonZeroAve(FSMinusV,SpinVec2D,twoSnucl)
-                      if (ieps.ne.3) then
-                        operMat=(10**3)*K1N*SpinVec(ieps,:,:)*(E_prot*PlusConst+E_neut*MinusConst)!0.5 might come from spin
-                      else
-                        opermat=(10**3)*K1N*SpinVec(ieps,:,:)*(L_prot*PlusConst+L_neut*MinusConst)!0.5 might come from spin
-                      end if
-
-                    write(*,"(A,I2,A,I2,A,I2)") "With twomt1N=",twomt1N, ", twomt1Np=",twomt1Np,", extQnum=",ieps
-                    call printmat(opermat,"Mmat")
-                    write(*,'(A)') "############################################################"
-                              end if ! L1N
+                        Result(ieps,twoMzp,twoMz)= Result(ieps,twoMzp,twoMz)+
+     &                    (10**3)*K1N*(prot*PlusConst+neut*MinusConst)
+                    tmp=(10**3)*K1N*(prot*PlusConst+neut*MinusConst)
+c                   if (tmp.ne.c0) then
+c                   write(*,"(A,' ',F11.8,1X,SP,F11.8,'i',SS,A,I4,A,I4)",advance='no')
+c    &                  "mat=", tmp, ",  rindx=", rindx, ",  extQnum=", ieps
+c
+c                   write(*,"(A,F10.8)") "   abs(rho1b(rindx)*mat)=  ",  abs(rho1b(rindx)*tmp)
+c                   end if
+                        end if ! L1N
             end do              !rindx   
-
-
-            write(*,*) ""
-            K1N= ((Mnucleon+mpi)/(Mnucl+mpi))*(mnucl/Mnucleon)
-
             FSPlusV=FSPlusV/SpinVec(ieps,:,:)
             FSMinusV=FSMinusV/SpinVec(ieps,:,:)
 
 c           Create contiguous 2D array to avoid temporary array warning
             PlusConst=NonZeroAve(FSPlusV,SpinVec2D,twoSnucl)
             MinusConst=NonZeroAve(FSMinusV,SpinVec2D,twoSnucl)
-            deallocate(SpinVec2D)
-            if (ieps.ne.3) then
-              Result(ieps,:,:)=(10**3)*K1N*SpinVec(ieps,:,:)*(E_prot*PlusConst+E_neut*MinusConst)!0.5 might come from spin
-            else
-              Result(ieps,:,:)=(10**3)*K1N*SpinVec(ieps,:,:)*(L_prot*PlusConst+L_neut*MinusConst)!0.5 might come from spin
-            end if
 
-            do ii = -twoSnucl, twoSnucl
-            do jj = -twoSnucl, twoSnucl
-              if (Result(ieps,ii,jj).ne.Result(ieps,ii,jj) ) then
-                Result(ieps,ii,jj)=c0 !If its NaN from dividing by zero, set it to zero
-              end if
-            end do  
-            end do
-
-            write(*,*) ""
             write(*,'(A)') "############################################"
             write(*,'(A,I1,",",I1,",",I1,A)') "eps=", int(eps(ieps,:)), " Result"
-
-            if (twoSnucl.eq.1) then
-              call ResultWrite(FSPlusV,FSMinusV,Sigma,twoSnucl,outUnitno)
-            else if (twoSnucl.eq.2) then
-              call ResultWrite(FSPlusV,FSMinusV,SpinOneVec,twoSnucl,outUnitno)
-            else if  (twoSnucl.eq.0) then
-              call ResultWrite(FSPlusV,FSMinusV,SpinZeroVec,twoSnucl,outUnitno)
-            end if
-            ! Result(ieps,:,:)=(K1N/2.d0)*(E_prot*FSPlusV + E_neut*FSMinusV)*(10**3)
+c           if (twoSnucl.eq.1) then
+c             call ResultWrite(FSPlusV,FSMinusV,Sigma,twoSnucl,outUnitno)
+c           else if (twoSnucl.eq.2) then
+c             call ResultWrite(FSPlusV,FSMinusV,SpinOneVec,twoSnucl,outUnitno)
+c           else if  (twoSnucl.eq.0) then
+c             call ResultWrite(FSPlusV,FSMinusV,SpinZeroVec,twoSnucl,outUnitno)
+c           end if
+            call ResultWrite(FSPlusV,FSMinusV,SpinVec2D,twoSnucl,outUnitno)
             write(*,*) ""
-            write(*,'(A,F24.17)') "F_T^{S-V}=", MinusConst
-            write(*,'(A,F24.17)') "F_T^{S+V}=", PlusConst
+            if (ieps.ne.3) then
+c             write(*,'(A,F10.6)') "F_T^{S-V}=", MinusConst 
+c             write(*,'(A,F10.6)') "F_T^{S+V}=", PlusConst 
+              write(*,'(A,F10.6)',advance='no') "F_T^{S-V}=", MinusConst 
+              write(*,'(A,F10.6)') "F_T^{S+V}=", PlusConst 
+            else
+              write(*,'(A,F10.6)',advance='no') "F_L^{S-V}=", MinusConst 
+              write(*,'(A,F10.6)') "F_L^{S+V}=", PlusConst 
+            end if
             end do!ieps
+
 
             if (twoSnucl.eq.1) then
               aveE0=(real(Result(1,1,-1))+aimag(Result(2,-1,1)))/2.d0
@@ -539,21 +533,24 @@ c           Create contiguous 2D array to avoid temporary array warning
 
             write(*,*) ""
             write(*,*) ""
+            write(*,'(A)') "############################################"
             write(*,'(A)') "Result is in units of 10^-3/M_pi^+"
-            write(*,'(A,F24.19,A)') "E_0+^1N=",aveE0, " (averaged)"
-            write(*,'(A,F24.19)') "L_0+^1N=",aveL0
+            write(*,'(A,F10.6,A)') "E_0+^1N=",aveE0, " (averaged)"
+            write(*,'(A,F10.6)') "L_0+^1N=",aveL0
 
-c           call secondOutput(Result,extQnumlimit,twoSnucl,outUnitno)
 
             write(outUnitno,*) "cm omega=",omega, "thetacm=",thetacm
-            write(*,*) ""
-            write(*,'(A)') "Scattering Matrix"
-            call outputroutine(outUnitno,twoSnucl,extQnumlimit,
-     &           Result,verbosity)
+c           write(*,*) ""
+c           ! write(*,'(A)') "Scattering Matrix"
+c    !        call outputroutine(outUnitno,twoSnucl,extQnumlimit,
+c    ! &           Result,verbosity)
             ! In units of m_pi^+
+ 
+            call outputroutine(outUnitno,twoSnucl,extQnumlimit,
+     &           Result ,verbosity)
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     be a good boy and deallocate arrays. Compilers do that automatically for simple programs. Better safe than sorry.
-            deallocate (FSMinusV,FSPlusV, STAT=test ) ! test becomes nonzero if this fails
+            deallocate (FSMinusV,FSPlusV,SpinVec2D,SpinVec, STAT=test ) ! test becomes nonzero if this fails
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     hgrie Aug/Sep 2020: delete the local .dat file if one was generated from .gz
             if (rmDensityFileLater.gt.0) then
@@ -586,23 +583,6 @@ c30   format(' ',A,5I4,A,F20.13,SP,F21.13," I")
 c40   format(A,2F18.13)
       
       end PROGRAM
-
-      subroutine secondOutput(Result,extQnumlimit,twoSnucl,outUnitno)
-      implicit none
-      include '../common-densities/constants.def'
-      integer twoSnucl, outUnitno,extQnumlimit
-      complex*16, intent(in) :: Result(1:extQnumlimit,-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
-      integer i, j,k
-      ! character (len=29) fmt
-
-      do k=1,extQnumlimit
-      do i=twoSnucl,-twoSnucl,-2
-      do j=twoSnucl, -twoSnucl,-2
-        write(*,*) Result(k,i,j)
-      end do
-      end do
-      end do 
-      end subroutine
 
 
 
@@ -656,6 +636,7 @@ c40   format(A,2F18.13)
         end do
         end do
       end if
+      return
       end subroutine
 
       function NonZeroAve(FTerm,SpinMatrix,twoSnucl)
@@ -706,3 +687,32 @@ c    &       trim(name), i, j, real(mat(i,j)), aimag(mat(i,j))
       end do
       write(*,*) "" 
       end subroutine printmat
+
+      subroutine DividePrint(Mmat, Oper)
+      implicit none
+
+      complex*16 :: Mmat(-1:1,-1:1)
+      complex*16 :: Oper(-1:1,-1:1)
+      complex*16 :: tmp
+      character(30) :: c1, c2
+      integer :: i, j
+
+      do i = -1, 1, 2
+        do j = -1, 1, 2
+          if (abs(Oper(i,j)) .ge. 1D-8) then
+            tmp = Mmat(i,j) / Oper(i,j)
+
+            ! Build pretty complex strings: a.bbbbbb+/-c.ddddddi
+            write(c1, '(F9.6,SP,F9.6,"i")') real(Mmat(i,j)), aimag(Mmat(i,j))
+            write(c2, '(F9.6,SP,F9.6,"i")') real(tmp),       aimag(tmp)
+            c1=trim(c1)
+            c2=trim(c2)
+
+            write(*,'("Mmat(",I2,",",I2,") = ",A,"   Mmat/Oper = ",A)') 
+     &             i, j, c1, c2
+          end if
+        end do
+      end do
+
+      write(*,*) !newline
+      end subroutine DividePrint

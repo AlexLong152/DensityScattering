@@ -178,13 +178,19 @@ c     0: do not delete; 1: delete un-gz'd file; 2: delete downloaded and un-gz'd
       integer rmDensityFileLater  
 
 
-      complex*16, allocatable :: Mmat(:,:)
+      complex*16 :: Mmat(-1:1,-1:1)
       complex*16, allocatable :: outputMat(:,:,:) 
-      real*8 sqrtS,x,sqrtSReal
+      real*8 sqrtS,x,sqrtSReal 
+      complex*16 tmpMat, relDev
       character*3 nuc
       character piCharges(3)
       character isospin2Str(-1:1)
       integer lab, cm, MaxEll
+
+      complex*16 :: sigmax(-1:1,-1:1)  ! (ms3p,ms3): sigma-x
+      complex*16 :: sigmay(-1:1,-1:1) ! (ms3p,ms3): sigma-y
+      complex*16 :: sigmaz(-1:1,-1:1)  ! (ms3p,ms3): sigma-z
+      complex*16 :: SigmaVec(3,-1:1,-1:1)
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     end OF VARIABLE DECLARATIONS, BEGINNING OF CODING
@@ -244,6 +250,18 @@ c     hgrie June 2017: keep original filename: needed for replacements of energy
       thetacm=0.d0
       maxEll=4 ! MaxEll from 0 to 4
       
+      sigmax(1,-1)=dcmplx(1.d0,0)
+      sigmax(-1,1)=dcmplx(1.d0,0)
+c
+      sigmay(1,-1)=dcmplx(0, -1.d0)
+      sigmay(-1,1)=dcmplx (0, 1.d0) 
+c
+      sigmaz(1,1)=dcmplx(1.d0,0)
+      sigmaz(-1,-1)=dcmplx(-1.d0,0)
+      SigmaVec(1,:,:)=sigmax
+      SigmaVec(2,:,:)=sigmay
+      SigmaVec(3,:,:)=sigmaz
+      SigmaVec=SigmaVec/2.d0
 c     Initialize pion photoproduction data
 c     Setting up quadratures for the Feynman integrals
       call AnglePtsWts(Nx,1,Nxmax,0.d0,1.0d0,xq,wx,Nx,verbosity)
@@ -307,7 +325,6 @@ c     define correct formats for energy and angle
 c     hgrie May 2018: outsourced into subroutine common-densities/makedensityfilename.f
             densityFileName = originaldensityFileName
 
-            allocate(Mmat(-1:1,-1:1))
 
             allocate(outputMat(1:extQnumlimit,-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
             outputMat=c0
@@ -345,12 +362,15 @@ c           write(*,*) "extQnumlimit=", extQnumlimit
                   nuc(3:3)="0" !only looking at neutral pion photoproduction
 
                   call getRawM(sqrtS,x , nuc, Mmat, Mnucl, sqrtSReal,MaxEll,eps(extQnum,:))
+c                 call getRawM(sqrtS-5.593d0,x , nuc, Mmat, Mnucl, sqrtSReal,MaxEll,eps(extQnum,:))
                   outputMat(extQnum,twoMzp,twoMz)= outputMat(extQnum,twoMzp,twoMz)+
      &                            Anucl*rho1b(rindx)*Mmat(twom1Np,twom1N)*(cmplx(0.d0,-1.d0,KIND=8))
-c                   write(*,"(A,I2,A,I2,A,I2)") "With twomt1N=",twomt1N, ", twomt1Np=",twomt1Np,", extQnum=",extQnum
-c                   call printmat(Mmat, "Mmat")
-c                   write(*,*) ""
-c                   write(*,*) "############################################################"
+                    tmpMat=Mmat(twom1Np,twom1N)*(-1.d0*ci)
+c                   if (tmpMat.ne.0.d0) then
+c                   write(*,"(A,' ',F11.8,1X,SP,F11.8,'i',SS,1X,A,I4,A,I2)",advance='no')
+c    &                      "mat=", tmpMat, ", rindx=", rindx, ",  extQnum=", extQnum
+c                   write(*,"(A,F10.8)") "   abs(rho1b(rindx)*mat)=  ",  abs(rho1b(rindx)*tmpMat)
+c                   end if
                 end if !L1N.eq.0
             end do              !rindx   
             end do             !extQnum
@@ -360,7 +380,7 @@ c                   write(*,*) "################################################
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     be a good boy and deallocate arrays. Compilers do that automatically for simple programs. Better safe than sorry.
-            deallocate(Mmat,outputMat)
+            deallocate(outputMat)
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     hgrie Aug/Sep 2020: delete the local .dat file if one was generated from .gz
             if (rmDensityFileLater.gt.0) then
@@ -393,3 +413,32 @@ c30   format(' ',A,5I4,A,F20.13,SP,F21.13," I")
 c40   format(A,2F18.13)
       
       end PROGRAM
+
+      subroutine DividePrint(Mmat, Oper)
+      implicit none
+
+      complex*16 :: Mmat(-1:1,-1:1)
+      complex*16 :: Oper(-1:1,-1:1)
+      complex*16 :: tmp
+      character(30) :: c1, c2
+      integer :: i, j
+
+      do i = -1, 1, 2
+        do j = -1, 1, 2
+          if (abs(Oper(i,j)) .ge. 1D-8) then
+            tmp = Mmat(i,j) / Oper(i,j)
+
+            ! Build pretty complex strings: a.bbbbbb+/-c.ddddddi
+            write(c1, '(F9.6,SP,F9.6,"i")') real(Mmat(i,j)), aimag(Mmat(i,j))
+            write(c2, '(F9.6,SP,F9.6,"i")') real(tmp),       aimag(tmp)
+            c1=trim(c1)
+            c2=trim(c2)
+
+            write(*,'("Mmat(",I2,",",I2,") = ",A,"   Mmat/Oper = ",A)') 
+     &             i, j, c1, c2
+          end if
+        end do
+      end do
+
+      write(*,*) !newline
+      end subroutine DividePrint
