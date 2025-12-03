@@ -475,22 +475,21 @@ c           tmpPlus and tmpMinus combines spin and isospin part of diagrams
                    FSMinusV(twoMzp,twoMz)=FSMinusV(twoMzp,twoMz)+Anucl*rho1b(rindx)*Sigma(twom1Np,twom1N)
      &                     *tmpMinus(twomt1Np,twomt1N)
 
-                   PlusConst=rho1b(rindx)*Sigma(twom1Np,twom1N)* tmpPlus(twomt1Np,twomt1N)
-                   MinusConst=rho1b(rindx)*Sigma(twom1Np,twom1N)* tmpMinus(twomt1Np,twomt1N)
-                   tmp=(10**3)*K1N*(prot*PlusConst+neut*MinusConst)*Anucl!matrix element 
+                   PlusConst=Sigma(twom1Np,twom1N)* tmpPlus(twomt1Np,twomt1N)
+                   MinusConst=Sigma(twom1Np,twom1N)* tmpMinus(twomt1Np,twomt1N)
+                   tmp=(10**3)*K1N*(prot*PlusConst+neut*MinusConst)*Anucl*rho1b(rindx)!matrix element 
                    Result(ieps,twoMzp,twoMz)= Result(ieps,twoMzp,twoMz)+tmp
      &            
-                    if (tmp.ne.c0) then
-
-                    if (rindx.eq.1) then
-                      write(*,*) ""
-                      write(*,*) ""
-                    end if
-                    write(*,"(A,' ',F11.8,1X,SP,F11.8,'i',SS,A,I4,A,I4)",advance='no')
-     &                  "mat=", tmp, ",  rindx=", rindx, ",  extQnum=", ieps
-      
-                    write(*,"(A,F10.8)") "   abs(rho1b(rindx)*mat)=  ",  abs(rho1b(rindx)*tmp)
-                    end if
+c                   if (rindx.eq.1) then
+c                     write(*,*) ""
+c                     write(*,*) ""
+c                   end if
+c                   if (tmp.ne.c0) then
+c                   write(*,"(A,' ',F11.8,1X,SP,F11.8,'i',SS,A,I4,A,I4)",advance='no')
+c    &                  "mat=", tmp, ",  rindx=", rindx, ",  extQnum=", ieps
+c     
+c                   write(*,"(A,F10.8)") "   abs(rho1b(rindx)*mat)=  ",  abs(rho1b(rindx)*tmp)
+c                   end if
               end if ! L1N
 
             end do              !rindx   
@@ -527,8 +526,6 @@ c           Create contiguous 2D array to avoid temporary array warning
               write(*,*) ""
             end if
 
-            write(*,*) ""
-            write(*,*) ""
             write(*,'(A)') "############################################"
             write(*,'(A)') "Result is in units of 10^-3/M_pi^+"
             write(*,'(A,F10.6,A)') "E_0+^1N=",aveE0, " (averaged)"
