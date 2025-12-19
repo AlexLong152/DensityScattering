@@ -4,7 +4,7 @@ c     ================================================================
       program testGetMat
       use pionScatLib
       implicit none
-      double precision sqrtS, sqrtSReal, x, theta
+      double precision sqrtS, sqrtSReal, x, theta, mNucl
       integer isospin, piCharge
       double complex resultmat(-1:1,-1:1)
 
@@ -21,8 +21,16 @@ c     Convert theta to cos(theta)
 c     Set sqrtSReal = sqrtS as requested
       sqrtSReal = sqrtS
 
-c     Call getMat
-      call getMat(sqrtS, x, isospin, piCharge, resultmat, sqrtSReal)
+c     Set nucleon mass based on isospin
+      if (isospin .eq. -1) then
+         mNucl = Mneutron
+      else if (isospin .eq. 1) then
+         mNucl = Mproton
+      endif
+
+c     Call getMat (returns matrix with 8*pi*sqrtSReal factor included)
+      call getMat(sqrtS, x, isospin, piCharge, resultmat, sqrtSReal,
+     &            mNucl)
 
 c     Output results in a format easy to parse from Python
 c     Format: real(mat[-1,-1]) imag(mat[-1,-1]) real(mat[-1,1]) ...

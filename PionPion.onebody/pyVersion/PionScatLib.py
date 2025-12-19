@@ -56,7 +56,7 @@ def getCS(sqrtS, x, isospin=1, piCharge=0):
     # print("np.sin(theta)=", np.sin(theta))
     # assert abs(np.sin(theta) - sintheta) < 1e-10
     DSG = abs(g) ** 2 + abs(h * sintheta) ** 2
-    DSG = DSG * 10
+    DSG = DSG * 10 * MeVtofm**2
     return DSG
 
 
@@ -75,8 +75,9 @@ def getMmat(sqrtS, x, isospin=1, piCharge=0):
     cross = -1j * np.cross(qpHat, qHat)
     matFactorH = matDotVec(sigVec, cross)
 
-    g, h = getGH(sqrtS, x, isospin, piCharge)
+    g, h = getGH(sqrtS, x, isospin, piCharge)  # MeV^-1 units
     result = iden * g + h * matFactorH
+    result = result * 8 * np.pi * sqrtS  # unitless
     return result
 
 
@@ -171,7 +172,7 @@ def getF(qVec, twoI, ell, sign, sqrtS):
 
 def getFAtValue(qVec, twoI, ell, sign, sqrtS):
     """
-    Calculate the partial wave amplitude. Returns f_{I,l} in units of fm
+    Calculate the partial wave amplitude. Returns f_{I,l} in units of MeV^-1
 
     Parameters
     ----------
@@ -213,7 +214,6 @@ def getFAtValue(qVec, twoI, ell, sign, sqrtS):
     eta = np.sqrt(1 - sr)
     qAbs = vecAbs(qVec)
     fOut1 = (eta * np.exp(2j * deltaRe) - 1) / (2j * qAbs)  # now in units of MeV^-1
-    fOut1 = fOut1 * MeVtofm
     # deltaIm = np.log(eta) / (-2)
     # delta = deltaRe + deltaIm * 1j
     # fOut2 = np.e ** (2j * delta) - 1

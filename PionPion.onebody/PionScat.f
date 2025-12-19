@@ -5,7 +5,7 @@
 c     Physical constants (explicit values to ensure they're not zero)
       double precision, parameter :: mpiPlus = 139.5675d0
       double precision, parameter :: mN = 938.919d0
-      double precision, parameter :: MeVtofm = 197.327d0
+      double precision, parameter :: MeVtofm = 197.327d0 !197.3 fm= MeV^-1
       double precision, parameter :: MYPI = 3.141592653589794d0
       
 c     Pauli matrices (as 2x2 complex arrays)
@@ -47,38 +47,52 @@ c     Isospin projection matrices for I=3
       contains
 
 c     ================================================================
-      subroutine getCS(sqrtS, x, isospin, piCharge, CrossSec)
+c     ================================================================
+      subroutine getCS(sqrtS, x, isospin, piCharge, CrossSec,
+     &                        mNucl)
 c     Calculate cross section from scattering matrix
 c     ================================================================
       implicit none
-      double precision sqrtS, x, CrossSec
+      double precision sqrtS, x, CrossSec,mNucl
       integer isospin, piCharge
-      
+
       double complex mat(-1:1,-1:1), matDag(-1:1,-1:1)
-      double precision fudgeFactor
+      double precision fudgeFactor, normFactor
       double complex trace
-      integer i
-      
-      call getMat(sqrtS, x, isospin, piCharge, mat, sqrtS)
-      call dag(mat, matDag, 1, 2)
-      
+      integer i, j
+
+      call getMat(sqrtS, x, isospin, piCharge, mat, sqrtS,mNucl)
+
+c     Divide out the 8*pi*sqrtSReal factor that getMat includes
+      normFactor = 8.0d0 * MYPI * sqrtS
+      mat = mat / normFactor
+
+c     Preform conjugate transpose
+      do i = -1, 1, 2
+        do j = -1, 1, 2
+          matDag(i, j) = dconjg(mat(j, i))
+        end do
+      end do
+
 c     Calculate trace of mat * matDag
       trace = (0.0d0, 0.0d0)
-      do i = -1, 1,2
-         trace = trace + mat(i,1)*matDag(1,i) + mat(i,2)*matDag(2,i)
+      do i = -1, 1, 2
+         do j = -1, 1, 2
+            trace = trace + mat(i,j)*matDag(j,i)
+         enddo
       enddo
-      
+
       CrossSec = 10.0d0 * dreal(trace) / 4.0d0
-      
+
 c     TODO: find where the missing factor of 2 comes from
       fudgeFactor = 2.0d0
-      CrossSec = CrossSec * fudgeFactor
-      
+      CrossSec = CrossSec * fudgeFactor*HC*HC
+
       return
       end subroutine getCS
 
 c     ================================================================
-      subroutine getMat(sqrtS, x, isospin, piCharge, resultmat,sqrtSReal)
+      subroutine getMat(sqrtS, x, isospin, piCharge, resultmat,sqrtSReal,mNucl)
 c     Calculate scattering matrix
 c     ================================================================
       implicit none
@@ -93,26 +107,21 @@ c     ================================================================
       double precision qHat(3), qpHat(3), cross(3)
       double complex matFactor(2,2)
       double complex sigVec(3,2,2)
-      double precision piMassArr(-1:1)
+      double precision piMassArr(-1:1), mNucl
+
       integer i, j, k
       
       sigVec(1,:,:)=sigx
       sigVec(2,:,:)=sigy
       sigVec(3,:,:)=sigz
       
-      call getGH(sqrtS, x, isospin, piCharge, g, h) 
+      call getGH(sqrtS, x, isospin, piCharge, g, h,sqrtSReal,mNucl) 
 c     Get pion and nucleon masses
       piMassArr(-1)=mpi
       piMassArr(0)=mpi0
       piMassArr(1)=mpi
       m1=piMassArr(piCharge)
-      
-      if (isospin .eq. -1) then
-         m2 = 939.56563d0
-      else if (isospin .eq. 1) then
-         m2 = 938.27231d0
-      endif
-      
+      m2=mNucl
       call getKinematics(sqrtSReal, x, m1, m2, m1, m2, S, qVec, qpVec)
 
 c     Debug output
@@ -140,36 +149,37 @@ c     Calculate final matrix: mat = iden * g + matFactor * h
       resultmat(-1,-1)=mat(1,1)
       resultmat(-1, 1)=mat(1,2)
       resultmat( 1,-1)=mat(2,1)
-      resultmat( 1, 1)=mat(2,2)
+      resultmat( 1, 1)=mat(2,2)! resultMat has units of MeV^-1 here
+      resultmat= resultmat*8*pi*sqrtSReal!unitless,sqrtS real has units of MeV
       return
       end subroutine getMat
 
 c     ================================================================
-      subroutine getcsGH(sqrtS, x, isospin, piCharge, DSG)
+      subroutine getcsGH(sqrtS, x, isospin, piCharge, DSG, mNucl,sqrtSReal)
 c     Calculate cross section using g,h amplitudes
 c     ================================================================
       implicit none
-      double precision sqrtS, x, DSG
+      double precision sqrtS, x, DSG, mNucl, sqrtSReal
       integer isospin, piCharge
-      
+
       double complex g, h
       double precision sintheta
-      
-      call getGH(sqrtS, x, isospin, piCharge, g, h)
+
+      call getGH(sqrtS, x, isospin, piCharge, g, h, sqrtSReal, mNucl)
       sintheta = dsqrt(1.0d0 - x*x)
       
       DSG = cdabs(g)**2 + cdabs(h * sintheta)**2
-      DSG = DSG * 10.0d0
+      DSG = DSG * 10.0d0*(8*pi*sqrtSReal)**2
       
       return
       end subroutine getcsGH
 
 c     ================================================================
-      subroutine getGH(sqrtS, x, isospin, piCharge, g, h)
-c     Calculate g and h scattering amplitudes
+      subroutine getGH(sqrtS, x, isospin, piCharge, g, h,sqrtSReal,mNucl)
+c     Calculate g and h scattering amplitudes in fm
 c     ================================================================
       implicit none
-      double precision sqrtS, x
+      double precision sqrtS, x, sqrtSReal, mNucl
       integer isospin, piCharge
       double complex g, h
       
@@ -204,13 +214,13 @@ c     Get masses
          m1 = mpiPlus
       endif
 
-      if (isospin .eq. -1) then
-         m2 = Mneutron
-      else if (isospin .eq. 1) then
-         m2 = Mproton
-      endif
-
-      call getKinematics(sqrtS, x, m1, m2, m1, m2, S, qVec, qpVec)
+c     if (isospin .eq. -1) then
+c        m2 = Mneutron
+c     else if (isospin .eq. 1) then
+c        m2 = Mproton
+c     endif
+      m2=mNucl
+      call getKinematics(sqrtSReal, x, m1, m2, m1, m2, S, qVec, qpVec)
 
       gTerm = (0.0d0, 0.0d0)
       hTerm = (0.0d0, 0.0d0)
@@ -323,7 +333,7 @@ c     where slope = (y2 - y1) / (x2 - x1) = (y2 - y1) / 2
 c     ================================================================
       subroutine getFAtValue(qVec, twoI, ell, sign, target2L, letter,
      &                       sqrtS, fOut)
-c     Calculate partial wave amplitude at a specific sqrtS value
+c     Calculate partial wave amplitude at a specific sqrtS value, returns fOut in outs of MeV^-1
 c     ================================================================
       implicit none
       double precision qVec(3), sqrtS
@@ -349,7 +359,7 @@ c     Get scattering data at the specified sqrtS
 c     Calculate fOut = (eta * exp(2i*deltaRe) - 1) / (2i*qAbs) * MeVtofm
       fOut = eta * cdexp((0.0d0, 2.0d0) * del_result) - (1.0d0, 0.0d0)
       fOut = fOut / ((0.0d0, 2.0d0) * qAbs)
-      fOut = fOut * MeVtofm
+c     fOut = fOut * MeVtofm
 
       return
       end subroutine getFAtValue

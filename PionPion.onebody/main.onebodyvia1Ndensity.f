@@ -1,3 +1,5 @@
+c     Alexander Long 2025: Pion scattering onebody
+c      
 c     hgrie Oct 2022: v2.0 fewbody-Compton
 c     hgrie Aug 2020: for usesymmetry.and.Mzp=0.andMz=0, Resultyx and Resultyx not calculated
 c             They must be zero by symmetry, see manu-script "Compton Densities Approach" p.53
@@ -44,7 +46,10 @@ c     Use Mzp>=0, and for Mzp=0, run only over Mz>=0
 c     -- that's still 2 more than necessary since ME(+0->+0) = ME(-0->-0) and ME(+0->-0) = ME(-0->+0)
 c     but it's good enough, saving lots of CPU time.
 c     see manuscript "Compton Densities Approach" pp11-12
+
+c     UNITS DISCUSSION
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc   
+
 
       PROGRAM onebodydensitymain
 
@@ -104,6 +109,7 @@ c
       integer Nx                ! grid size 
       real*8 xq(Nxmax),wx(Nxmax)! points & weights
       real*8 mpiArr(3)
+      real*8 unitsFactor
       
 c     
 c----------------------------------------------------------------------
@@ -313,7 +319,6 @@ c     hgrie May 2018: read 1N density
             outputMat=c0
             x=cos(thetacm)
             mpiArr=(/mpi,mpi0,mpi/)
-            write(*,*) "Setting mass of pion to charged pion mass"
             do extQnum=1,extQnumlimit
 c           extQnum=2!Neutral pion only
 c           mpi1=mpiArr(extQnum)
@@ -321,6 +326,7 @@ c           mpi1=mpiArr(extQnum)
 
             piCharge=extQnum-2
             piCharge=-1
+            write(*,*) "piCharge=", piCharge 
             ! Compute the sqrt term
 c           omega=131.8754348d0
             sqrtTerm = sqrt(Mnucl**2 + omega**2)
@@ -346,24 +352,25 @@ c           omega=131.8754348d0
 c           write(*,*) "pAbs=", pAbs 
 c           pAbs=sqrt(omega*omega-mpi1*mpi1)
 
-            sqrtSReal=sqrt(pSqr+mpi1*mpi1)+sqrt(Mnucl*Mnucl+pAbs*pAbs)
-            sqrtS=sqrt(pSqr+mpi1*mpi1)+sqrt(mNucleon*mNucleon+pAbs*pAbs)
+            sqrtSReal=sqrt(pSqr+mpi0*mpi0)+sqrt(Mnucl*Mnucl+pSqr)
+            sqrtS=sqrt(pSqr+mpi0*mpi0)+sqrt(mNucleon*mNucleon+pAbs*pAbs)
 c           sqrtS=omega+sqrt(mNucleon*mNucleon+pAbs*pAbs)
             do rindx=1,maxrho1bindex
                 CALL get1Nqnnum(rindx,twom1N,twomt1N,twoMz,twom1Np,twomt1Np,twoMzp,L1N,ML1N)
                 if (L1N.eq.0) then !ML1N is automatically zero if L1N is
 c                 write(*,*) "About to call getMat with sqrtS=", sqrtS, ", x=", x, ", twomt1N=", twomt1N, ", piCharge=", piCharge
-                  call getMat(sqrtS, x, twomt1N, piCharge, Mmat,sqrtS)
+                  call getMat(sqrtS, x, twomt1N, piCharge, Mmat,sqrtSReal,mNucl)
                     outputMat(extQnum,twoMzp,twoMz)= outputMat(extQnum,twoMzp,twoMz)+
      &                            Anucl*rho1b(rindx)*Mmat(twom1Np,twom1N)
 
                 end if 
             end do              !rindx   
             end do             !extQnum
-
+c           outputMat is unitless now
+            outputMat=outputMat*(1/(mpi0*1000))!10^-3 mpi^-1 units
+            outputMat=outputMat*HC*HC
             call outputroutine(outUnitno,twoSnucl,extQnumlimit,
      &           outputMat,verbosity)
-
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     be a good boy and deallocate arrays. Compilers do that automatically for simple programs. Better safe than sorry.
             deallocate(outputMat)
