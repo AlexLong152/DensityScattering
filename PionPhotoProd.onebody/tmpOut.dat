@@ -1,0 +1,297 @@
+rm -f ../onebodyvia1Ndensity/calcAmpVars.o ../onebodyvia1Ndensity/calculateAs.OQ3poles.o ../onebodyvia1Ndensity/calculateAs.OQ3nopoles.o ../onebodyvia1Ndensity/calculateAs.Delta.o ../onebodyvia1Ndensity/construct1NAmps.o ../onebodyvia1Ndensity/read1Ndensity.o ../onebodyvia1Ndensity/trafo1Namps-to-helicity.o ../common-densities/gauleg.o ../common-densities/gridGauleg.o ../common-densities/makedensityfilename.o ../common-densities/makeoutputfilename.o ../common-densities/outputtomath.o ../common-densities/photonmomenta.o ../common-densities/readinput-densities.o ../common-densities/outputroutine.o main.onebodyvia1Ndensity.o poles.o readinput-onebody.o said_subs.o subroutines.o utility_suite.o testing.o onebodyvia1Ndensity testCrossSec testCrossSec.o TestCrossSec
+mpif90 -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none -ffpe-summary=none -mcmodel=large -I/usr/local/hdf5/openmpi/include -I../common-densities/density-modules -I../common-densities ../onebodyvia1Ndensity/calcAmpVars.f -o ../onebodyvia1Ndensity/calcAmpVars.o
+mpif90 -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none -ffpe-summary=none -mcmodel=large -I/usr/local/hdf5/openmpi/include -I../common-densities/density-modules -I../common-densities ../onebodyvia1Ndensity/calculateAs.OQ3poles.f -o ../onebodyvia1Ndensity/calculateAs.OQ3poles.o
+mpif90 -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none -ffpe-summary=none -mcmodel=large -I/usr/local/hdf5/openmpi/include -I../common-densities/density-modules -I../common-densities ../onebodyvia1Ndensity/calculateAs.OQ3nopoles.f -o ../onebodyvia1Ndensity/calculateAs.OQ3nopoles.o
+mpif90 -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none -ffpe-summary=none -mcmodel=large -I/usr/local/hdf5/openmpi/include -I../common-densities/density-modules -I../common-densities ../onebodyvia1Ndensity/calculateAs.Delta.f -o ../onebodyvia1Ndensity/calculateAs.Delta.o
+mpif90 -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none -ffpe-summary=none -mcmodel=large -I/usr/local/hdf5/openmpi/include -I../common-densities/density-modules -I../common-densities ../onebodyvia1Ndensity/construct1NAmps.f -o ../onebodyvia1Ndensity/construct1NAmps.o
+mpif90 -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none -ffpe-summary=none -mcmodel=large -I/usr/local/hdf5/openmpi/include -I../common-densities/density-modules -I../common-densities ../onebodyvia1Ndensity/read1Ndensity.f -o ../onebodyvia1Ndensity/read1Ndensity.o
+mpif90 -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none -ffpe-summary=none -mcmodel=large -I/usr/local/hdf5/openmpi/include -I../common-densities/density-modules -I../common-densities ../onebodyvia1Ndensity/trafo1Namps-to-helicity.f -o ../onebodyvia1Ndensity/trafo1Namps-to-helicity.o
+mpif90 -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none -ffpe-summary=none -mcmodel=large -I/usr/local/hdf5/openmpi/include -I../common-densities/density-modules -I../common-densities ../common-densities/gauleg.f -o ../common-densities/gauleg.o
+mpif90 -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none -ffpe-summary=none -mcmodel=large -I/usr/local/hdf5/openmpi/include -I../common-densities/density-modules -I../common-densities ../common-densities/gridGauleg.f -o ../common-densities/gridGauleg.o
+mpif90 -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none -ffpe-summary=none -mcmodel=large -I/usr/local/hdf5/openmpi/include -I../common-densities/density-modules -I../common-densities ../common-densities/makedensityfilename.f -o ../common-densities/makedensityfilename.o
+mpif90 -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none -ffpe-summary=none -mcmodel=large -I/usr/local/hdf5/openmpi/include -I../common-densities/density-modules -I../common-densities ../common-densities/makeoutputfilename.f -o ../common-densities/makeoutputfilename.o
+mpif90 -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none -ffpe-summary=none -mcmodel=large -I/usr/local/hdf5/openmpi/include -I../common-densities/density-modules -I../common-densities ../common-densities/outputtomath.f -o ../common-densities/outputtomath.o
+mpif90 -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none -ffpe-summary=none -mcmodel=large -I/usr/local/hdf5/openmpi/include -I../common-densities/density-modules -I../common-densities ../common-densities/photonmomenta.f -o ../common-densities/photonmomenta.o
+mpif90 -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none -ffpe-summary=none -mcmodel=large -I/usr/local/hdf5/openmpi/include -I../common-densities/density-modules -I../common-densities ../common-densities/readinput-densities.f -o ../common-densities/readinput-densities.o
+mpif90 -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none -ffpe-summary=none -mcmodel=large -I/usr/local/hdf5/openmpi/include -I../common-densities/density-modules -I../common-densities ../common-densities/outputroutine.f -o ../common-densities/outputroutine.o
+mpif90 -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none -ffpe-summary=none -mcmodel=large -I/usr/local/hdf5/openmpi/include -I../common-densities/density-modules -I../common-densities main.onebodyvia1Ndensity.f -o main.onebodyvia1Ndensity.o
+main.onebodyvia1Ndensity.f:184:31:
+
+  184 |       complex*16 tmpMat, relDev
+      |                               1
+Warning: Unused variable ‘reldev’ declared at (1) [-Wunused-variable]
+mpif90 -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none -ffpe-summary=none -mcmodel=large -I/usr/local/hdf5/openmpi/include -I../common-densities/density-modules -I../common-densities poles.f -o poles.o
+poles.f:261:25:
+
+  261 |       double complex imag
+      |                         1
+Warning: Unused variable ‘imag’ declared at (1) [-Wunused-variable]
+poles.f:504:15:
+
+  504 |       integer i
+      |               1
+Warning: Unused variable ‘i’ declared at (1) [-Wunused-variable]
+poles.f:503:33:
+
+  503 |       double precision realVec(3)
+      |                                 1
+Warning: Unused variable ‘realvec’ declared at (1) [-Wunused-variable]
+mpif90 -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none -ffpe-summary=none -mcmodel=large -I/usr/local/hdf5/openmpi/include -I../common-densities/density-modules -I../common-densities readinput-onebody.f -o readinput-onebody.o
+mpif90 -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none -ffpe-summary=none -mcmodel=large -I/usr/local/hdf5/openmpi/include -I../common-densities/density-modules -I../common-densities said_subs.f -o said_subs.o
+mpif90 -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none -ffpe-summary=none -mcmodel=large -I/usr/local/hdf5/openmpi/include -I../common-densities/density-modules -I../common-densities subroutines.f -o subroutines.o
+mpif90 -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none -ffpe-summary=none -mcmodel=large -I/usr/local/hdf5/openmpi/include -I../common-densities/density-modules -I../common-densities utility_suite.f -o utility_suite.o
+mpif90 -o onebodyvia1Ndensity ../onebodyvia1Ndensity/calcAmpVars.o ../onebodyvia1Ndensity/calculateAs.OQ3poles.o ../onebodyvia1Ndensity/calculateAs.OQ3nopoles.o ../onebodyvia1Ndensity/calculateAs.Delta.o ../onebodyvia1Ndensity/construct1NAmps.o ../onebodyvia1Ndensity/read1Ndensity.o ../onebodyvia1Ndensity/trafo1Namps-to-helicity.o ../common-densities/gauleg.o ../common-densities/gridGauleg.o ../common-densities/makedensityfilename.o ../common-densities/makeoutputfilename.o ../common-densities/outputtomath.o ../common-densities/photonmomenta.o ../common-densities/readinput-densities.o ../common-densities/outputroutine.o main.onebodyvia1Ndensity.o poles.o readinput-onebody.o said_subs.o subroutines.o utility_suite.o -Wl,-rpath,/usr/local/hdf5/openmpi/lib -L../common-densities/density-modules -ldensity -L/usr/local/hdf5/openmpi/lib -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -llapack -lgomp -ldl -lz -lsz
+chmod +x onebodyvia1Ndensity
+Input files:
+input.dat
+
+***** Running input input.dat.
+    Lowest beam energy           =    131.85700000000000      MeV
+    Highest beam energy          =    131.85700000000000      MeV
+    Energy step from low to high =    10.000000000000000      MeV
+    Lowest theta                 =    60.000000000000000      deg
+    Highest theta                =    60.000000000000000      deg
+    Theta step from low to high  =    15.000000000000000      deg
+ First take on output filename (placeholders to be replaced below): 
+       output-AboveThresh-code.dat
+ First take on density filename (placeholders to be replaced below): 
+       /home/alexander/OneDrive/densities-3He/1Ndensities/132MeV/60deg/onebody-3He.132MeV-060deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG0.000setNtotmax00omegaH00.denshash=3bd9b5d55f401de84f369724cdeb02eb176fda6928c442e1611c2ba14efdbc8b.v2.0.h5
+   Target Nucleus: 3He, Anucl =  3, spin Snucl =  1/2 , mass Mnucl =  2808.400    MeV
+ Input and output in centre-of-mass frame.
+ Number of external quantum numbers set to extQnumlimit =    3
+ Calculate all  12 amplitudes independently, not using symmetry() of process.
+ O(e²delta³)=O(epsilon³) calculation.
+   Delta and DeltaPi parts of static scalar polarisabilities are subtracted.
+   Delta parameters:
+     Delta mass                  Mdelta    =    1232.0000000000000       MeV
+       => Delta-N mass splitting Delta     =    293.08103000000006       MeV
+     PionNDelta coupling         gPiNDelta =    1.4250000000000000     
+     DeltaGamma coupl. (nonrel.) b1        =    5.0000000000000000     
+ No integrals in onebody.
+ Number of quadratures in Feynman parameter integral of single-N amplitude = 32
+ ADDITIONAL COMMENTS:_v2.0
+ Write output to file: output-AboveThresh-code.dat
+    Now looking for density file...
+    Density file name generated from energy & angle: /home/alexander/OneDrive/densities-3He/1Ndensities/132MeV/60deg/onebody-3He.132MeV-060deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG0.000setNtotmax00omegaH00.denshash=3bd9b5d55f401de84f369724cdeb02eb176fda6928c442e1611c2ba14efdbc8b.v2.0.h5
+       Density file exists, good.
+ *********************** 1N DENSITY MATRIX PARAMETERS ***************************
+j12max_rho = ****
+             rindx    ms3  mt3   bm   ms3p mt3p  bmp    bk   k
+ RHO1BINDX:      1     -1   -1   -1     -1   -1   -1     0   0
+ RHO1BINDX:      2      1   -1   -1     -1   -1   -1     0   0
+ RHO1BINDX:      3     -1   -1   -1      1   -1   -1     0   0
+ RHO1BINDX:      4      1   -1   -1      1   -1   -1     0   0
+ RHO1BINDX:      5     -1    1   -1     -1    1   -1     0   0
+ RHO1BINDX:      6      1    1   -1     -1    1   -1     0   0
+ RHO1BINDX:      7     -1    1   -1      1    1   -1     0   0
+ RHO1BINDX:      8      1    1   -1      1    1   -1     0   0
+ RHO1BINDX:      9     -1   -1    1     -1   -1   -1     0   0
+ RHO1BINDX:     10      1   -1    1     -1   -1   -1     0   0
+ RHO1BINDX:     11     -1   -1    1      1   -1   -1     0   0
+ RHO1BINDX:     12      1   -1    1      1   -1   -1     0   0
+ RHO1BINDX:     13     -1    1    1     -1    1   -1     0   0
+ RHO1BINDX:     14      1    1    1     -1    1   -1     0   0
+ RHO1BINDX:     15     -1    1    1      1    1   -1     0   0
+ RHO1BINDX:     16      1    1    1      1    1   -1     0   0
+ RHO1BINDX:     17     -1   -1   -1     -1   -1    1     0   0
+ RHO1BINDX:     18      1   -1   -1     -1   -1    1     0   0
+ RHO1BINDX:     19     -1   -1   -1      1   -1    1     0   0
+ RHO1BINDX:     20      1   -1   -1      1   -1    1     0   0
+ RHO1BINDX:     21     -1    1   -1     -1    1    1     0   0
+ RHO1BINDX:     22      1    1   -1     -1    1    1     0   0
+ RHO1BINDX:     23     -1    1   -1      1    1    1     0   0
+ RHO1BINDX:     24      1    1   -1      1    1    1     0   0
+ RHO1BINDX:     25     -1   -1    1     -1   -1    1     0   0
+ RHO1BINDX:     26      1   -1    1     -1   -1    1     0   0
+ RHO1BINDX:     27     -1   -1    1      1   -1    1     0   0
+ RHO1BINDX:     28      1   -1    1      1   -1    1     0   0
+ RHO1BINDX:     29     -1    1    1     -1    1    1     0   0
+ RHO1BINDX:     30      1    1    1     -1    1    1     0   0
+ RHO1BINDX:     31     -1    1    1      1    1    1     0   0
+ RHO1BINDX:     32      1    1    1      1    1    1     0   0
+ RHO1BINDX:     33     -1   -1   -1     -1   -1   -1     1  -1
+ RHO1BINDX:     34      1   -1   -1     -1   -1   -1     1  -1
+ RHO1BINDX:     35     -1   -1   -1      1   -1   -1     1  -1
+ RHO1BINDX:     36      1   -1   -1      1   -1   -1     1  -1
+ RHO1BINDX:     37     -1    1   -1     -1    1   -1     1  -1
+ RHO1BINDX:     38      1    1   -1     -1    1   -1     1  -1
+ RHO1BINDX:     39     -1    1   -1      1    1   -1     1  -1
+ RHO1BINDX:     40      1    1   -1      1    1   -1     1  -1
+ RHO1BINDX:     41     -1   -1    1     -1   -1   -1     1  -1
+ RHO1BINDX:     42      1   -1    1     -1   -1   -1     1  -1
+ RHO1BINDX:     43     -1   -1    1      1   -1   -1     1  -1
+ RHO1BINDX:     44      1   -1    1      1   -1   -1     1  -1
+ RHO1BINDX:     45     -1    1    1     -1    1   -1     1  -1
+ RHO1BINDX:     46      1    1    1     -1    1   -1     1  -1
+ RHO1BINDX:     47     -1    1    1      1    1   -1     1  -1
+ RHO1BINDX:     48      1    1    1      1    1   -1     1  -1
+ RHO1BINDX:     49     -1   -1   -1     -1   -1    1     1  -1
+ RHO1BINDX:     50      1   -1   -1     -1   -1    1     1  -1
+ RHO1BINDX:     51     -1   -1   -1      1   -1    1     1  -1
+ RHO1BINDX:     52      1   -1   -1      1   -1    1     1  -1
+ RHO1BINDX:     53     -1    1   -1     -1    1    1     1  -1
+ RHO1BINDX:     54      1    1   -1     -1    1    1     1  -1
+ RHO1BINDX:     55     -1    1   -1      1    1    1     1  -1
+ RHO1BINDX:     56      1    1   -1      1    1    1     1  -1
+ RHO1BINDX:     57     -1   -1    1     -1   -1    1     1  -1
+ RHO1BINDX:     58      1   -1    1     -1   -1    1     1  -1
+ RHO1BINDX:     59     -1   -1    1      1   -1    1     1  -1
+ RHO1BINDX:     60      1   -1    1      1   -1    1     1  -1
+ RHO1BINDX:     61     -1    1    1     -1    1    1     1  -1
+ RHO1BINDX:     62      1    1    1     -1    1    1     1  -1
+ RHO1BINDX:     63     -1    1    1      1    1    1     1  -1
+ RHO1BINDX:     64      1    1    1      1    1    1     1  -1
+ RHO1BINDX:     65     -1   -1   -1     -1   -1   -1     1   0
+ RHO1BINDX:     66      1   -1   -1     -1   -1   -1     1   0
+ RHO1BINDX:     67     -1   -1   -1      1   -1   -1     1   0
+ RHO1BINDX:     68      1   -1   -1      1   -1   -1     1   0
+ RHO1BINDX:     69     -1    1   -1     -1    1   -1     1   0
+ RHO1BINDX:     70      1    1   -1     -1    1   -1     1   0
+ RHO1BINDX:     71     -1    1   -1      1    1   -1     1   0
+ RHO1BINDX:     72      1    1   -1      1    1   -1     1   0
+ RHO1BINDX:     73     -1   -1    1     -1   -1   -1     1   0
+ RHO1BINDX:     74      1   -1    1     -1   -1   -1     1   0
+ RHO1BINDX:     75     -1   -1    1      1   -1   -1     1   0
+ RHO1BINDX:     76      1   -1    1      1   -1   -1     1   0
+ RHO1BINDX:     77     -1    1    1     -1    1   -1     1   0
+ RHO1BINDX:     78      1    1    1     -1    1   -1     1   0
+ RHO1BINDX:     79     -1    1    1      1    1   -1     1   0
+ RHO1BINDX:     80      1    1    1      1    1   -1     1   0
+ RHO1BINDX:     81     -1   -1   -1     -1   -1    1     1   0
+ RHO1BINDX:     82      1   -1   -1     -1   -1    1     1   0
+ RHO1BINDX:     83     -1   -1   -1      1   -1    1     1   0
+ RHO1BINDX:     84      1   -1   -1      1   -1    1     1   0
+ RHO1BINDX:     85     -1    1   -1     -1    1    1     1   0
+ RHO1BINDX:     86      1    1   -1     -1    1    1     1   0
+ RHO1BINDX:     87     -1    1   -1      1    1    1     1   0
+ RHO1BINDX:     88      1    1   -1      1    1    1     1   0
+ RHO1BINDX:     89     -1   -1    1     -1   -1    1     1   0
+ RHO1BINDX:     90      1   -1    1     -1   -1    1     1   0
+ RHO1BINDX:     91     -1   -1    1      1   -1    1     1   0
+ RHO1BINDX:     92      1   -1    1      1   -1    1     1   0
+ RHO1BINDX:     93     -1    1    1     -1    1    1     1   0
+ RHO1BINDX:     94      1    1    1     -1    1    1     1   0
+ RHO1BINDX:     95     -1    1    1      1    1    1     1   0
+ RHO1BINDX:     96      1    1    1      1    1    1     1   0
+ RHO1BINDX:     97     -1   -1   -1     -1   -1   -1     1   1
+ RHO1BINDX:     98      1   -1   -1     -1   -1   -1     1   1
+ RHO1BINDX:     99     -1   -1   -1      1   -1   -1     1   1
+ RHO1BINDX:    100      1   -1   -1      1   -1   -1     1   1
+ RHO1BINDX:    101     -1    1   -1     -1    1   -1     1   1
+ RHO1BINDX:    102      1    1   -1     -1    1   -1     1   1
+ RHO1BINDX:    103     -1    1   -1      1    1   -1     1   1
+ RHO1BINDX:    104      1    1   -1      1    1   -1     1   1
+ RHO1BINDX:    105     -1   -1    1     -1   -1   -1     1   1
+ RHO1BINDX:    106      1   -1    1     -1   -1   -1     1   1
+ RHO1BINDX:    107     -1   -1    1      1   -1   -1     1   1
+ RHO1BINDX:    108      1   -1    1      1   -1   -1     1   1
+ RHO1BINDX:    109     -1    1    1     -1    1   -1     1   1
+ RHO1BINDX:    110      1    1    1     -1    1   -1     1   1
+ RHO1BINDX:    111     -1    1    1      1    1   -1     1   1
+ RHO1BINDX:    112      1    1    1      1    1   -1     1   1
+ RHO1BINDX:    113     -1   -1   -1     -1   -1    1     1   1
+ RHO1BINDX:    114      1   -1   -1     -1   -1    1     1   1
+ RHO1BINDX:    115     -1   -1   -1      1   -1    1     1   1
+ RHO1BINDX:    116      1   -1   -1      1   -1    1     1   1
+ RHO1BINDX:    117     -1    1   -1     -1    1    1     1   1
+ RHO1BINDX:    118      1    1   -1     -1    1    1     1   1
+ RHO1BINDX:    119     -1    1   -1      1    1    1     1   1
+ RHO1BINDX:    120      1    1   -1      1    1    1     1   1
+ RHO1BINDX:    121     -1   -1    1     -1   -1    1     1   1
+ RHO1BINDX:    122      1   -1    1     -1   -1    1     1   1
+ RHO1BINDX:    123     -1   -1    1      1   -1    1     1   1
+ RHO1BINDX:    124      1   -1    1      1   -1    1     1   1
+ RHO1BINDX:    125     -1    1    1     -1    1    1     1   1
+ RHO1BINDX:    126      1    1    1     -1    1    1     1   1
+ RHO1BINDX:    127     -1    1    1      1    1    1     1   1
+ RHO1BINDX:    128      1    1    1      1    1    1     1   1
+FF1B:    0.668014E+00       Infinity       Infinity       Infinity
+Calculation of rho for ...
+  omega     =    0.131857E+03
+  qval      =    0.131817E+03
+  thetaval  =    0.599800E+02
+  thetaqval =    0.119990E+03
+         q [fm^-1]      F_n            F_p            F_N
+ Computed above are Form Factors of Nucleon, normalised to F(q²=0)=1 for A=3,4; =2S+1 else.
+ Computing Form Factors of N, normalised to F_pairs(q²=0)=1.
+ Total # nucleons:  3    n              p              nucleons
+  Form Factors:          0.277090       0.534717       0.811808
+  Eff. # nucleons:       0.831271       1.604152       2.435423
+    Energy and angle of 1Ndensity file match request.
+ 
+SAID data loaded with: 48 waves
+ 
+ 
+mat= -0.00079859 -0.00009541i , rindx=   2,  extQnum= 1   abs(rho1b(rindx)*mat)=  0.00000009
+mat= -0.00079859 -0.00009541i , rindx=   3,  extQnum= 1   abs(rho1b(rindx)*mat)=  0.00000009
+mat= -0.01040863 -0.00255357i , rindx=   6,  extQnum= 1   abs(rho1b(rindx)*mat)=  0.00003607
+mat= -0.01040863 -0.00255357i , rindx=   7,  extQnum= 1   abs(rho1b(rindx)*mat)=  0.00003607
+mat=  1.78273948 +0.21299551i , rindx=  10,  extQnum= 1   abs(rho1b(rindx)*mat)=  0.44314124
+mat= -0.00138376 -0.00016533i , rindx=  11,  extQnum= 1   abs(rho1b(rindx)*mat)=  0.00000027
+mat= -0.02082185 -0.00510827i , rindx=  14,  extQnum= 1   abs(rho1b(rindx)*mat)=  0.00014435
+mat= -0.01803560 -0.00442471i , rindx=  15,  extQnum= 1   abs(rho1b(rindx)*mat)=  0.00010830
+mat= -0.00138376 -0.00016533i , rindx=  18,  extQnum= 1   abs(rho1b(rindx)*mat)=  0.00000027
+mat=  1.78273948 +0.21299551i , rindx=  19,  extQnum= 1   abs(rho1b(rindx)*mat)=  0.44314124
+mat= -0.01803560 -0.00442471i , rindx=  22,  extQnum= 1   abs(rho1b(rindx)*mat)=  0.00010830
+mat= -0.02082185 -0.00510827i , rindx=  23,  extQnum= 1   abs(rho1b(rindx)*mat)=  0.00014435
+mat=  0.00079859 +0.00009541i , rindx=  26,  extQnum= 1   abs(rho1b(rindx)*mat)=  0.00000009
+mat=  0.00079859 +0.00009541i , rindx=  27,  extQnum= 1   abs(rho1b(rindx)*mat)=  0.00000009
+mat=  0.01040863 +0.00255357i , rindx=  30,  extQnum= 1   abs(rho1b(rindx)*mat)=  0.00003607
+mat=  0.01040863 +0.00255357i , rindx=  31,  extQnum= 1   abs(rho1b(rindx)*mat)=  0.00003607
+ 
+ 
+mat= -0.00009541 +0.00079859i , rindx=   2,  extQnum= 2   abs(rho1b(rindx)*mat)=  0.00000009
+mat=  0.00009541 -0.00079859i , rindx=   3,  extQnum= 2   abs(rho1b(rindx)*mat)=  0.00000009
+mat= -0.00255357 +0.01040863i , rindx=   6,  extQnum= 2   abs(rho1b(rindx)*mat)=  0.00003607
+mat=  0.00255357 -0.01040863i , rindx=   7,  extQnum= 2   abs(rho1b(rindx)*mat)=  0.00003607
+mat=  0.21299551 -1.78273948i , rindx=  10,  extQnum= 2   abs(rho1b(rindx)*mat)=  0.44314124
+mat=  0.00016533 -0.00138376i , rindx=  11,  extQnum= 2   abs(rho1b(rindx)*mat)=  0.00000027
+mat= -0.00510827 +0.02082185i , rindx=  14,  extQnum= 2   abs(rho1b(rindx)*mat)=  0.00014435
+mat=  0.00442471 -0.01803560i , rindx=  15,  extQnum= 2   abs(rho1b(rindx)*mat)=  0.00010830
+mat= -0.00016533 +0.00138376i , rindx=  18,  extQnum= 2   abs(rho1b(rindx)*mat)=  0.00000027
+mat= -0.21299551 +1.78273948i , rindx=  19,  extQnum= 2   abs(rho1b(rindx)*mat)=  0.44314124
+mat= -0.00442471 +0.01803560i , rindx=  22,  extQnum= 2   abs(rho1b(rindx)*mat)=  0.00010830
+mat=  0.00510827 -0.02082185i , rindx=  23,  extQnum= 2   abs(rho1b(rindx)*mat)=  0.00014435
+mat=  0.00009541 -0.00079859i , rindx=  26,  extQnum= 2   abs(rho1b(rindx)*mat)=  0.00000009
+mat= -0.00009541 +0.00079859i , rindx=  27,  extQnum= 2   abs(rho1b(rindx)*mat)=  0.00000009
+mat=  0.00255357 -0.01040863i , rindx=  30,  extQnum= 2   abs(rho1b(rindx)*mat)=  0.00003607
+mat= -0.00255357 +0.01040863i , rindx=  31,  extQnum= 2   abs(rho1b(rindx)*mat)=  0.00003607
+ 
+ 
+mat=  1.89229588 +0.22608493i , rindx=   1,  extQnum= 3   abs(rho1b(rindx)*mat)=  0.49928038
+mat= -0.10909803 -0.01303465i , rindx=   4,  extQnum= 3   abs(rho1b(rindx)*mat)=  0.00165959
+mat=  0.81942998 +0.20103233i , rindx=   5,  extQnum= 3   abs(rho1b(rindx)*mat)=  0.22355974
+mat= -0.83422867 -0.20466292i , rindx=   8,  extQnum= 3   abs(rho1b(rindx)*mat)=  0.23170751
+mat= -0.00079859 -0.00009541i , rindx=   9,  extQnum= 3   abs(rho1b(rindx)*mat)=  0.00000009
+mat= -0.00079859 -0.00009541i , rindx=  12,  extQnum= 3   abs(rho1b(rindx)*mat)=  0.00000009
+mat= -0.01040863 -0.00255357i , rindx=  13,  extQnum= 3   abs(rho1b(rindx)*mat)=  0.00003607
+mat= -0.01040863 -0.00255357i , rindx=  16,  extQnum= 3   abs(rho1b(rindx)*mat)=  0.00003607
+mat= -0.00079859 -0.00009541i , rindx=  17,  extQnum= 3   abs(rho1b(rindx)*mat)=  0.00000009
+mat= -0.00079859 -0.00009541i , rindx=  20,  extQnum= 3   abs(rho1b(rindx)*mat)=  0.00000009
+mat= -0.01040863 -0.00255357i , rindx=  21,  extQnum= 3   abs(rho1b(rindx)*mat)=  0.00003607
+mat= -0.01040863 -0.00255357i , rindx=  24,  extQnum= 3   abs(rho1b(rindx)*mat)=  0.00003607
+mat=  0.10909803 +0.01303465i , rindx=  25,  extQnum= 3   abs(rho1b(rindx)*mat)=  0.00165959
+mat= -1.89229588 -0.22608493i , rindx=  28,  extQnum= 3   abs(rho1b(rindx)*mat)=  0.49928038
+mat=  0.83422867 +0.20466292i , rindx=  29,  extQnum= 3   abs(rho1b(rindx)*mat)=  0.23170751
+mat= -0.81942998 -0.20103233i , rindx=  32,  extQnum= 3   abs(rho1b(rindx)*mat)=  0.22355974
+Using 5 Partial Waves (maximum l value)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Result(extQnum=   1,twoMzp=   1, twoMz=   1):    0.0224144562159429503  +0.0052979669100446554 i
+Result(extQnum=   1,twoMzp=   1, twoMz=  -1):    1.7424982712059933210  +0.2032972115202060781 i
+Result(extQnum=   1,twoMzp=  -1, twoMz=   1):    1.7424982712059933210  +0.2032972115202060781 i
+Result(extQnum=   1,twoMzp=  -1, twoMz=  -1):   -0.0224144562159429503  -0.0052979669100446554 i
+Result(extQnum=   2,twoMzp=   1, twoMz=   1):   -0.0000000000251156322  +0.0000000002102139556 i
+Result(extQnum=   2,twoMzp=   1, twoMz=  -1):   -0.2124772809890723702  +1.7813369890069632451 i
+Result(extQnum=   2,twoMzp=  -1, twoMz=   1):    0.2124772809890723702  -1.7813369890069632451 i
+Result(extQnum=   2,twoMzp=  -1, twoMz=  -1):   -0.0000000000251156322  +0.0000000002102139556 i
+Result(extQnum=   3,twoMzp=   1, twoMz=   1):   -1.7683991662018212487  -0.2094196848381315035 i
+Result(extQnum=   3,twoMzp=   1, twoMz=  -1):   -0.0224144560057289929  -0.0052979668849290227 i
+Result(extQnum=   3,twoMzp=  -1, twoMz=   1):   -0.0224144558655863593  -0.0052979668681852679 i
+Result(extQnum=   3,twoMzp=  -1, twoMz=  -1):    1.7683991662018212487  +0.2094196848381314757 i
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Mathematica-friendly output: all  3* 4 =   12 amplitudes (some related by symmetries):
+    [Sequence: extQnum∈[1;extQnumlimit] (outmost), Mzp∈[S;-S], Mz∈[S;-S] (innermost)]
+         {+.224144562159429503*10^(-01)+.529796691004465539*10^(-02)*I,+.174249827120599332*10^(+01)+.203297211520206078*10^(+00)*I,+.174249827120599332*10^(+01)+.203297211520206078*10^(+00)*I,-.224144562159429503*10^(-01)-.529796691004465539*10^(-02)*I,-.251156322302048540*10^(-10)+.210213955617599701*10^(-09)*I,-.212477280989072370*10^(+00)+.178133698900696325*10^(+01)*I,+.212477280989072370*10^(+00)-.178133698900696325*10^(+01)*I,-.251156322302048540*10^(-10)+.210213955617599701*10^(-09)*I,-.176839916620182125*10^(+01)-.209419684838131503*10^(+00)*I,-.224144560057289929*10^(-01)-.529796688492902273*10^(-02)*I,-.224144558655863593*10^(-01)-.529796686818526791*10^(-02)*I,+.176839916620182125*10^(+01)+.209419684838131476*10^(+00)*I}
+ *** Wrote output to file: output-AboveThresh-code.dat
+ Remember to change the value of the energy to match the density 
+Real Time used: 0 seconds on host alexander-Desktop

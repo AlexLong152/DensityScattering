@@ -61,6 +61,8 @@ c     ================================================================
       double complex trace
       integer i, j
 
+      fudgeFactor = 2.0d0
+
       call getMat(sqrtS, x, isospin, piCharge, mat, sqrtS,mNucl)
 
 c     Divide out the 8*pi*sqrtSReal factor that getMat includes
@@ -84,10 +86,8 @@ c     Calculate trace of mat * matDag
 
       CrossSec = 10.0d0 * dreal(trace) / 4.0d0
 
-c     TODO: find where the missing factor of 2 comes from
-      fudgeFactor = 2.0d0
-      CrossSec = CrossSec * fudgeFactor*HC*HC
-
+      CrossSec = CrossSec * fudgeFactor*MeVtofm*MeVtofm
+      write(*,*) "CrossSec=", CrossSec 
       return
       end subroutine getCS
 
@@ -150,7 +150,8 @@ c     Calculate final matrix: mat = iden * g + matFactor * h
       resultmat(-1, 1)=mat(1,2)
       resultmat( 1,-1)=mat(2,1)
       resultmat( 1, 1)=mat(2,2)! resultMat has units of MeV^-1 here
-      resultmat= resultmat*8*pi*sqrtSReal!unitless,sqrtS real has units of MeV
+      !factor 1/sqrt(2) could come from spin averaging?
+      resultmat= resultmat*8*pi*sqrtSReal!/sqrt(2.d0)!unitless,sqrtS real has units of MeV
       return
       end subroutine getMat
 

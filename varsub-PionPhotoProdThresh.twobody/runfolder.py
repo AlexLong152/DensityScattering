@@ -8,10 +8,11 @@
 import runfolderTwobody as rt
 
 
-densfolder = r"/home/alexander/OneDrive/densities-3He/2Ndensities/132MeV/"
-outputfolder = r"/home/alexander/Dropbox/PionPhotoProduction/results-3He/2bod/132MeV/"
+# 4He
+densfolder = r"/home/alexander/OneDrive/densities-4He/2Ndensities/133MeV/60deg/"
+outputfolder = r"/home/alexander/Dropbox/PionPhotoProduction/results-4He/133MeV/2bod/"
 rt.Odelta = 4
-rt.j12max = 2
-
+rt.j12max = 1
+rt.batch = 1
 rt.executableName = r"run.twobodyvia2Ndensity.PionPhotoProdThresh"
 rt.main(densfolder, outputfolder)

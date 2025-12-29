@@ -15,7 +15,7 @@ numDiagrams = 1
 
 basefile = ".pyinput.dat"  # system auto creates this file
 folder = r"/home/alexander/OneDrive/densities-3He/2Ndensities/132MeV/"
-outputfolder = r"/home/alexander/Dropbox/PionPhotoProduction/results-3He/2bod/132MeV/"
+outputfolder = r"/home/alexander/Dropbox/PionPion/results-3He/2bod/thresh/j12=1/"
 
 if folder[-1] != r"/":
     folder += r"/"
@@ -32,7 +32,7 @@ def main():
     remove = input("remove small output files currently in directory? [y/n] ")
     if remove.lower() == "y":
         removeSmallOut()
-
+    system("make clean;make fast")
     writepyInput()
     writeParCommands()
     # tmp = listdir(folder)
@@ -63,9 +63,7 @@ def main():
         if not isfile(output):
             j += 1
             runfile = basefile[:-4] + "-" + str(i) + ".dat"  # input file for fortran
-            runcommand.append(
-                r'"./run.twobodyvia2Ndensity.PionPhotoProdThresh ' + runfile + r'"'
-            )
+            runcommand.append(r'"./run.twobodyvia2Ndensity.PionPion ' + runfile + r'"')
 
             system("cp " + basefile + " " + runfile)
             omega = str(getomega(f))
@@ -119,7 +117,7 @@ YYY YYY 15                             thetaLow, thetaHigh, thetaStep
 OUTPUT
 INPUT
 cm_ymmetry_verbos                     frame, symmetry, verbosity of STDOUT
-Odelta4_j12max=2_numDiagrams=1 		    Calctype, maximal total ang mom in (12) subsystem, and number of diagrams
+Odelta4_j12max=1_numDiagrams=1 		    Calctype, maximal total ang mom in (12) subsystem, and number of diagrams
 14 2 		    		    NP12A, NP12B
 1.1 5.0 15.0 			    P12A, P12B, P12C
 2 50     			    AngularType12,(Nordth12 OR Nanggrid12),Nthbins12,Nordphi12,Nphibins12

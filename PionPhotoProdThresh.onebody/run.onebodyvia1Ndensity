@@ -23,7 +23,7 @@ foreach arg ( $files )
 	set startdatum = `date +%s`
 	./onebodyvia1Ndensity $arg | tee $temp.tmp
 	set enddatum = `date +%s`
-	set filename = `grep -e "Write output to file" $temp.tmp | sed s/Write\ output\ to\ file:\ //`
+	set filename = `grep -a -e "Write output to file" $temp.tmp | sed 's/.*Write output to file: *//' | sed 's/ *$//'`
         cat $temp.tmp >> $filename
 	echo "Production date: $datestring" >> $filename
 	set diffdatum = `expr $enddatum - $startdatum`

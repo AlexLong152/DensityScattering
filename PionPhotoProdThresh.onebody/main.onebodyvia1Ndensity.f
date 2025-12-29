@@ -480,16 +480,16 @@ c           tmpPlus and tmpMinus combines spin and isospin part of diagrams
                    tmp=(10**3)*K1N*(prot*PlusConst+neut*MinusConst)*Anucl*rho1b(rindx)!matrix element 
                    Result(ieps,twoMzp,twoMz)= Result(ieps,twoMzp,twoMz)+tmp
      &            
-c                   if (rindx.eq.1) then
-c                     write(*,*) ""
-c                     write(*,*) ""
-c                   end if
-c                   if (tmp.ne.c0) then
-c                   write(*,"(A,' ',F11.8,1X,SP,F11.8,'i',SS,A,I4,A,I4)",advance='no')
-c    &                  "mat=", tmp, ",  rindx=", rindx, ",  extQnum=", ieps
-c     
-c                   write(*,"(A,F10.8)") "   abs(rho1b(rindx)*mat)=  ",  abs(rho1b(rindx)*tmp)
-c                   end if
+                    if (rindx.eq.1) then
+                      write(*,*) ""
+                      write(*,*) ""
+                    end if
+                    if (tmp.ne.c0) then
+                    write(*,"(A,' ',F11.8,1X,SP,F11.8,'i',SS,A,I4,A,I4)",advance='no')
+     &                  "mat=", tmp, ",  rindx=", rindx, ",  extQnum=", ieps
+      
+                    write(*,"(A,F10.8)") "   abs(rho1b(rindx)*mat)=  ",  abs(rho1b(rindx)*tmp)
+                    end if
               end if ! L1N
 
             end do              !rindx   

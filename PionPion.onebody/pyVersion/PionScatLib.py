@@ -78,7 +78,7 @@ def getMmat(sqrtS, x, isospin=1, piCharge=0):
     g, h = getGH(sqrtS, x, isospin, piCharge)  # MeV^-1 units
     result = iden * g + h * matFactorH
     result = result * 8 * np.pi * sqrtS  # unitless
-    return result
+    return result / np.sqrt(2)
 
 
 def getGH(sqrtS, x, isospin=1, piCharge=0):

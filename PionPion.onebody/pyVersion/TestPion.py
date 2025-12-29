@@ -71,6 +71,20 @@ def main():
     # tidy up layout and show once
     fig.tight_layout()
     plt.show()
+    sqrtS = 1162
+    theta = 30
+    isospin = 1
+    piCharge = 1
+    x = np.cos(theta * np.pi / 180)
+    print(f"At sqrtS={sqrtS}, theta={theta},isopin={isospin},piCharge={piCharge}")
+    CS = pl.getCS(sqrtS, x, isospin, piCharge)
+    print("CS=", CS, "mb")
+    print("Now the matrix version")
+    mMat = pl.getMmat(sqrtS, x, isospin=isospin, piCharge=piCharge)
+    scalar = np.trace(np.dot(mMat, np.conjugate(mMat.T)))
+    CS2 = ((8 * np.pi * sqrtS) ** -2) * scalar
+    CS2 = CS2 * 10 * pl.MeVtofm**2
+    print("CS2=", CS2.real)
 
 
 def getData(piCharge, sqrtS):

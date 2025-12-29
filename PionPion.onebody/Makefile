@@ -60,7 +60,7 @@ INCS    := \
 # ─── final executable ─────────────────────────────────────────────────────────
 COMMAND := onebodyvia1Ndensity
 
-.PHONY: all clean test testMat
+.PHONY: all clean test testMat testGetMat testGetCS
 
 all: $(COMMAND)
 
@@ -71,20 +71,37 @@ $(COMMAND): $(OBJS)
 # Define test objects excluding the main program object
 TEST_OBJS := $(filter-out main.onebodyvia1Ndensity.o, $(OBJS))
 
-test: testCrossSec.o $(TEST_OBJS)
-	$(FC) -o testCrossSec testCrossSec.o $(TEST_OBJS) $(LDFLAGS)
-	chmod +x testCrossSec
 
-testMat: testGetMat.o $(TEST_OBJS)
+test: testGetMat.o $(TEST_OBJS)
 	$(FC) -o testGetMat testGetMat.o $(TEST_OBJS) $(LDFLAGS)
 	chmod +x testGetMat
+
+testGetMat: testGetMat.o $(TEST_OBJS)
+	$(FC) -o testGetMat testGetMat.o $(TEST_OBJS) $(LDFLAGS)
+	chmod +x testGetMat
+
+testGetCS: testGetCS.o $(TEST_OBJS)
+	$(FC) -o testGetCS testGetCS.o $(TEST_OBJS) $(LDFLAGS)
+	chmod +x testGetCS
+
+# Special rule for PionScat that depends on parseFile module
+PionScat.o: PionScat.f $(INCS) parseFile.o
+	$(FC) $(FFLAGS) $< -o $@
+
+# Special rule for parseFile module (no special dependencies)
+parseFile.o: parseFile.f $(INCS)
+	$(FC) $(FFLAGS) $< -o $@
 
 # Special rule for main program that depends on PionScat module
 main.onebodyvia1Ndensity.o: main.onebodyvia1Ndensity.f $(INCS) PionScat.o
 	$(FC) $(FFLAGS) $< -o $@
 
-# Special rule for parseFile that depends on PionScat module
-parseFile.o: parseFile.f $(INCS) PionScat.o
+# Special rule for testGetMat that depends on PionScat module
+testGetMat.o: testGetMat.f PionScat.o
+	$(FC) $(FFLAGS) $< -o $@
+
+# Special rule for testGetCS that depends on PionScat module
+testGetCS.o: testGetCS.f PionScat.o
 	$(FC) $(FFLAGS) $< -o $@
 
 # compile any .f → .o if sources or .def files change
@@ -92,4 +109,4 @@ parseFile.o: parseFile.f $(INCS) PionScat.o
 	$(FC) $(FFLAGS) $< -o $@
 
 clean:
-	rm -f $(OBJS) $(COMMAND) testCrossSec testCrossSec.o testGetMat testGetMat.o
+	rm -f $(OBJS) $(COMMAND) testCrossSec testCrossSec.o testGetMat testGetMat.o testGetCS testGetCS.o *.mod

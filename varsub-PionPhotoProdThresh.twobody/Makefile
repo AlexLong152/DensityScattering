@@ -51,8 +51,25 @@ OBJS := $(OBJS_THIS) $(OBJS_TWOBODY) $(OBJS_COMMON)
 
 # Compiler and flags
 FC = mpif90
-FFLAGS = -O3 -fopenmp -g -c -Wall -Wno-tabs -ffixed-line-length-0 \
-  -ffpe-summary=none -mcmodel=large -fPIC -cpp -fcheck=all \
+
+# FFLAGS = -O1 -fopenmp -g -Wall -Wno-tabs -ffixed-line-length-0 \
+#   -ffpe-summary=none -mcmodel=large -fPIC -cpp -fcheck=all -fbacktrace \
+#   -finit-integer=-1000 -finit-real=inf -fallow-argument-mismatch \
+#   -I$(VAR_MODS) -I$(COMMON_DIR) -I/usr/local/hdf5/openmpi/include
+
+# FFLAGS_FAST = -O3 -fopenmp -g -c -Wall -Wno-tabs -ffixed-line-length-0 \
+#   -ffpe-summary=all -mcmodel=large -fPIC -cpp -fcheck=all -fbacktrace \
+#   -finit-integer=-1000 -finit-real=inf -fallow-argument-mismatch \
+#   -I$(VAR_MODS) -I$(COMMON_DIR) -I/usr/local/hdf5/openmpi/include
+#
+FFLAGS = -O1 -fopenmp -g -Wall -Wno-tabs -ffixed-line-length-0 \
+  -ffpe-summary=none -fPIC -cpp -fcheck=all -fbacktrace \
+  -finit-integer=-1000 -finit-real=nan -fallow-argument-mismatch \
+  -I$(VAR_MODS) -I$(COMMON_DIR) -I/usr/local/hdf5/openmpi/include
+
+
+FAST_FLAGS  = -O3 -fopenmp -Wall -Wno-tabs -ffixed-line-length-0 \
+  -ffpe-summary=none -fPIC -cpp -fbacktrace \
   -finit-integer=-1000 -finit-real=inf -fallow-argument-mismatch \
   -I$(VAR_MODS) -I$(COMMON_DIR) -I/usr/local/hdf5/openmpi/include
 
@@ -62,17 +79,21 @@ LDFLAGS = \
   -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 \
   -llapack -lgomp -ldl -lz -lsz
 
-.PHONY: all clean
+.PHONY: all clean fast
 
 all: $(COMMAND)
 	chmod +x $(COMMAND)
 
 $(COMMAND): $(OBJS)
-	$(FC) -o $@ $^ $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $@ $^ $(LDFLAGS)
 
 %.o: %.f
 	$(FC) $(FFLAGS) -c $< -o $@
 
+# Build an optimized version with FAST_FLAGS (same executable name)
+fast: clean
+	$(MAKE) -B FFLAGS="$(FAST_FLAGS)" all
+
 clean:
-	find . -name '*.o' -o -name '*.mod' -delete
+	find . \( -name '*.o' -o -name '*.mod' \) -delete
 	rm -f $(COMMAND)

@@ -293,10 +293,10 @@ c     end if
       call getF(x, sqrtS, 2, target, f2, MaxEll)
       call getF(x, sqrtS, 3, target, f3, MaxEll)
       call getF(x, sqrtS, 4, target, f4, MaxEll)
-      f1=cmplx(real(f1),0.d0)
-      f2=cmplx(real(f2),0.d0)
-      f3=cmplx(real(f3),0.d0)
-      f4=cmplx(real(f4),0.d0)
+c     f1=cmplx(real(f1),0.d0)
+c     f2=cmplx(real(f2),0.d0)
+c     f3=cmplx(real(f3),0.d0)
+c     f4=cmplx(real(f4),0.d0)
 
 
 c     Calculate cross product of kVec and epsVec
@@ -513,8 +513,8 @@ c     Define Pauli matrices
       sigmaX(1, 2) = dcmplx(1.0d0, 0.0d0)
       sigmaX(2, 1) = dcmplx(1.0d0, 0.0d0)
       
-      sigmaY(1, 2) = dcmplx(0.0d0, -1.0d0)
-      sigmaY(2, 1) = dcmplx(0.0d0, 1.0d0)
+      sigmaY(2, 1) = dcmplx(0.0d0, -1.0d0)
+      sigmaY(1, 2) = dcmplx(0.0d0, 1.0d0)
       
       sigmaZ(1, 1) = dcmplx(1.0d0, 0.0d0)
       sigmaZ(2, 2) = dcmplx(-1.0d0, 0.0d0)

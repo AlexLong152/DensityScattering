@@ -1,0 +1,6 @@
+a= (62 ± 4 ± 7) × 10^{-3}/m_pi
+From two and 3 nucleon terms:
+a=-26.1±7 x 10^-3 /m_pi
+
+From 1 nucleon:
+a=88±4 x 10^-3 /m_pi  page 15 right side, halfway down the text.

@@ -1,1 +1,0 @@
-/home/alexander/OneDrive/DensityScattering/tools/pionphoto/runfolder-twobody-pionphotop.py

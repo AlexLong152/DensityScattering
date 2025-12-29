@@ -248,7 +248,6 @@ c     hgrie June 2017: keep original filename: needed for replacements of energy
 
       thetaL=0.d0
       thetacm=0.d0
-      maxEll=4 ! MaxEll from 0 to 4
       
       sigmax(1,-1)=dcmplx(1.d0,0)
       sigmax(-1,1)=dcmplx(1.d0,0)
@@ -361,8 +360,10 @@ c           write(*,*) "extQnumlimit=", extQnumlimit
                   ! nuc(3:3)=piCharges(extQnum)
                   nuc(3:3)="0" !only looking at neutral pion photoproduction
 
+                  maxEll=0 ! MaxEll from 0 to 4
                   call getRawM(sqrtS,x , nuc, Mmat, Mnucl, sqrtSReal,MaxEll,eps(extQnum,:))
-c                 call getRawM(sqrtS-5.593d0,x , nuc, Mmat, Mnucl, sqrtSReal,MaxEll,eps(extQnum,:))
+c                 call getRawM(sqrtS-5.593d0,x , nuc, Mmat, Mnucl, sqrtSReal,MaxEll,eps(extQnum,:))!resulting scattering matrix imag to zero
+c                 call getRawM(sqrtS-3.885d0,x , nuc, Mmat, Mnucl, sqrtSReal,MaxEll,eps(extQnum,:))!imag mat elements to zero
 
                   tmpMat= Anucl*rho1b(rindx)*Mmat(twom1Np,twom1N)*(cmplx(0.d0,-1.d0,KIND=8))!matrix element
                   outputMat(extQnum,twoMzp,twoMz)= outputMat(extQnum,twoMzp,twoMz)+tmpMat

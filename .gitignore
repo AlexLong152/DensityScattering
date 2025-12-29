@@ -22,7 +22,6 @@
 common-densities/2Ndensity-module/testcompdens
 onebodyvia1Ndensity/onebodyvia1Ndensity
 twobodyvia2Ndensity/twobodyvia2Ndensity
-
 #Exclude .dat files in 1Ndensities: small, but too temporary to keep in repo
 densities-*/*/1Ndensities/*.dat
 densities-*/*/1Ndensities/*/*.dat
@@ -49,7 +48,7 @@ twobodyvia2Ndensity/output*/*
 
 #Exclude contents of results*/ folders -- these should not be part of code!
 results*/
-
+.calude/
 #Exclude all "working directories" which end on "-play"
 *-play/
 

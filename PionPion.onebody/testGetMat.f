@@ -34,9 +34,9 @@ c     Call getMat (returns matrix with 8*pi*sqrtSReal factor included)
 
 c     Output results in a format easy to parse from Python
 c     Format: real(mat[-1,-1]) imag(mat[-1,-1]) real(mat[-1,1]) ...
-      write(*,'(A,E23.15,1X,E23.15)') 'mat(-1,-1)=', resultmat(-1,-1)
-      write(*,'(A,E23.15,1X,E23.15)') 'mat(-1, 1)=', resultmat(-1, 1)
-      write(*,'(A,E23.15,1X,E23.15)') 'mat( 1,-1)=', resultmat( 1,-1)
-      write(*,'(A,E23.15,1X,E23.15)') 'mat( 1, 1)=', resultmat( 1, 1)
+      write(*,'(A,E23.15,1X,E23.15)') 'mat(-1,-1)=', resultmat(-1,-1)/sqrt(2.d0)
+      write(*,'(A,E23.15,1X,E23.15)') 'mat(-1, 1)=', resultmat(-1, 1)/sqrt(2.d0)
+      write(*,'(A,E23.15,1X,E23.15)') 'mat( 1,-1)=', resultmat( 1,-1)/sqrt(2.d0)
+      write(*,'(A,E23.15,1X,E23.15)') 'mat( 1, 1)=', resultmat( 1, 1)/sqrt(2.d0)
 
       end program testGetMat

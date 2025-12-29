@@ -28,7 +28,7 @@ c     rhoindx(alpha2N,alpha2Np) has units of fm³ [Andreas email 24 May 2018]
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 
-      subroutine read2Ndensity(densityFileName,Anucl,twoSnucl,omega,theta,j12max,P12MAG,AP12MAG,NP12,verbosity)
+      subroutine read2Ndensity(densityFileName,Anucl,twoSnucl,omega,theta,j12max,P12MAG,AP12MAG,NP12,verbosity,Edensity)
       
       USE CompDens              ! this needs module CompDens.mod
 
@@ -75,6 +75,7 @@ c
       integer,intent(in) :: Anucl
       integer,intent(in) :: twoSnucl
       integer,intent(in) :: verbosity         ! verbosity of stdoutout
+      real*8,intent(out) :: Edensity        ! energy (in MeV) and angle (in rad) of input file. Is input to subroutine
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     LOCAL VARIABLES:
 c      
@@ -424,7 +425,7 @@ c         end do                 ! ip12
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     perform checks that density file parameters match requested parameters -- exit if not.
-
+c        write(*,*) "varsub-read2Ndensity.f:428 omega=", omega 
          if (nsets.ne.1) then
             write(*,*) "*** ERROR: 2Ndensity file contains more than 1 energy/angle combination --- "
             write(*,*)             " --- THAT IS NOT YET IMPLEMENTED ---"
@@ -444,8 +445,12 @@ c     perform checks that density file parameters match requested parameters -- 
             write(*,'(A,F15.6,A)') "    theta - theta(2Ndensity) = ",(theta-thetaval)*180.0d0/Pi," deg"
             write(*,*) "-- Exiting."
             stop
-         else
+        else if (omega.ne.omval*hc) then
+            write(*,*)             "Angle matches 2Ndensity file, Energy almost matches, setting energy to density energy" 
+            Edensity=omega
+        else   
             write(*,*)             "   Energy and angle of 2Ndensity file match request." 
+            Edensity=omega
          end if
 
          if (j12max_rho.lt.j12max) then

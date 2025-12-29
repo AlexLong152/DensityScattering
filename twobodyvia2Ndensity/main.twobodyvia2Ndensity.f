@@ -217,6 +217,7 @@ c     if density file generated from a .gz, delete that temporary file after eac
 c     if downloaded and .gz, also delete the download.
 c     0: do not delete; 1: delete un-gz'd file; 2: delete downloaded and un-gz'd file 
       integer rmDensityFileLater 
+      real*8 ddelta
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     end OF VARIABLE DECLARATIONS, BEGINNING OF CODING

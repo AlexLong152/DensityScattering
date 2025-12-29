@@ -15,12 +15,8 @@ and p, p' is the nucleon momentum before and after
 import numpy as np
 from parseFile import getFileData
 from copy import copy
-from matplotlib import pyplot as plt
-from matplotlib import rcParams
 
-rcParams["text.usetex"] = True
-rcParams["font.family"] = "serif"
-
+MeVtofm = 197.3  # 1fm =(1/197.3) MeV^-1
 mpi = 134.97
 mpiPlus = 139.57
 mProton = 938.272
@@ -33,66 +29,21 @@ dataDict = getFileData()
 
 
 def main():
-    sqrtS = 1162
     isospin = 1
+    sqrtS = 1162
     piCharge = 1
     thetas = np.arange(0, 181, 30)
-    print("  theta      CS       Mat CS       Ratio")
-    for theta in thetas:
-        x = np.cos(theta * np.pi / 180)
-        # f, g = getGH(sqrtS, x, isospin, piCharge)
-        DSG = getcsGH(sqrtS, x, isospin, piCharge)
-        # f, g = getGH(sqrtS, x, isospin=1, piCharge=1)
-        MatDSG = getCS(sqrtS, x, isospin, piCharge)
-        ratio = DSG / MatDSG
-        print(f"{theta:7.2f}  {DSG:9.6f}   {MatDSG:9.6f},  {ratio:9.6f}")
+    print("  theta      CS       Mat CS")
+    for piCharge in [1, 0, -1]:
+        print(16 * "--")
+        print("Pion Charge=", piCharge)
+        for theta in thetas:
+            x = np.cos(theta * np.pi / 180)
+            CS = getCS(sqrtS, x, isospin, piCharge)
+            print(f"{theta:7.2f} |{CS:9.6f}  |{CS:9.6f}")
 
 
 def getCS(sqrtS, x, isospin=1, piCharge=0):
-    mat = getMat(sqrtS, x, isospin, piCharge)
-    matDag = dag(mat)
-    CrossSec = 10 * np.trace(np.dot(mat, matDag)).real / 4
-
-    # TODO:find where the missing factor of 2 comes from
-    # should get 2*2 spins for unpolarized target, what about the rest
-    # its possbile this factor should be in getMat instead
-    # But then it would have to be sqrt(2)
-    fudgeFactor = 2
-
-    return CrossSec * fudgeFactor
-
-
-def getMat(sqrtS, x, isospin=1, piCharge=0):
-    """
-    Parameters
-    ----------
-    sqrtS   : float
-      Center‐of‐mass energy (MeV)
-    x       : float
-      cos(θ)
-    isospin : int
-      Nucleon isospin (1=proton, −1=neutron)
-    piCharge: int
-      Pion charge (−1, 0, +1)
-    g, h = getGH(sqrtS, x, isospin, piCharge)
-    """
-    m1 = mpiDict[piCharge]  # pion mass (MeV)
-    m2 = mNuc[isospin]  # nucleon mass (MeV)
-
-    # q and qp are inital and final pion 3 momentum
-    _, qVec, qpVec = getKinematics(sqrtS, x, m1, m2, m1, m2)
-
-    qHat = normalize(qVec)
-    qpHat = normalize(qpVec)
-
-    matFactor = -1j * matDotVec(sigVec, np.cross(qpHat, qHat))
-
-    mat = iden * g + matFactor * h
-
-    return mat
-
-
-def getcsGH(sqrtS, x, isospin=1, piCharge=0):
     """
     Returns cross section in milibarns
     """
@@ -138,7 +89,7 @@ def getGH(sqrtS, x, isospin=1, piCharge=0):
         By Ericson and Weise. Return h/Sin(theta) instead of just h
     """
     twoIs = np.array([1, 3])
-    ells = np.arange(5, dtype=int)
+    ells = np.arange(8, dtype=int)
     charge2Idx = {1: 0, -1: 1, 0: 2}
     isoVecDict = {1: np.array([1, 0]), -1: np.array([0, 1])}
     isoVec = isoVecDict[isospin]  # e.g. [1,0] for proton, [0,1] for neutron
@@ -161,9 +112,9 @@ def getGH(sqrtS, x, isospin=1, piCharge=0):
         projII = projI[twoI][chargeIdx]  # 2×2 isospin matrix
 
         weight = float(np.dot(isoVec, np.dot(projII, isoVec)))
-        # print(f"For twoI={twoI}, weight=", weight)
+        # print("For twoI, isospin, piCharge=", twoI, isospin, piCharge, "weight=",weight)
 
-        # 4c) loop partial waves ℓ = 0…4
+        # 4c) loop partial waves ℓ = 0…7
         for ell in ells:
             fPlus = getF(qVec, twoI, ell, 1, sqrtS)  # f_{ℓ+}^{(I)} in fm
             fMinus = getF(qVec, twoI, ell, -1, sqrtS)  # f_{ℓ−}^{(I)} in fm
@@ -186,6 +137,19 @@ def getGH(sqrtS, x, isospin=1, piCharge=0):
 
 
 def getF(qVec, twoI, ell, sign, sqrtS):
+    # Even numbers are defined in the said-pi.txt file
+    assert sqrtS != 1300
+    diff = sqrtS % 2
+    x1 = sqrtS - diff
+    x2 = x1 + 2
+    y1 = getFAtValue(qVec, twoI, ell, sign, x1)
+    y2 = getFAtValue(qVec, twoI, ell, sign, x2)
+    m = (y1 - y2) / (x1 - x2)
+    yFinal = m * diff + y1
+    return yFinal
+
+
+def getFAtValue(qVec, twoI, ell, sign, sqrtS):
     """
     Calculate the partial wave amplitude. Returns f_{I,l} in units of fm
 
@@ -208,21 +172,27 @@ def getF(qVec, twoI, ell, sign, sqrtS):
         Partial wave amplitude
     """
     # TODO: interpolate S instead of taking nearest
-    sqrtSTmp = sqrtS / 2
-    sqrtStmp = int(np.round(sqrtSTmp))  # round to the nearest even number
-    sqrtStmp = 2 * sqrtStmp
+    # sqrtSTmp = sqrtS / 2
+    # sqrtStmp = int(np.round(sqrtSTmp))  # round to the nearest even number
+    # sqrtStmp = 2 * sqrtStmp
     # print("sqrtStmp=", sqrtStmp)
     # print("2*ell+sign=", 2 * ell + sign)
     try:
-        deltaRe, sr = dataDict[ell][twoI][2 * ell + sign][sqrtStmp]
+        deltaRe, sr = dataDict[ell][twoI][2 * ell + sign][sqrtS]
+        # print("sqrtS=", sqrtS)
+        # print("deltaRe=", deltaRe * 180 / np.pi)
+        # print("sr=", sr, "\n")
     except KeyError:
+        assert ell == 0
+        assert sign == -1, f"sign={sign}"
+        # when ell=0, sign=-1, 2*ell+sign=-1 and the dataDict isn't defined
+        # because the partials waves aren't physical here, so set to zero
         deltaRe = 0
         sr = 0
 
     eta = np.sqrt(1 - sr)
     qAbs = vecAbs(qVec)
-    fOut1 = (eta * np.e ** (2j * deltaRe)) - 1
-    fOut1 = (1 / (2j * qAbs)) * fOut1  # now in units of MeV^-1
+    fOut1 = (eta * np.exp(2j * deltaRe) - 1) / (2j * qAbs)  # now in units of MeV^-1
     fOut1 = fOut1 * MeVtofm
     # deltaIm = np.log(eta) / (-2)
     # delta = deltaRe + deltaIm * 1j
@@ -325,7 +295,7 @@ def getKinematics(sqrtS, x, m1, m2, m3, m4):
 
     E3cm = (S + m3**2 - m4**2) / (2 * sqrtS)
     E4cm = (S - m3**2 + m4**2) / (2 * sqrtS)
-
+    assert E1cm + E2cm == E3cm + E4cm
     # print("E3 numer",(S+m3**2 - m4**2))
     # print("E4 numer",(S-m3**2 + m4**2))
     # # assert E3cm==E1cm
@@ -345,8 +315,8 @@ def getKinematics(sqrtS, x, m1, m2, m3, m4):
     absp = np.sqrt(E1cm**2 - m1**2)
     qVec = np.array([0, 0, 1]) * absp
 
-    # absQ = np.sqrt(E2cm**2 - m2**2)
-    # pVec = np.array([0, 0, -1]) * absQ
+    absQ = np.sqrt(E2cm**2 - m2**2)
+    pVec = np.array([0, 0, -1]) * absQ
 
     absQp = np.sqrt(E3cm**2 - m3**2)
     qpVec = np.array([0, np.sqrt(1 - x**2), x]) * absQp
@@ -354,8 +324,11 @@ def getKinematics(sqrtS, x, m1, m2, m3, m4):
     # abskp = np.sqrt(E4cm**2 - m4**2)
     # kpVec = np.array([0, np.sqrt(1 - x**2), x]) * abskp
 
-    # abspp = np.sqrt(Enucl**2 - mN**2)
-    # qVec = np.array([0, np.sin(x), np.cos(x)]) * absQ
+    abskp = np.sqrt(E4cm**2 - m4**2)
+    kpVec = np.array([0, np.sqrt(1 - x**2), x]) * -1 * abskp
+
+    diffs = qVec + pVec - (qpVec + kpVec)
+    assert np.max(abs(diffs)) < 1e-6
 
     return S, qVec, qpVec
 
@@ -469,18 +442,19 @@ def legP(x, n, deriv=0):
                 return (1 / 8) * (15 * x - 70 * x**3 + 63 * x**5)
             case 6:
                 return (1 / 16) * (231 * x**6 - 315 * x**4 + 105 * x**2 - 5)
+            case 7:
+                return (-35 * x + 315 * x**3 - 693 * x**5 + 429 * x**7) / 16
+            case 8:
+                return (
+                    35 - 1260 * x**2 + 6930 * x**4 - 12012 * x**6 + 6435 * x**8
+                ) / 128
             case _:
                 raise ValueError(f"legendreP not implimented for given n={n}")
     elif deriv == 1:
         match n:
-            case -1:
-                return 0
-            case 0:
+            case -1 | 0:
                 return 0
             case 1:
-                # tmp = np.zeros(len(x))
-                # tmp[:] = 1.0
-                # return tmp
                 return 1
             case 2:
                 return 3 * x
@@ -492,21 +466,17 @@ def legP(x, n, deriv=0):
                 return (15 - 210 * x**2 + 315 * x**4) / 8
             case 6:
                 return (693 * x**5) / 8 - (315 * x**3) / 4 + (105 * x) / 8
+            case 7:
+                return (-35 + 945 * x**2 - 3465 * x**4 + 3003 * x**6) / 16
+            case 8:
+                return (-2520 * x + 27720 * x**3 - 72072 * x**5 + 51480 * x**7) / 128
             case _:
                 raise ValueError(f"legendreP not implimented for given n={n}")
     elif deriv == 2:
         match n:
-            case -1:
-                return 0
-            case 0:
-                return 0
-            case 1:
+            case -1 | 0 | 1:
                 return 0
             case 2:
-                # tmp = np.zeros(len(x))
-                # tmp[:] = 3.0
-                # return tmp
-                # print("about to return 3")
                 return 3
             case 3:
                 return 15 * x
@@ -516,13 +486,13 @@ def legP(x, n, deriv=0):
                 return (-420 * x + 1260 * x**3) / 8
             case 6:
                 return (3465 * x**4) / 8 - (945 * x**2) / 4 + 105 / 8
+            case 7:
+                return (1890 * x - 13860 * x**3 + 18018 * x**5) / 16
+            case 8:
+                return (-2520 + 83160 * x**2 - 360360 * x**4 + 360360 * x**6) / 128
             case _:
                 raise ValueError(f"legendreP not implimented for given n={n}")
-    # print("deriv=", deriv)
-    # print("x=", x)
-    # print("n=", n)
     raise ValueError("something went badly wrong")
-    # return 0
 
 
 def vecAbs(v1):
@@ -680,7 +650,6 @@ projI = {1: P1, 3: P3}
 
 for i in range(3):
     assert (P3[i] + P1[i] == np.eye(2)).all()
-MeVtofm = 197.3  # 1fm =(1/197.3) MeV^-1
 
 if __name__ == "__main__":
     main()

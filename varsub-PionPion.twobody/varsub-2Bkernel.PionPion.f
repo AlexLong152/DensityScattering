@@ -247,7 +247,7 @@ c     write(*,*) "DEBUG INPUT: kpVec=", kpVec
 c       uVec=qVec=pVec-ppVec+kVec/2+kpVec/2
         ppVec=pVec-uVec+(kVec+kpVec)/2
 c       write(*,*) "DEBUG: ppVec=", ppVec
-        Jacobian=1.d0!check this
+        Jacobian=-1.d0!check this
       else
           ppVec=uVec
           Jacobian=1.d0

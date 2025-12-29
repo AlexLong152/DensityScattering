@@ -1,0 +1,206 @@
+ cm omega =    132.59999999999999      thetacm =    60.000000000000000     
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+( -0.53693330651703619E-01+0.28443972339675742E-09i)
+(  0.15396192280674487E+02-0.10568395265016061E-06i)
+(  0.15396014076009926E+02+0.10567256858674548E-06i)
+(  0.53431453845818114E-01+0.27687546336204496E-09i)
+(  0.36951387416268392E-10+0.11880814071352079E-01i)
+( -0.10063347689303118E-06-0.15314952220841176E+02i)
+( -0.10062132034243355E-06+0.15314764028519475E+02i)
+( -0.31475604997499142E-10+0.11647085529148929E-01i)
+(  0.12114976039979323E+02+0.37145707668057178E-07i)
+( -0.21919181242577846E-01+0.37887068123862685E-09i)
+( -0.22024093504508777E-01-0.37917735611209091E-09i)
+( -0.12114973993389439E+02+0.37159115846264995E-07i)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ ================================================================================
+ Twobody Contributions to Few-Nucleon Processes Calculated Via 2N-Density Matrix
+ ================================================================================
+    Mantle Code Version 1.0
+       Alexander Long/hgrie starting November 2023   
+       based on Compton density code: D. Phillips/A. Nogga/hgrie starting August 2020
+       based on 3He Compton codes: D. Phillips/A. Nogga/hgrie starting May 2018
+                                   D. Phillips/B. Strasberg/hgrie starting June 2014
+                                   with A. Margaryan 2016-17, modifying codes by D. Shukla 2007/8
+    Lowest beam energy           =    132.59999999999999      MeV
+    Highest beam energy          =    132.59999999999999      MeV
+    Energy step from low to high =    15.000000000000000      MeV
+    Lowest theta                 =    60.000000000000000      deg
+    Highest theta                =    60.000000000000000      deg
+    Theta step from low to high  =    30.000000000000000      deg
+ First take on output filename (placeholders to be replaced below): 
+       Test-out-jacobian=-1.dat
+ First take on density filename (placeholders to be replaced below): 
+       /home/alexander/OneDrive/densities-3He/2Ndensities/132MeV/twobody-3He.132MeV-060deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG0.000setNtotmax00omegaH00.denshash=ebcf00005072b8042425e0f57af9b3bbb3995273ed88d3533d4e1e058562dac3.v2.0.h5
+   Target Nucleus: 3He, Anucl =  3, spin Snucl =  1/2 , mass Mnucl =  2808.400    MeV
+ Input and output in centre-of-mass frame.
+ Number of external quantum numbers set to extQnumlimit =    3
+ Calculate all  12 amplitudes independently, not using symmetry() of process.
+ O(e delta²)=O(Q³) calculation. (12) subsystem is (pn) since only charged MECs.
+ Integration parameters of (12) subsystem:
+ Total angular momentum in (12) subsystem set to j12max =    1
+Number of diagrams set to numDiagrams=   1
+ Radial Integration in (12) subsystem:
+   total of NP12 = NP12A+NP12B =   16 points
+    1 bin with hyperbolic map: (NP12A = 14) points:
+       (NP12A/2 =  7) points in p12 interval [0; (P12A =     1.0000)] fm^-1
+       (NP12A/2 =  7) points in p12 interval [(P12A =     1.0000);(P12B =     5.0000)] fm^-1
+    1 bin with linear map: (NP12B= 2) points in p12 interval [(P12B =     5.0000);(P12C =    15.0000)] fm^-1
+   NP12p == ( NP12A+NP12B =   16) cannot be dialled.
+ Angular Integration in (12) subsystem
+    by Lebedev-Laikov for theta & phi combined:
+    ==> preliminary size of solid angle grid Nanggrid12(set to Nordth12) =   50 points.
+    Nthbins12, Nordphi12, Nphibins12 have no meaning.
+ ADDITIONAL COMMENTS:_PionPhotoProdThresh.v2.0
+ Write output to file: Test-out-jacobian=-1.dat
+ LebedevLaikov:
+     Solid angle grid size:           50
+           #   theta [deg], phi [deg], angular weight (sums to 4\pi)
+           1   89.999997495521924        0.0000000000000000       0.15957296462286086     
+           2   89.999997495521924        179.99999499104382       0.15957296462286086     
+           3   89.999997495521924        89.999997495521924       0.15957296462286086     
+           4   89.999997495521924       -89.999997495521924       0.15957296462286086     
+           5   0.0000000000000000        0.0000000000000000       0.15957296462286086     
+           6   179.99999499104382        0.0000000000000000       0.15957296462286086     
+           7   89.999997495521924        44.999998747760955       0.28368527044064151     
+           8   89.999997495521924       -44.999998747760955       0.28368527044064151     
+           9   89.999997495521924        134.99999624328285       0.28368527044064151     
+          10   89.999997495521924       -134.99999624328285       0.28368527044064151     
+          11   44.999998747760955        89.999997495521924       0.28368527044064151     
+          12   134.99999624328285        89.999997495521924       0.28368527044064151     
+          13   44.999998747760955       -89.999997495521924       0.28368527044064151     
+          14   134.99999624328285       -89.999997495521924       0.28368527044064151     
+          15   44.999998747760955        0.0000000000000000       0.28368527044064151     
+          16   44.999998747760955        179.99999499104382       0.28368527044064151     
+          17   134.99999624328285        0.0000000000000000       0.28368527044064151     
+          18   134.99999624328285        179.99999499104382       0.28368527044064151     
+          19   54.735608794088265        44.999998747760955       0.26507188752293587     
+          20   125.26438619695554        44.999998747760955       0.26507188752293587     
+          21   54.735608794088265       -44.999998747760955       0.26507188752293587     
+          22   125.26438619695554       -44.999998747760955       0.26507188752293587     
+          23   54.735608794088265        134.99999624328285       0.26507188752293587     
+          24   125.26438619695554        134.99999624328285       0.26507188752293587     
+          25   54.735608794088265       -134.99999624328285       0.26507188752293587     
+          26   125.26438619695554       -134.99999624328285       0.26507188752293587     
+          27   25.239401118328587        44.999998747760955       0.25350561795174759     
+          28   154.76059387271525        44.999998747760955       0.25350561795174759     
+          29   25.239401118328587       -44.999998747760955       0.25350561795174759     
+          30   154.76059387271525       -44.999998747760955       0.25350561795174759     
+          31   25.239401118328587        134.99999624328285       0.25350561795174759     
+          32   154.76059387271525        134.99999624328285       0.25350561795174759     
+          33   25.239401118328587       -134.99999624328285       0.25350561795174759     
+          34   154.76059387271525       -134.99999624328285       0.25350561795174759     
+          35   72.451597370058309        18.434948309922838       0.25350561795174759     
+          36   72.451597370058309        161.56504668112098       0.25350561795174759     
+          37   107.54839762098548        18.434948309922838       0.25350561795174759     
+          38   107.54839762098548        161.56504668112098       0.25350561795174759     
+          39   72.451597370058309       -18.434948309922838       0.25350561795174759     
+          40   72.451597370058309       -161.56504668112098       0.25350561795174759     
+          41   107.54839762098548       -18.434948309922838       0.25350561795174759     
+          42   107.54839762098548       -161.56504668112098       0.25350561795174759     
+          43   72.451597370058309        71.565049185599037       0.25350561795174759     
+          44   72.451597370058309       -71.565049185599037       0.25350561795174759     
+          45   72.451597370058309        108.43494580544476       0.25350561795174759     
+          46   72.451597370058309       -108.43494580544476       0.25350561795174759     
+          47   107.54839762098548        71.565049185599037       0.25350561795174759     
+          48   107.54839762098548       -71.565049185599037       0.25350561795174759     
+          49   107.54839762098548        108.43494580544476       0.25350561795174759     
+          50   107.54839762098548       -108.43494580544476       0.25350561795174759     
+ Sum of all angular weights (expect 4Pi) =   0.99999999999999933      *4Pi
+ ***************************** END OF INITIALISATION *****************************
+ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+ Incoming energies (rounded) =          132  MeV
+ Number of Angles Nangles         =            1
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Calculating amps: theta =   60.000000000000000      deg: angle #           1
+    Now looking for density file...
+    Density file name generated from energy & angle: /home/alexander/OneDrive/densities-3He/2Ndensities/132MeV/twobody-3He.132MeV-060deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG0.000setNtotmax00omegaH00.denshash=ebcf00005072b8042425e0f57af9b3bbb3995273ed88d3533d4e1e058562dac3.v2.0.h5
+       Density file exists, good.
+ *********************** 2N DENSITY MATRIX PARAMETERS ***************************
+    Density filename does not contain row number.
+ Density file has hashtag:      ebcf00005072b8042425e0f57af9b3bbb3995273ed88d3533d4e1e058562dac3
+ hdf tools version: 
+ HDFinit: Using standard driver in HDF for all reading.
+ HDFinit: Using standard driver in HDF for all writing.
+ just closed meshpoints.dat
+ Initamp version: 
+ P12 grid read in from file
+p12 read parameters:  p1=   0.100000E+01 p2=   0.500000E+01 p3=   0.180000E+02 n1=   44 n2=   12 n_ges=   56
+j12max_rho =    5
+mjtot      =   -1...   1
+ Sets in file:
+ set number     energy [MeV]     scatt. angle [deg]
+      1               131.86                59.98
+    Finished reading bookkeeping information. Starting to read data sets.
+ Finished reading dataset of 2Ndensity.
+ Computing Form Factors of NN pairs using densities grid, normalised to F_pairs(q²=0)=1 for A=3,4; =2S+1 else.
+       q [fm^-1]      F_nn           F_np           F_pp           F_pairs
+FF:    0.668014E+00  -0.218460E-06   0.629256E+00   0.317692E+00   0.946948E+00
+Calculation of rho for ...
+  omega     =    0.131857E+03
+  qval      =    0.131817E+03
+  thetaval  =    0.599800E+02
+  thetaqval =    0.119990E+03
+ Computing Form Factors of NN Pairs using integration and j12max from input file, normalised to F_pairs(q²=0)=1.
+ Total # pairs:  3    nn             np             pp             pairs
+ Set #  1: q =    0.66801 MeV
+  Form Factors:       0.000000       0.620172       0.307232       0.927404
+  Eff. # pairs:       0.000000       1.860516       0.921697       2.782213
+ Angle matches 2Ndensity file, Energy almost matches, setting energy to density energy
+      j12max     =    1
+      j12max2N   =    5
+    2Ndensity file covers requested j12max. Proceeding with j12max =    1
+ --------------------------------------------------------------------------------
+ Kernel: Twobody Pion Photoproduction at Threshold
+ --------------------------------------------------------------------------------
+    Kernel Code Version 1.0
+       Alexander Long/hgrie starting November 2023   
+
+ *********Now convoluting 2N helicity amplitudes with 2N density matrix.*********
+ Output: F_{L/T} ε.S^Mprime_M = < Mprime | kernel | M > Lenkewitz Eur. Phys. J. A (2013) 49:20 eq (10)
+         with ε: incoming-photon polarisation, S: nucleus spin; [F_{L/T}]=[fm]¯¹
+         Mapping of extQnum: 1 = ε_x, 2 = ε_y (both transversal); 3 = ε_z (longitudinal)
+         No symmetries used.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Result(extQnum=   1,twoMzp=   1, twoMz=   1):   -0.0536933306517036191  +0.0000000002844397234 i
+Result(extQnum=   1,twoMzp=   1, twoMz=  -1):   15.3961922806744873071  -0.0000001056839526502 i
+Result(extQnum=   1,twoMzp=  -1, twoMz=   1):   15.3960140760099264412  +0.0000001056725685867 i
+Result(extQnum=   1,twoMzp=  -1, twoMz=  -1):    0.0534314538458181137  +0.0000000002768754634 i
+Result(extQnum=   2,twoMzp=   1, twoMz=   1):    0.0000000000369513874  +0.0118808140713520787 i
+Result(extQnum=   2,twoMzp=   1, twoMz=  -1):   -0.0000001006334768930 -15.3149522208411763557 i
+Result(extQnum=   2,twoMzp=  -1, twoMz=   1):   -0.0000001006213203424 +15.3147640285194750476 i
+Result(extQnum=   2,twoMzp=  -1, twoMz=  -1):   -0.0000000000314756050  +0.0116470855291489293 i
+Result(extQnum=   3,twoMzp=   1, twoMz=   1):   12.1149760399793233745  +0.0000000371457076681 i
+Result(extQnum=   3,twoMzp=   1, twoMz=  -1):   -0.0219191812425778461  +0.0000000003788706812 i
+Result(extQnum=   3,twoMzp=  -1, twoMz=   1):   -0.0220240935045087766  -0.0000000003791773561 i
+Result(extQnum=   3,twoMzp=  -1, twoMz=  -1):  -12.1149739933894391442  +0.0000000371591158463 i
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Mathematica-friendly output: all  3* 4 =   12 amplitudes (some related by symmetries):
+    [Sequence: extQnum∈[1;extQnumlimit] (outmost), Mzp∈[S;-S], Mz∈[S;-S] (innermost)]
+         {-.536933306517036191*10^(-01)+.284439723396757417*10^(-09)*I,+.153961922806744873*10^(+02)-.105683952650160606*10^(-06)*I,+.153960140760099264*10^(+02)+.105672568586745484*10^(-06)*I,+.534314538458181137*10^(-01)+.276875463362044963*10^(-09)*I,+.369513874162683924*10^(-10)+.118808140713520787*10^(-01)*I,-.100633476893031182*10^(-06)-.153149522208411764*10^(+02)*I,-.100621320342433551*10^(-06)+.153147640285194750*10^(+02)*I,-.314756049974991424*10^(-10)+.116470855291489293*10^(-01)*I,+.121149760399793234*10^(+02)+.371457076680571782*10^(-07)*I,-.219191812425778461*10^(-01)+.378870681238626851*10^(-09)*I,-.220240935045087766*10^(-01)-.379177356112090910*10^(-09)*I,-.121149739933894391*10^(+02)+.371591158462649951*10^(-07)*I}
+ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+ *** Wrote output to file: Test-out-jacobian=-1.dat
+Production date: 2025-11-15 14:10:56-05:00
+Real Time used: 2322 seconds on host alexander-Desktop
+**************************************************
+*********            INPUT FILE          *********
+**************************************************
+132.6 132.6 15                           omegaLow, omegaHigh, omegaStep
+060 060 30                             thetaLow, thetaHigh, thetaStep
+Test-out-jacobian=1.dat
+'/home/alexander/OneDrive/densities-3He/2Ndensities/132MeV/twobody-3He.132MeV-060deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG0.000setNtotmax00omegaH00.denshash=ebcf00005072b8042425e0f57af9b3bbb3995273ed88d3533d4e1e058562dac3.v2.0.h5'
+nosymmetry_verbos_extQnumlimit=3                     frame, symmetry, verbosity of STDOUT
+Odelta2_j12max=1_numDiagrams=1 		    Calctype, maximal total ang mom in (12) subsystem, and number of diagrams
+14 2 		    		    NP12A, NP12B
+1.0 5.0 15 			    P12A, P12B, P12C
+2 50      			    AngularType12,(Nordth12 OR Nanggrid12),Nthbins12,Nordphi12,Nphibins12
+COMMENTS:_PionPhotoProdThresh.v2.0
+# in density filename, code replaces XXX and YYY automatically by energy and angle.
+#results/ezsub-1-sub=false.dat
+# no difference between this run and finite-test1.dat except NP12A

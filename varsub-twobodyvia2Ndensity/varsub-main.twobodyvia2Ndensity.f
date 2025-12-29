@@ -56,10 +56,11 @@ c     --------------------------------------------------------------------------
 c                                   "mantle" code                                                                   "kernel" code
 c
 c     ===> Overall units of output are MeV^(3-n) for kernel with base units MeV^-n !!!!
-c 
+c     ===> The rest of the code besides the kernel as units MeV^3. The scattering matrix has no units for 2->2 reactions. 
+c         ===> If you want to report back scattering matrix as the result, kernel needs to be in units MeV^-3
 c     The (HC)³/(2π)³ above (programmed in finalstatesums.twobodyvia2Ndensity.f 's "fact=...")
 c     converts between the fm units of the "mantle" and the MeV units of the "kernel".
-c     It ALSO includes ONE of the Fourier volumes 1/(2π)³. There is no second Fourier volume (killed by phase space). 
+c     It ALSO includes ONE of the Fourier volumes 1/(2π)³. There is no second Fourier volume (killed by phase space integrals which also have (2π)³ factor). 
 c     This guarantees that onebody and twobody have the same size and can simply be summed to get the total amplitude:
 c
 c     amplitude = onebody + twobody, without any relative factors (provided both provide output in same base units).
@@ -137,7 +138,7 @@ c     outfile-name of output file
 c     
       integer inUnitno,outUnitno
       
-      real*8 Egamma,kgamma,thetaL,thetacm,Elow,Ehigh,Einterval,Eprobe,Einput
+      real*8 Egamma,thetaL,thetacm,Elow,Ehigh,Einterval,Eprobe,Einput,Edensity!,kgamma
       
       real*8 thetaLow,thetaHigh,thetaInterval
       integer calctype,Nangles,Nenergy,ienergy,j ! number of energies/angles; index for energies/angles
@@ -148,7 +149,7 @@ c
       integer Anucl             ! target nucleus mass number
       integer twoSnucl          ! 2 x target nucleus spin
       real*8 Mnucl               ! mass of target nucleus
-      integer ii,jj,kk 
+c     integer ii,jj,kk 
       character*500 outfile
       character*500 densityFileName,originaldensityFileName ! second for multiple energies or angles
       
@@ -191,7 +192,7 @@ c     ----------|      |--------------
 c     -p12-k/2  --------   -p12p-kp/2
 c     
       ! real*8 k,kth,kphi,kp,kpth,kpphi,Qk,Qkth,Qkphi
-      real*8 t,omega
+c     real*8 t,omega
 c     
 c**********************************************************************
 c     
@@ -325,13 +326,8 @@ c     Loop over Energies
 c**********************************************************************
       do j=1,Nenergy
          Egamma=Elow+Einterval*(j-1)
-         EInput=Egamma
-         ! write(*,*) "varsub-main.twobodyvia2Ndensity.f:328 WARNING - overwriting input energy with fixed value for testing"  
-         ! Egamma=140
-
+          
 c        Report kernel process and version -- KernelGreeting() set in <process-dir>/2BKernel*.f
-         call KernelGreeting(Egamma,Eprobe,Mnucl,verbosity)!Eprobe is the value returned
-         Egamma=Eprobe
          ! omega=Eprobe
          ! write(*,*) "varsub-main.twobodyvia2Ndensity.f:335 Egamma=", Egamma 
          ! stop
@@ -369,11 +365,16 @@ c     hgrie June 2017: create name of 2Ndensity file for given energy and angle,
 c     define correct formats for energy and angle
 c     outsourced into subroutine common-densities/makedensityfilename.f
             densityFileName = originaldensityFileName
-            call makedensityfilename(densityFileName,Egamma,thetacm,rmDensityFileLater,verbosity)
+            call makedensityfilename(densityFileName,Egamma,thetacm,rmDensityFileLater,verbosity,Edensity)
 c**********************************************************************
 c     hgrie May 2017: read 2Ndensity
 c           the line below defines rho
-            call read2Ndensity(densityFileName,Anucl,twoSnucl,Einput,thetacm,j12max,P12MAG,AP12MAG,NP12,verbosity)
+            
+            call read2Ndensity(densityFileName,Anucl,twoSnucl,Egamma,thetacm,j12max,P12MAG,AP12MAG,NP12,verbosity,Edensity)
+            if (Elow.eq.Ehigh) then
+              Egamma=Edensity! just set the energy to the energy of the density if they are close! just set the energy to the energy of the density if they are close
+            end if
+            call KernelGreeting(Egamma,Eprobe,Mnucl,verbosity)!Eprobe is the value returned
 c           write(*,*) "In main.twobodyvia2Ndensity.f: shape(rhoRead)=",shape(rhoDensity) 
 c**********************************************************************      
 c     hgrie Aug/Sep 2020: delete the local .h5 file if one was generated from .gz

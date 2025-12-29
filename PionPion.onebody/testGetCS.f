@@ -28,6 +28,6 @@ c     Call getCS to compute cross section
       call getCS(sqrtS, x, isospin, piCharge, CrossSec, mNucl)
 
 c     Output result in a format easy to parse from Python
-      write(*,'(A,E23.15)') 'CrossSec=', CrossSec
+      write(*,'(A,E23.15)') 'CrossSec=', CrossSec/2.d0
 
       end program testGetCS
