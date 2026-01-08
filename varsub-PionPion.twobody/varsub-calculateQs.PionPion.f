@@ -84,8 +84,7 @@ c
       return
       end
 
-
-      subroutine calculateqsmass(p,pp,q,k,q1,kVec,kp,thetacm,mPion,mNucl,verbosity)
+      subroutine calculateqsmass(p,pp,kVec,kpVec,thetacm,mPion,mNucl,verbosity)
 c     Kinematics for pion photoproduction
 c     Derivation for the kinematics can be found in pionpionAngle.pdf
 c     OneDrive/thesis/Kinematics/pionpionAngle.pdf
@@ -98,16 +97,15 @@ c**********************************************************************
 c
 c  Input variables:
 c
-      real*8 p(3), pp(3), k,thetacm, mPion, mNucl
+      real*8 p(3), pp(3), kVec(3),mPion,mNucl, thetacm
       integer verbosity 
-c
+c  Output variables
+      real*8 kpVec(3)
 c**********************************************************************
 c
 c     temporary variables
     
-      real*8 Epion, mandalS, ENuc, kpsq, kpAbs, omegaThreshold
-      real*8 kp(3), q(3)
-      real*8 q1(3), kVec(3)
+      real*8 Epion, mandalS, ENuc, kpsq, kpAbs, omegaThreshold,k
 c**********************************************************************      
 c
 c     
@@ -120,7 +118,19 @@ c     VARIABLE DESCRIPTIONS
 c     -----------------------------------------------
 c     q: propgator for diagram A, note q=q_2, the second propogator for diagram B
 c     q1:First propogatior for diagram B, q1=q-k
+
+c     A full derivation of the kinematics can be found in the particle physics bookley (pdg)
+c     https://pdg.lbl.gov/2023/download/db2022.pdf pg 259, see figure 49.6
+      k=sqrt(DOT_PRODUCT(kVec,kVec))
       omegaThreshold=(mPion*(mPion+2*mNucl))/(2*(mPion+mNucl))
+      if (abs(k-omegaThreshold).le.2) then
+c             assume that if within 2MeV we are trying to run at threshold
+c             write(*,*) "reset k"
+          k=omegaThreshold
+      else
+        write(*,*) "kp^2<0 -> given masses/energy are incompatable"
+        stop
+      end if
       ENuc=sqrt((mNucl**2) + (k**2))
       mandalS=(ENuc + k)**2 !lab frame
       Epion=(mandalS+(mPion**2)-(mNucl**2))/(2*sqrt(mandalS))
@@ -128,15 +138,52 @@ c     q1:First propogatior for diagram B, q1=q-k
       kpAbs=sqrt(kpsq)
 
       kVec=(/0.d0,0.d0,k/)
-      kp=(/0.d0,kpAbs*sin(thetacm), kpAbs*cos(thetacm)/)
-      write(*,*) "pion photoproduction"
-      write(*,*) "In calculateQs.PionPion.f: kp=",kp 
-      q = (p-pp)+((kVec+kp)/2)
-      q1 = q-k
+      kpVec=(/0.d0,kpAbs*sin(thetacm), kpAbs*cos(thetacm)/)!without loss of generality - phi undetermined
+
+      if (abs(Epion-sqrt(mPion**2+kpsq)).ge.1) then
+        write(*,*) "something wrong in kinematics"
+        stop
+      end if
+
+      if (kpsq.lt.-10) then
+          write(*,*) "kp^2<0 -> given masses/energy are incompatable"
+          write(*,*) "This error should have been caught already.... something went wrong"
+          stop
+      end if
+
+      if (verbosity.ne.0) then
+          write(*,*) "called with wrong number of arguments"
+          error stop 
+      end if
+
+c     q = (p-pp)+((kVec+kp)/2)
+c     q1 = (p-pp)+((kp-kVec)/2)
+c     q1 = q-k
+
+c     write(*,*) "#################################################################################"
+c     write(*,*) "In calcmomenta.f: Epion=",Epion 
+c     write(*,*) "In calcmomenta.f: mandalS=",mandalS 
+c     write(*,*) "In calcmomenta.f: kpsq=",kpsq 
+c     write(*,*) "kp=",kp 
+c     write(*,*) "#################################################################################"
+c     write(*,*) "In calcmomenta kpAbs=", kpAbs
+c     write(*,*) "In calcmomenta q=", q
+c     write(*,*) ""
+c     write(*,*) "In common-densities/calcmomenta.f" 
+c     write(*,*) "Check equality of the next few"
+c     write(*,*) "Check from density: k?=omega:  k=", k
+c     write(*,*) ""
+c     write(*,*) "omega check with mandal: omega = k= s-M^2/(2sqrt(s))"
+c     write(*,*) "k?=(mandalS-M*M)/(2*sqrt(s))",k,"?=",(mandalS-mNucl*mNucl)/(2*sqrt(mandalS))
+c     write(*,*) ""
+c     write(*,*) "E_pion check with mandalstam"
+c     write(*,*) "E_pi= sqrt(m^2+k'^2)=(s+m^2-M^2)/(2sqrt(s)) -- Next line"
+c     write(*,*) sqrt(mPion**2+kpsq),"?=",(mandalS+mPion**2-mNucl**2)/(2*sqrt(mandalS))
+c     write(*,*) "#################################################################################"
+c     write(*,*) ""
       if (verbosity.eq.1000) continue
       return
       end 
-
       subroutine triangle(val,a,b,c)
       implicit none
       real*8 a,b,c, val

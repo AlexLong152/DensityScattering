@@ -16,75 +16,7 @@ c     specific to process considered
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
-      subroutine CalculateQs(qx,qy,qz,q12x,q12y,q12z,qpx,qpy,qpz,
-     &     qp12x,qp12y,qp12z,qppx,qppy,qppz,qpp12x,qpp12y,qpp12z,
-     &     qpppx,qpppy,qpppz,qppp12x,qppp12y,qppp12z,
-     &     qsq,qpsq,qppsq,qpppsq,q12sq,qp12sq,qpp12sq,qppp12sq,px,py,pz,
-     &     ppx,ppy,ppz,
-     &     k,thetacm,verbosity)
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c
-      implicit none
-c
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     INPUT VARIABLES:
-c
-      real*8,intent(in)  :: px,py,pz,ppx,ppy,ppz,k,thetacm
-      integer,intent(in) :: verbosity
-c
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     OUTPUT VARIABLES:
-c
-      real*8,intent(out) :: qx,qy,qz,qpx,qpy,qpz,qppx,qppy,qppz,qsq,qpsq,qppsq
-      real*8,intent(out) :: q12x,q12y,q12z,qp12x,qp12y,qp12z,qpp12x,qpp12y,qpp12z
-      real*8,intent(out) :: q12sq,qp12sq,qpp12sq
-      real*8,intent(out) :: qpppx,qpppy,qpppz, qpppsq
-      real*8,intent(out) :: qppp12x,qppp12y,qppp12z, qppp12sq
-c
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     LOCAL VARIABLES: none
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c
-      qx=px - ppx + k*dsin(thetacm)/2.d0
-      qy=py - ppy
-      qz=pz - ppz + k*(1.d0 + dcos(thetacm))/2.d0
-      qpppx=px + ppx - k*dsin(thetacm)/2.d0
-      qpppy=py + ppy
-      qpppz=pz + ppz - k*(1.d0 + 3.d0*dcos(thetacm))/6.d0
-      qppp12x=-px - ppx - k*dsin(thetacm)/2.d0
-      qppp12y=-py - ppy
-      qppp12z=-pz - ppz - k*(1.d0 + 3.d0*dcos(thetacm))/6.d0
-      q12x=-px + ppx + k*dsin(thetacm)/2.d0
-      q12y=-py + ppy
-      q12z=-pz + ppz + k*(1.d0 + dcos(thetacm))/2.d0
-      qpx=px - ppx + k*dsin(thetacm)/2.d0
-      qpy=py - ppy
-      qpz=pz - ppz + k*(dcos(thetacm)- 1.d0)/2.d0
-      qppx=px - ppx - k*dsin(thetacm)/2.d0
-      qppy=py - ppy 
-      qppz=pz - ppz + k*(1.d0 - dcos(thetacm))/2.d0
-      qp12x=-px + ppx + k*dsin(thetacm)/2.d0
-      qp12y=-py + ppy
-      qp12z=-pz + ppz + k*(dcos(thetacm) - 1.d0)/2.d0
-      qpp12x=-px + ppx - k*dsin(thetacm)/2.d0
-      qpp12y=-py + ppy
-      qpp12z=-pz + ppz + k*(1.d0 - dcos(thetacm))/2.d0
-      qsq=qx**2 + qy**2 + qz**2
-      q12sq=q12x**2 + q12y**2 + q12z**2
-      qpsq=qpx**2 + qpy**2 + qpz**2
-      qppsq=qppx**2 + qppy**2 + qppz**2
-      qp12sq=qp12x**2 + qp12y**2 + qp12z**2
-      qpp12sq=qpp12x**2 + qpp12y**2 + qpp12z**2
-      qpppsq=qpppx**2 + qpppy**2 + qpppz**2
-      qppp12sq=qppp12x**2 + qppp12y**2 + qppp12z**2
-
-
-      
-      if (verbosity.eq.1000) continue
-      return
-      end
-
-      subroutine calculateqsmass(p,pp,kVec,kpVec,thetacm,mPion,mNucl,verbosity)
+      subroutine calculateqsmass(kVec,kpVec,thetacm,mPion,mNucl,verbosity)
 c     Kinematics for pion photoproduction
 c     Derivation for the kinematics can be found in pionpionAngle.pdf
 c     OneDrive/thesis/Kinematics/pionpionAngle.pdf
@@ -97,10 +29,10 @@ c**********************************************************************
 c
 c  Input variables:
 c
-      real*8 p(3), pp(3), kVec(3),mPion,mNucl, thetacm
-      integer verbosity 
+      real*8, intent(in) :: kVec(3),mPion,mNucl, thetacm
+      integer, intent(in) ::verbosity 
 c  Output variables
-      real*8 kpVec(3)
+      real*8, intent(out) :: kpVec(3)
 c**********************************************************************
 c
 c     temporary variables
@@ -136,8 +68,6 @@ c             write(*,*) "reset k"
       Epion=(mandalS+(mPion**2)-(mNucl**2))/(2*sqrt(mandalS))
       kpsq=(((mandalS+mPion**2-mNucl**2)**2)/(4*mandalS))-mPion**2
       kpAbs=sqrt(kpsq)
-
-      kVec=(/0.d0,0.d0,k/)
       kpVec=(/0.d0,kpAbs*sin(thetacm), kpAbs*cos(thetacm)/)!without loss of generality - phi undetermined
 
       if (abs(Epion-sqrt(mPion**2+kpsq)).ge.1) then
@@ -151,10 +81,6 @@ c             write(*,*) "reset k"
           stop
       end if
 
-      if (verbosity.ne.0) then
-          write(*,*) "called with wrong number of arguments"
-          stop 
-      end if
 
 c     q = (p-pp)+((kVec+kp)/2)
 c     q1 = (p-pp)+((kp-kVec)/2)

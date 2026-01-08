@@ -94,10 +94,17 @@ c         write(*,*) "        Symmetry imposed: ME(extQnum=1) =  ME(extQnum=1) u
 c     
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+c     subroutine Calc2Bspinisospintrans(Kernel2B,ppVecs,Mnucl,
+c    &     extQnumlimit,ml12,ml12p,
+c    &     t12,mt12,t12p,mt12p,l12,s12,
+c    &     l12p,s12p,thetacm,Eprobe,pVec,uVec,numDiagrams,verbosity)
+
       subroutine Calc2Bspinisospintrans(Kernel2B,ppVecs,Mnucl,
-     &     extQnumlimit,ml12,ml12p,
-     &     t12,mt12,t12p,mt12p,l12,s12,
-     &     l12p,s12p,thetacm,Eprobe,pVec,uVec,calctype,numDiagrams,verbosity)
+     &      extQnumlimit,ml12,ml12p,
+     &      t12,mt12,t12p,mt12p,l12,
+     &      s12,l12p,s12p,thetacm,Eprobe,pVec,
+     &      uVec,numDiagrams,calctype,verbosity)
 c     !Alex Long 2024:
 c     !pVec, is the  physical momenta, but uVec is the generic integration variable which may be transformed
 
@@ -150,15 +157,14 @@ c              4th: NN spin of initial state: S=0 or S=1 (s12)
 c              5th: NN spin projection of initial state ms12      
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     INPUT VARIABLES:
-      
-      integer,intent(in) :: calctype
+
       real*8,intent(in)  :: thetacm,Eprobe
       integer,intent(in) :: extQnumlimit, numDiagrams
       integer,intent(in) :: t12,mt12,t12p,mt12p,l12,l12p,s12,s12p, ml12,ml12p
       real*8, intent(in) :: pVec(3), uVec(3)
 c!     real*8,intent(in)  :: px,py,pz,ppx,ppy,ppz
-               
-      integer,intent(in) :: verbosity
+
+      integer,intent(in) :: calctype, verbosity
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c!     LOCAL VARIABLES:
       integer diagNumber
@@ -174,9 +180,9 @@ c!     real*8 qVec(3)
       complex*16 Yl12(-5:5)
       complex*16 KernelA(1:extQnumlimit,0:1,-1:1,0:1,-1:1) !contribution just from diagram A
       real*8 m1,m2,m3,m4
-      integer diagNum
       real*8 sqrtS,prefactor
-c!     
+      real*8 ppVecA(3)
+c!
       mPion=mpi0
       ppVecs=0.d0
       k=real(sqrt(Eprobe*Eprobe - mPion*mPion),8)
@@ -185,7 +191,7 @@ c!
       Kernel2B=c0
       kernelA=c0
       dl12by2=(l12-l12p)/2.d0   !to check if l12-l12p is  even or odd
-c     
+c
       ppVec=uVec !just for the calculateqs call
 
 c      !subroutine calculateqsmass is available for kpVec calculation
@@ -193,14 +199,19 @@ c      !subroutine calculateqsmass is available for kpVec calculation
       m2=mPion
       m3=mNucl
       m4=mPion
+
       call calculateqs2Mass(pVec,ppVec,kVec,kpVec,m1,m2,m3,m4,thetacm,verbosity)
-      sqrtS=sqrt(mNucl*mNucl+k*k)+sqrt(mpion*mpion+k*k)
-      prefactor=8*Pi*sqrtS
-      ! write(*,*) "varsub-2Bkernel.PionPion.f:184 extQnumlimit=", extQnumlimit 
+      sqrtS=sqrt(mNucl*mNucl+k*k)+sqrt(mPion*mPion+k*k)
+c     assign prefactor=8*Pi*sqrtS to convert from scattering length to matrix element
+c     setting prefactor=1.d0=HC returns scattering length in fm
+      prefactor=8*Pi*sqrtS!matrix elements are unitless
+      prefactor=1000/mpi0!converts units for scattering length
       diagNumber=1
-      call getDiagAB(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,kpVec,t12,t12p,
-     &      mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
-c     KernelA is in units MeV^-4, prefactor is units MeV -> Kernel2B in units MeV^-3 -> Result in units MeV^0
+      ppVecA=0.d0
+      call getDiagABC(KernelA,pVec,uVec,ppVecA,kVec,kpVec,t12,t12p,
+     &      mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,mNucl,verbosity)
+      ppVecs(diagNumber,:)=ppVecA
+c     DIMENSIONAL ANALYSIS: KernelA computed in getDiagABC has units [MeV^-4]
       Kernel2B(diagNumber,:,:,:,:,:)=prefactor*KernelA
 
       end
@@ -208,7 +219,7 @@ c     KernelA is in units MeV^-4, prefactor is units MeV -> Kernel2B in units Me
 
 
 
-      subroutine getDiagAB(Kerneltmp,pVec,uVec,ppVecA,kVec,kpVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
+      subroutine getDiagABC(Kerneltmp,pVec,uVec,ppVecA,kVec,kpVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,mNucl,verbosity)
       implicit none
 
       include '../common-densities/constants.def'
@@ -217,14 +228,13 @@ c     Parameters-------------------------------------
 c     integer, intent(out) :: diagNumber
       real*8, intent(out) :: ppVecA(3)
       integer,intent(in) :: extQnumlimit
-      real*8, intent(in) :: pVec(3), kVec(3), uVec(3),kpVec(3)
+      real*8, intent(in) :: pVec(3), kVec(3), uVec(3),kpVec(3), mNucl
       integer, intent(in) :: t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12, verbosity
 
 c     Internal variables
       real*8 qVec(3), ppVec(3),ell(3), qpVec(3)!, r, theta, phi,
       complex*16 factorAsym, factorAasy
-      complex*16 factorBsym, factorBasy
-      complex*16 factorCsym, factorCasy
+      complex*16 factorBCsym, factorBCasy
 
       logical useTransform
       real*8 Jacobian, prefactor,reducedMass
@@ -238,16 +248,11 @@ c     write(*,*) "getDiagAB: extQnumlimit=", extQnumlimit, "s12p=", s12p, "s12="
           stop
       end if
 
-c     write(*,*) "DEBUG INPUT: pVec=", pVec
-c     write(*,*) "DEBUG INPUT: uVec=", uVec
-c     write(*,*) "DEBUG INPUT: kVec=", kVec
-c     write(*,*) "DEBUG INPUT: kpVec=", kpVec
       useTransform=.true.
       if (useTransform) then
 c       uVec=qVec=pVec-ppVec+kVec/2+kpVec/2
         ppVec=pVec-uVec+(kVec+kpVec)/2
-c       write(*,*) "DEBUG: ppVec=", ppVec
-        Jacobian=-1.d0!check this
+        Jacobian=-1.d0
       else
           ppVec=uVec
           Jacobian=1.d0
@@ -255,107 +260,74 @@ c       write(*,*) "DEBUG: ppVec=", ppVec
 
       qVec=pVec-ppVec+kVec/2+kpVec/2 !=uVec
       qpVec=qVec-kVec
-c     if (vecsquare(qVec-uVec).ge.1.0) then
-c         write(*,*) "Error in getDiagAB: qVec-uVec too large:",vecsquare(qVec-uVec)
-c         write(*,*) "qVec=", qVec
-c         write(*,*) "uVec=", uVec
-c         write(*,*) "kinemetics inconsistent,  stopping"
-c         stop
-c     end if
 
-c     write(*,*) "DEBUG: qVec=", qVec
-c     write(*,*) "DEBUG: DOT_PRODUCT(qVec,qVec)=", DOT_PRODUCT(qVec,qVec)
-c     write(*,*) "DEBUG: |qVec|=", sqrt(DOT_PRODUCT(qVec,qVec))
+c     fpi=92.42 MeV defined in constants.def
+c     Define from BKM review
+      reducedMass=mpi0/mNucl
+c     prefactor=(1/(32*(1+reducedMass)*(Pi*fpi)**4)) This is prefactor for scattering length
+c     DIMENSIONAL ANALYSIS: prefactor = mpi0^2/(4*fpi^4) = [MeV^2]/[MeV^4] = [MeV^-2]
+      prefactor = mpi0*mpi0/(2*(fpi**4.d0))
+      prefactor = prefactor*(1/(4*Pi))*((1+(mpi0/mNucl))**(-1))
 
-      ! q0=(mPion**2 + DOT_PRODUCT(qVec,qVec))
-      ! Epi=(mPion**2 + DOT_PRODUCT(kpVec,kpVec))
 
-c     fpi=92.42 defined in constants.def
-c     Define from BKM review 
-      reducedMass=mpi0/mNucleon
-c     prefactor=(1/(32*(1+reducedMass)*(Pi*fpi)**4))*((2*Pi)**3/HC)
-      prefactor=(1/(32*(1+reducedMass)*(Pi*fpi)**4))
-      
-      factorAsym=-4*mpi0*mpi0*prefactor*(1/(DOT_PRODUCT(qVec,qVec)))*((-1)*(-1)**(t12))
-      factorBsym=-1*gA*gA*prefactor/((DOT_PRODUCT(qVec,qVec)+mpi0**2))*((2*t12*(t12+1))-3)
-      factorCsym=gA*gA*prefactor*(1/((DOT_PRODUCT(qVec,qVec)+mpi0**2)**2))*((2*t12*(t12+1))-3)
-      ! factorDsym=-2*gA*gA*prefactor*mPion*mPion*(1/((DOT_PRODUCT(qVec,qVec)+mPion**2)**2))
+      if (DOT_PRODUCT(qVec,qVec).lt.1.d-10) then
+         write(*,*) "ERROR in getDiagABC: qVec is too small, will cause division by zero!"
+         write(*,*) "DOT_PRODUCT(qVec,qVec)=", DOT_PRODUCT(qVec,qVec)
+         stop
+      end if
 
+      factorAsym=prefactor*(1/(DOT_PRODUCT(qVec,qVec)))
+      factorBCsym=-1*gA*gA*prefactor*(1.d0/((DOT_PRODUCT(qVec,qVec)+mpi0**2)**2))
 
       factorAasy=factorAsym
-      factorBasy=factorBsym
-      factorCasy=factorCsym
-      ! factorDasy=factorDsym
-      ! write(*,*) "kVec=", kVec 
-      ! write(*,*) "kpVec=", kpVec 
-      ! write(*,*) "qVec=", qVec 
-      ! write(*,*) "prefactor=", prefactor 
-      ! write(*,*) "mpi0=", mpi0 
-      ! write(*,*) "factorAsym=", factorAsym 
-      ! write(*,*) "factorBsym=", factorBsym 
-      ! write(*,*) "factorCsym=", factorCsym 
+      factorBCasy=factorBCsym
+      if (factorAsym.ne.factorAsym) then
+        write(*,*) "factorAsym=", factorAsym 
+        stop
+      end if
+
+      if (factorBCsym.ne.factorBCsym) then
+        write(*,*) "factorBCsym=", factorBCsym 
+        stop
+      end if
       if ((t12 .eq. t12p) .and. (mt12 .eq. mt12p)) then
 
          if (s12p .eq. s12) then ! spin symmetric part only; s12-s12p=0 => l12-l12p is even
             call CalcKernel2BAsym(Kerneltmp,
      &           factorAsym,
-     &           s12p,s12,t12,mt12,extQnumlimit,verbosity)
+     &           s12p,s12,t12,mt12,t12p,mt12p,extQnumlimit,verbosity)
 
-            if (ANY(Kerneltmp.Ne.Kerneltmp)) then
-              write(*,*) "Sym A Kernel contains NaN values"
-              write(*,*) "factorAsym=", factorAsym 
-              stop
+            if (any(Kerneltmp.ne.Kerneltmp)) then
+              write(*,*) "Kernel was NaN after sym A stopping"
+              error stop
             end if
+            call CalcKernel2BBCsym(Kerneltmp,qVec,
+     &           factorBCsym,
+     &           s12p,s12,t12,mt12, t12p, mt12p, extQnumlimit,verbosity)
 
-            call CalcKernel2BBsym(Kerneltmp,qVec,
-     &           factorBsym,
-     &           s12p,s12,t12,extQnumlimit,verbosity)
-
-            if (ANY(Kerneltmp.Ne.Kerneltmp)) then
-              write(*,*) "Sym B Kernel contains NaN values"
-              stop
+            if (any(Kerneltmp.ne.Kerneltmp)) then
+              write(*,*) "Kernel was NaN after sym B stopping"
+              error stop
             end if
-            call CalcKernel2BCsym(Kerneltmp,qVec,
-     &           factorCsym,
-     &           s12p,s12,t12,extQnumlimit,verbosity)
-
-            if (ANY(Kerneltmp.Ne.Kerneltmp)) then
-              write(*,*) "Sym c Kernel contains NaN values"
-              stop
-            end if
-c           call CalcKernel2BDsym(Kernel2B,qVec,
-c    &           factorDsym,
-c    &           s12p,s12,mt12,extQnumlimit,verbosity)
-
          else                   !  spin anti-symmetric part only; s12 question: s12-s12p=±1 => l12-l12p is odd
 
+
             call CalcKernel2BAasy(Kerneltmp,
-     &           factorAsym,
-     &           s12p,s12,t12,extQnumlimit,verbosity)
+     &           factorAasy,
+     &           s12p,s12,t12,mt12,t12p,mt12p,extQnumlimit,verbosity)
 
-            if (ANY(Kerneltmp.Ne.Kerneltmp)) then
-              write(*,*) "Asym A Kernel contains NaN values"
-              stop
+            if (any(Kerneltmp.ne.Kerneltmp)) then
+              write(*,*) "Kernel was NaN after asym A stopping"
+              error stop
             end if
-            call CalcKernel2BBasy(Kerneltmp,qVec,
-     &           factorBsym,
-     &           s12p,s12,t12,extQnumlimit,verbosity)
+            call CalcKernel2BBCasy(Kerneltmp,qVec,
+     &           factorBCasy,
+     &           s12p,s12,t12,mt12, t12p, mt12p, extQnumlimit,verbosity)
 
-            if (ANY(Kerneltmp.Ne.Kerneltmp)) then
-              write(*,*) "Asym B Kernel contains NaN values"
-              stop
+            if (any(Kerneltmp.ne.Kerneltmp)) then
+              write(*,*) "Kernel was NaN after asym B stopping"
+              error stop
             end if
-            call CalcKernel2BCasy(Kerneltmp,qVec,
-     &           factorCsym,
-     &           s12p,s12,t12,extQnumlimit,verbosity)
-
-            if (ANY(Kerneltmp.Ne.Kerneltmp)) then
-              write(*,*) "Asym C Kernel contains NaN values"
-              stop
-            end if
-c           call CalcKernel2BDasy(Kernel2B,qVec,
-c    &           factorDsym,
-c    &           s12p,s12,mt12,extQnumlimit,verbosity)
          end if                 ! s12 question
       else                      ! t12!=t12p
         continue
@@ -363,7 +335,11 @@ c    &           s12p,s12,mt12,extQnumlimit,verbosity)
 
       ppVecA=ppVec
       Kerneltmp=Kerneltmp*Jacobian
-      end subroutine getDiagAB
+      if (any(Kerneltmp.ne.Kerneltmp)) then
+        write(*,*) "Kernel was Nan, stopping"
+        error stop
+      end if
+      end subroutine getDiagABC
 
 
 

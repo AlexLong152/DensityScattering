@@ -28,7 +28,7 @@ c
 
       subroutine CalcKernel2BAasy(Kernel2B,
      &           factor,
-     &           s12p,s12,t12,mt12,extQnumlimit,verbosity)
+     &           s12p,s12,t12,mt12,t12p,mt12p,extQnumlimit,verbosity)
 c********************************************************************
 c     
 c     Calculates diagram A
@@ -46,28 +46,29 @@ c      complex*16 Kernel2Bpx(0:1,-1:1,0:1,-1:1),Kernel2Bpy(0:1,-1:1,0:1,-1:1)
 c     
 c********************************************************************
 c     INPUT VARIABLES:
-c     
+c
       complex*16,intent(in) :: factor
-      integer,intent(in) :: s12p,s12,t12,mt12
+      integer,intent(in) :: s12p,s12,t12,mt12,t12p,mt12p
       integer,intent(in) :: extQnumlimit
       integer,intent(in) :: verbosity
-c     
+c
 c********************************************************************
 c     LOCAL VARIABLES:
-c      
+c
 c     complex*16 hold(0:1,-1:1,0:1,-1:1)
       integer Msp,Ms, extQnum
       real*8 tmp,tmp2, ddelta
-      real*8 isospin
+      complex*16 isospin
 
-      isospin=((-1)**(t12))*ddelta(mt12,0)
       do extQnum=1,extQnumlimit!no dependence on this either
+c     call PionPionA(t12,mt12,t12p,mt12p,extQnum,isospin)
+      isospin=1.d0
       do Msp=-s12p,s12p
       do Ms=-s12,s12
             tmp=ddelta(s12p,s12)
             tmp2=ddelta(Msp,Ms)
             Kernel2B(extQnum,s12p,Msp,s12,Ms) = Kernel2B(extQnum,s12p,Msp,s12,Ms) +
-     &              factor*isospin*tmp*tmp2
+     &              factor*tmp*tmp2*isospin
 
       end do
       end do
@@ -80,149 +81,48 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       return
       end
 
-      subroutine CalcKernel2BBasy(Kernel2B,qVec,
-     &           factor,
-     &           s12p,s12,t12,extQnumlimit,verbosity)
-c     
-c********************************************************************
-c     
-c     Calculates diagram B
-c     
-c********************************************************************
-c     
-      implicit none
-      include '../common-densities/constants.def'
-c     
-c********************************************************************
-c     INPUT/OUTPUT VARIABLES:
-c     
-      complex*16,intent(inout) :: Kernel2B(1:extQnumlimit,0:1,-1:1,0:1,-1:1)
-c      complex*16 Kernel2Bpx(0:1,-1:1,0:1,-1:1),Kernel2Bpy(0:1,-1:1,0:1,-1:1)
-c     
-c********************************************************************
-c     INPUT VARIABLES:
-c     
-      real*8, intent(in) :: qVec(3)
-      complex*16,intent(in) :: factor
-      integer,intent(in) :: s12p,s12,t12
-      integer,intent(in) :: extQnumlimit
-      integer,intent(in) :: verbosity
-c     
-c********************************************************************
-c     LOCAL VARIABLES:
-c      
-      complex*16 hold(0:1,-1:1,0:1,-1:1)
-      integer Msp,Ms, extQnum
-      real*8 isospin
-     
-      isospin=(2*t12*(t12+1))-3
-      call doublesigmaasy(hold,qVec(1),qVec(2),qVec(3),qVec(1),qVec(2),qVec(3),s12p,s12,verbosity)
-      do extQnum=1,extQnumlimit
-      do Msp=-s12p,s12
-      do Ms=-s12,s12
-            Kernel2B(extQnum,s12p,Msp,s12,Ms) = Kernel2B(extQnum,s12p,Msp,s12,Ms) + factor*hold(s12p,Msp,s12,Ms)*isospin
-      end do
-      end do
-      end do 
-c     
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-      if (verbosity.eq.1000) continue
-      return
-      end
 
-      subroutine CalcKernel2BCasy(Kernel2B,qVec,
+      subroutine CalcKernel2BBCasy(Kernel2B,qVec,
      &           factor,
-     &           s12p,s12,t12,extQnumlimit,verbosity)
+     &           s12p,s12,t12,mt12, t12p, mt12p, extQnumlimit,verbosity)
 c********************************************************************
-c     
+c
 c     Calculates diagram C
-c     
+c
 c********************************************************************
-c     
+c
       implicit none
       include '../common-densities/constants.def'
-c     
+c
 c********************************************************************
 c     INPUT/OUTPUT VARIABLES:
-c     
+c
       complex*16,intent(inout) :: Kernel2B(1:extQnumlimit,0:1,-1:1,0:1,-1:1)
 c      complex*16 Kernel2Bpx(0:1,-1:1,0:1,-1:1),Kernel2Bpy(0:1,-1:1,0:1,-1:1)
-c     
+c
 c********************************************************************
 c     INPUT VARIABLES:
-c     
+c
       real*8, intent(in) :: qVec(3)
       complex*16,intent(in) :: factor
-      integer,intent(in) :: s12p,s12,t12
+      integer,intent(in) :: s12p,s12,t12, mt12, t12p, mt12p
       integer,intent(in) :: extQnumlimit
       integer,intent(in) :: verbosity
-c     
+c
 c********************************************************************
 c     LOCAL VARIABLES:
-c      
+c
       complex*16 hold(0:1,-1:1,0:1,-1:1)
       integer Msp,Ms, extQnum
-      real*8 isospin
+      complex*16 isospin
 
-      isospin= (2*t12*(t12+1))-3
-      do extQnum=1,extQnumlimit
-      do Msp=-s12p,s12
-      do Ms=-s12,s12
-            call doublesigmaasy(hold,qVec(1),qVec(2),qVec(3),qVec(1),qVec(2),qVec(3),s12p,s12,verbosity)
-            Kernel2B(extQnum,s12p,Msp,s12,Ms) = Kernel2B(extQnum,s12p,Msp,s12,Ms) + factor*hold(s12p,Msp,s12,Ms)*isospin
-      end do
-      end do
-      end do 
-c     
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-      if (verbosity.eq.1000) continue
-      return
-      end
-
-
-      subroutine CalcKernel2BDasy(Kernel2B,qVec,
-     &           factor,
-     &           s12p,s12,mt12,extQnumlimit,verbosity)
-c     
-c********************************************************************
-c     
-c     Calculates diagram D
-c     
-c********************************************************************
-c     
-      implicit none
-      include '../common-densities/constants.def'
-c     
-c********************************************************************
-c     INPUT/OUTPUT VARIABLES:
-c     
-      complex*16,intent(inout) :: Kernel2B(1:extQnumlimit,0:1,-1:1,0:1,-1:1)
-c********************************************************************
-c     INPUT VARIABLES:
-c     
-      real*8, intent(in) :: qVec(3)
-      complex*16,intent(in) :: factor
-      integer,intent(in) :: s12p,s12,mt12
-      integer,intent(in) :: extQnumlimit
-      integer,intent(in) :: verbosity
-c     
-c********************************************************************
-c     LOCAL VARIABLES:
-c      
-      complex*16 hold(0:1,-1:1,0:1,-1:1)
-      integer Msp,Ms, extQnum
-      real*8 isospin
-
-      isospin=(-1)**(mt12)
       call doublesigmaasy(hold,qVec(1),qVec(2),qVec(3),qVec(1),qVec(2),qVec(3),s12p,s12,verbosity)
-
       do extQnum=1,extQnumlimit
+c     call PionPionBC(t12, mt12, t12p, mt12p, extQnum, isospin)
+      isospin=1.d0
       do Msp=-s12p,s12p
       do Ms=-s12,s12
             Kernel2B(extQnum,s12p,Msp,s12,Ms) = Kernel2B(extQnum,s12p,Msp,s12,Ms) + factor*hold(s12p,Msp,s12,Ms)*isospin
-
-            write(*,*) "pion isospin not implimented for diagram D, stopping"
-            stop
       end do
       end do
       end do 

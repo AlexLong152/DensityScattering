@@ -73,10 +73,16 @@ c         write(*,*) "        Symmetry imposed: ME(extQnum=1) =  ME(extQnum=1) u
 c     
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     subroutine Calc2Bspinisospintrans(Kernel2B,ppVecs,Mnucl,
+c    &     extQnumlimit,ml12,ml12p,
+c    &     t12,mt12,t12p,mt12p,l12,s12,
+c    &     l12p,s12p,thetacm,Eprobe,pVec,uVec,calctype,numDiagrams,verbosity)
+
       subroutine Calc2Bspinisospintrans(Kernel2B,ppVecs,Mnucl,
-     &     extQnumlimit,ml12,ml12p,
-     &     t12,mt12,t12p,mt12p,l12,s12,
-     &     l12p,s12p,thetacm,Eprobe,pVec,uVec,calctype,numDiagrams,verbosity)
+     &    extQnumlimit,ml12,ml12p,
+     &    t12,mt12,t12p,mt12p,l12,
+     &    s12,l12p,s12p,thetacm,Eprobe,pVec,
+     &    uVec,numDiagrams,calctype,verbosity)
 c     !Alex Long 2024:
 c     !pVec, is the  physical momenta, but uVec is the generic integration variable which may be transformed
 
@@ -117,7 +123,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     !OUTPUT VARIABLES:
       
-      complex*16,intent(out) :: Kernel2B(1:numDiagrams,1:extQnumlimit,0:1,-1:1,0:1,-1:1) ! was Comp2Bxx/xy/yx/yy
+      complex*16,intent(inout) :: Kernel2B(1:numDiagrams,1:extQnumlimit,0:1,-1:1,0:1,-1:1) ! was Comp2Bxx/xy/yx/yy
       real*8, intent(out) :: ppVecs(1:numDiagrams,1:3)
 
 c     Note that Kernel2B.. computes the amplitude for extQnums
@@ -129,14 +135,14 @@ c              5th: NN spin projection of initial state ms12
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     INPUT VARIABLES:
       
-      integer,intent(in) :: calctype
+c     integer,intent(in) :: calctype
       real*8,intent(in)  :: thetacm,Eprobe
       integer,intent(in) :: extQnumlimit, numDiagrams
       integer,intent(in) :: t12,mt12,t12p,mt12p,l12,l12p,s12,s12p, ml12,ml12p
       real*8, intent(in) :: pVec(3), uVec(3)
 c!     real*8,intent(in)  :: px,py,pz,ppx,ppy,ppz
                
-      integer,intent(in) :: verbosity
+      integer,intent(in) :: calctype,verbosity
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c!     LOCAL VARIABLES:
       integer diagNumber
@@ -166,18 +172,11 @@ c
 c     
       
 c      pVec=(/px,py,pz/)
-       ppVec=uVec!just for the calculateqs call
-       ! mPion=134.976d0
+c     ppVec=uVec!just for the calculateqs call
 
 c      !subroutine calculateqsmass is available for kpVec calculation
 c      Calculate momenta q,q',q':
-       call calculateqsmass(pVec,ppVec,kVec,kpVec,thetacm,mpi0,mNucl,verbosity)
-c      kpVec=(/0.d0,0.d0,0.d0/) !need to read in more precison in input file energy
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     Odelta0 2N contributions: NONE
-c     !<if they were nonzero, enter diagrams here>
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+      call calculateqsmass(kVec,kpVec,thetacm,mpi0,mNucl,verbosity)
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Odelta2 2N contributions
 cccccccccccccccccccccccTrue

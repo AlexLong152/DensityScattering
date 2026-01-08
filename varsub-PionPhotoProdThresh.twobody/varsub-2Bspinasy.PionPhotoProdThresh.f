@@ -93,9 +93,10 @@ c     real*8 tmpVec(3),kCrossEps(3)
       do ieps=1,3
         epsVec=eps(ieps,:)
         call cross(qVec-kVec,epsVec,kCrossEps)
-        call doublesigmaasy(hold,kCrossEps(1),kCrossEps(2),kCrossEps(3),qVec(1),qVec(2),qVec(3))
         do Msp=-Sp,Sp
         do Ms=-S,S
+             !TODO: check this, just added verbosity and S, Sp arguments to this
+             call doublesigmaasy(hold,kCrossEps(1),kCrossEps(2),kCrossEps(3),qVec(1),qVec(2),qVec(3),Sp,S,verbosity)
              Kernel(ieps,Sp,Msp,S,Ms) = Kernel(ieps,Sp,Msp,S,Ms) + factor*(ci*hold(Sp,Msp,S,Ms)
      &      -Ihold(Sp,Msp,S,Ms)*2.d0*dot_product(epsVec,tmpVec))
         end do
@@ -134,9 +135,10 @@ c     real*8 tmpVec(3),kCrossEps(3)
         epsVec=eps(ieps,:)
         call cross(kVec,epsVec,kCrossEps)
         kCrossEps=kCrossEps*(1+kappanu)
-        call doublesigmasym(hold,kCrossEps(1),kCrossEps(2),kCrossEps(3),qVec(1),qVec(2),qVec(3))
         do Msp=-Sp,Sp
         do Ms=-S,S
+          !TODO: check this, just added Sp, S, verbossity to doublesigma
+             call doublesigmasym(hold,kCrossEps(1),kCrossEps(2),kCrossEps(3),qVec(1),qVec(2),qVec(3),Sp,S,verbosity)
              Kernel(ieps,Sp,Msp,S,Ms) = Kernel(ieps,Sp,Msp,S,Ms) + factor*(ci*hold(Sp,Msp,S,Ms)
      &      +Ihold(Sp,Msp,S,Ms)*2.d0*dot_product(epsVec,tmpVec))
         end do

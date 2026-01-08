@@ -20,12 +20,19 @@ c
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     subroutine Calculate2BIntegralI2(Int2B,Mnucl,
+c    &     extQnumlimit,
+c    &     j12p,m12p,l12p,s12p,t12p,mt12p,j12,m12,
+c    &     l12,s12,t12,mt12,pAbs,uVecRs,th12,phi12,Nth12,Nphi12,NP12,
+c    &     thetacm,Eprobe,
+c    &     AngularType12,angweight12,calctype,numDiagrams,ip12p,twoSnucl,twoMzp,twoMz,verbosity)
+
       subroutine Calculate2BIntegralI2(Int2B,ppVecs,Mnucl,
-     &     extQnumlimit,
-     &     j12p,m12p,l12p,s12p,t12p,mt12p,j12,m12,
-     &     l12,s12,t12,mt12,pAbs,uVecRs,th12,phi12,Nth12,Nphi12,NP12,
-     &     thetacm,Eprobe,
-     &     AngularType12,angweight12,calctype,numDiagrams,ip12p,twoSnucl,twoMzp,twoMz,verbosity)
+     &    extQnumlimit,
+     &    j12p,m12p,l12p,s12p,t12p,mt12p,j12,m12,
+     &    l12,s12,t12,mt12, pAbs,uVecRs,th12,
+     &    phi12,Nth12,Nphi12,NP12,thetacm,Eprobe,
+     &    AngularType12,angweight12,calctype,numDiagrams,ip12p,twoSnucl,twoMzp,twoMz,verbosity)
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
       USE clebsch
@@ -84,10 +91,12 @@ c      complex*16 Intpx(-5:5,-5:5),Intpy(-5:5,-5:5) ! for STUMP, see below
       real*8 pVec(3), uVec(3)
       real*8,allocatable :: P12_MeV(:)
       integer alpha2N, alpha2Np, rindx
+
+c     write(*,*) "numDiagrams=", numDiagrams 
+c     write(*,*) "extQnumlimit=", extQnumlimit 
       if (.not.allocated(P12_MeV)) then
           allocate(P12_MeV, mold=P12P_density)
       end if
-
       if (verbosity.eq.1000) continue ! unused variable, kept for future use
 c     
       if ((l12p .gt. 5) .or. (l12 .gt. 5)) then
@@ -166,16 +175,17 @@ c     angle integral: φprime of p12p
 
                            uVec=(/ux,uy,uz/)!generic integration variable
 
-                        
+                           ppVecs=0.d0
+c                          write(*,*) "varsub-calculate2BI2.f:173 numDiagrams,calctype,verbosity=", numDiagrams,calctype,verbosity 
                            call Calc2Bspinisospintrans(Kernel2B,ppVecs,Mnucl,
      &                          extQnumlimit,ml12,ml12p,
      &                          t12,mt12,t12p,mt12p,l12,
      &                          s12,l12p,s12p,thetacm,Eprobe,pVec,
-     &                          uVec,calctype,numDiagrams,verbosity)
-
+     &                          uVec,numDiagrams,calctype,verbosity)
+c                         write(*,*) "ppVecs(1,:)=", ppVecs(1,:) 
 c                         tmpRho=0.0000001
                           do diagNum=1,numDiagrams
-c                             radVec=(/uVecR,th12(jth),phi12(jphi)/)!TODO: remove after debugging
+c                             radVec=(/uVecR,th12(jth),phi12(jphi)/)
                               call getHarmonicCart(Yl12p,l12p,ppVecs(diagNum,:),verbosity)
                               Yl12pstar=Real(Yl12p(ml12p))-ci*Imag(Yl12p(ml12p))
 

@@ -63,6 +63,7 @@ c     INPUT VARIABLES:
       integer,intent(in) :: calctype,symmetry,verbosity
       real*8, intent(in) :: Mnucl
 
+      real*8 ppVecs(1:numDiagrams,1:3)
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     OUTPUT VARIABLES:
       
@@ -80,7 +81,7 @@ c     LOCAL VARIABLES:
       complex*16 Int2B(1:numDiagrams,1:extQnumlimit)
       complex*16 fact
       
-      real*8 ppVecs(1:numDiagrams,1:3)
+c     real*8 ppVecs(1:numDiagrams,1:3)
 c      complex*16 Int2Bx,Int2By,Int2Bpx,Int2Bpy ! for STUMP, see below
 c      complex*16 Int3x, Int3y, Int3px, Int3py  ! for STUMP, see below
 c      complex*16 factx, facty, factpx, factpy  ! for STUMP, see below
@@ -105,7 +106,7 @@ c     Note that P12MAG(ip12p) isn't actually physical momenta, but p12 is.
       if (.not.allocated(P12_MeV)) then
           allocate(P12_MeV, mold=P12P_density)
       end if
-
+      ppVecs=0.d0
       P12_MeV=P12P_density*HC
       pAbs=p12*HC!pAbs in units of MeV now
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -126,6 +127,7 @@ c     check if ME to be skipped and reconstructed via a symmetry of the amplitud
 c                        if (invokesymmetrytwoMzp(symmetry,twoSnucl,twoMzp,verbosity)) exit
                         
                         do twoMz=twoSnucl,-twoSnucl,-2
+                         !write(*,*) "varsub-finalstatesums.twobodyvia2Ndensity.f:129 numDiagrams=", numDiagrams 
                      call Calculate2BIntegralI2(Int2B,ppVecs,Mnucl,
      &                    extQnumlimit,
      &                    j12p,m12p,l12p,s12p,t12p,mt12p,

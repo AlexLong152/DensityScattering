@@ -62,9 +62,9 @@ FC = mpif90
 #   -finit-integer=-1000 -finit-real=inf -fallow-argument-mismatch \
 #   -I$(VAR_MODS) -I$(COMMON_DIR) -I/usr/local/hdf5/openmpi/include
 #
-FFLAGS = -O1 -fopenmp -g -Wall -Wno-tabs -ffixed-line-length-0 \
-  -ffpe-summary=none -fPIC -cpp -fcheck=all -fbacktrace \
-  -finit-integer=-1000 -finit-real=nan -fallow-argument-mismatch \
+FFLAGS = -O0 -fopenmp -g -Wall -Wno-tabs -ffixed-line-length-0 \
+  -ffpe-summary=all -fPIC -cpp -fcheck=all -fbacktrace \
+  -finit-integer=-1000 -finit-real=inf -fallow-argument-mismatch \
   -I$(VAR_MODS) -I$(COMMON_DIR) -I/usr/local/hdf5/openmpi/include
 
 
@@ -92,8 +92,8 @@ $(COMMAND): $(OBJS)
 
 # Build an optimized version with FAST_FLAGS (same executable name)
 fast: clean
-	$(MAKE) -B FFLAGS="$(FAST_FLAGS)" all
+	$(MAKE) FFLAGS="$(FAST_FLAGS)" all
 
 clean:
-	find . \( -name '*.o' -o -name '*.mod' \) -delete
+	find . -name '*.o' -o -name '*.mod' -delete
 	rm -f $(COMMAND)

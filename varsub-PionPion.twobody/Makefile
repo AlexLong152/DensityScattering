@@ -11,7 +11,7 @@ VAR_MODS   := $(COMMON_DIR)/varsub-density-modules
 TWOBODY_VS := ../varsub-twobodyvia2Ndensity
 
 # Add source search paths
-VPATH := $(THIS_DIR) $(COMMON_DIR) $(TWOBODY_VS)
+VPATH := $(THIS_DIR) $(COMMON_DIR) $(TWOBODY_VS) tests
 
 # Object files in this folder
 OBJS_THIS := \
@@ -20,7 +20,8 @@ OBJS_THIS := \
   varsub-2Bkernel.PionPion.o \
   varsub-2Bspinsym.PionPion.o \
   varsub-2Bspinasy.PionPion.o \
-  varsub-usesymmetries.PionPion.o
+  varsub-usesymmetries.PionPion.o \
+  varsub-IsospinMap.PionPion.o
 
 # Object files from varsub-twobodyvia2Ndensity
 OBJS_TWOBODY := \
@@ -52,11 +53,15 @@ OBJS := $(OBJS_THIS) $(OBJS_TWOBODY) $(OBJS_COMMON)
 # Compiler and flags
 FC = mpif90
 
-FFLAGS = -O1 -fopenmp -g -Wall -Wno-tabs -ffixed-line-length-0 \
-  -ffpe-summary=none -fPIC -cpp -fcheck=all -fbacktrace \
-  -finit-integer=-1000 -finit-real=nan -fallow-argument-mismatch \
-  -I$(VAR_MODS) -I$(COMMON_DIR) -I/usr/local/hdf5/openmpi/include
+# FFLAGS = -O0 -fopenmp -g -Wall -Wno-tabs -ffixed-line-length-0 \
+#   -ffpe-summary=None -fPIC -cpp -fcheck=all -fbacktrace \
+#   -finit-integer=-1000 -finit-real=inf -fallow-argument-mismatch\
+#   -I$(VAR_MODS) -I$(COMMON_DIR) -I/usr/local/hdf5/openmpi/include
 
+FFLAGS  = -O3 -fopenmp -Wall -Wno-tabs -ffixed-line-length-0 \
+  -ffpe-summary=none -fPIC -cpp -fbacktrace \
+  -finit-integer=-1000 -finit-real=inf -fallow-argument-mismatch \
+  -I$(VAR_MODS) -I$(COMMON_DIR) -I/usr/local/hdf5/openmpi/include
 
 FAST_FLAGS  = -O3 -fopenmp -Wall -Wno-tabs -ffixed-line-length-0 \
   -ffpe-summary=none -fPIC -cpp -fbacktrace \
@@ -69,13 +74,20 @@ LDFLAGS = \
   -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 \
   -llapack -lgomp -ldl -lz -lsz
 
-.PHONY: all clean fast
+.PHONY: all clean fast test
 
 all: $(COMMAND)
 	chmod +x $(COMMAND)
 
+# test: tests/testIsospinMap
+# 	chmod +x tests/testIsospinMap
+
 $(COMMAND): $(OBJS)
 	$(FC) $(FFLAGS) -o $@ $^ $(LDFLAGS)
+
+tests/testIsospinMap: testIsospinMap.o varsub-IsospinMap.PionPion.o
+	@mkdir -p tests
+	$(FC) $(FFLAGS) -o $@ $^
 
 %.o: %.f
 	$(FC) $(FFLAGS) -c $< -o $@
@@ -87,3 +99,4 @@ fast: clean
 clean:
 	find . \( -name '*.o' -o -name '*.mod' \) -delete
 	rm -f $(COMMAND)
+	rm -f tests/testIsospinMap
