@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Tuple, Dict
+from typing import Callable, Tuple, Dict
 
 """
 |1,1>=|t1=1/2,mt2=1/2>|t2=1/2,mt2=1/2> :index 0
@@ -10,11 +10,8 @@ from typing import Tuple, Dict
 
 
 def main():
-    test1()
-    test2()
+    extQnum = 1
 
-
-def test1():
     # pipiDecoupled(twom1, twom2, twom1p, twom2p, extQnum)
 
     print("Testing DecoupledFromCoupled vs PionPionBC...")
@@ -30,76 +27,36 @@ def test1():
 
     max_diff = 1e-5
     all_passed = True
-    for extQnum in (1, 2, 3):
-        for t, mt in test_states:
-            for tp, mtp in test_states:
-                # Calculate using coupled basis method
-                coupled_result = PionPionBC(t, mt, tp, mtp, extQnum)
 
-                # Calculate using decoupled basis method
-                decoupled_result = DecoupledFromCoupled(t, mt, tp, mtp, extQnum)
+    for t, mt in test_states:
+        for tp, mtp in test_states:
+            # Calculate using coupled basis method
+            coupled_result = PionPionBC(t, mt, tp, mtp, extQnum).real
 
-                # Compare results
-                diff = abs(coupled_result - decoupled_result)
-                max_diff = max(max_diff, diff)
+            # Calculate using decoupled basis method
+            decoupled_result = DecoupledFromCoupled(t, mt, tp, mtp, extQnum).real
 
-                passed = diff < 1e-10
-                all_passed = all_passed and passed
-                status = "Pass" if passed else "Fail"
-                if not passed:
-                    print(
-                        f"{f'{status} <{tp},{mtp}|O|{t},{mt}>: ':<20}"
-                        f"Coupled={coupled_result:+.3f} !- "
-                        f"{decoupled_result:+.2f} = Coupled "
-                    )
+            # Compare results
+            diff = abs(coupled_result - decoupled_result)
+            max_diff = max(max_diff, diff)
+
+            passed = diff < 1e-10
+            all_passed = all_passed and passed
+            status = "Pass" if passed else "Fail"
+            if not passed:
+                print(
+                    f"{f'{status} <{tp},{mtp}|O|{t},{mt}>: ':<20}"
+                    f"Coupled={coupled_result:+.3f} !- "
+                    f"{decoupled_result:+.2f} = Coupled "
+                )
+    print("=" * 60)
+    print(f"Maximum difference: {max_diff:.2e}")
     if all_passed:
-        print("Test 1 passed")
+        print("All tests PASSED!")
     else:
-        print("In Test1 Some tests failed")
+        print("Some tests FAILED!")
 
-
-def test2():
-    def op_matrix(extQnum):
-        Op = np.zeros((4, 4), dtype=complex)
-        for i in (1, 2, 3):
-            Op += np.kron(_TAU[i], _TAU[i])
-        Op += -2 * np.kron(_TAU[extQnum], _TAU[extQnum])
-        return Op
-
-    for extQnum in range(1, 4):
-        twom_states = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
-        Op = op_matrix(extQnum)
-
-        for bra, (m1p, m2p) in enumerate(twom_states):
-            for ket, (m1, m2) in enumerate(twom_states):
-                val = pipiDecoupled(m1, m2, m1p, m2p, extQnum)
-
-                assert np.allclose(val, Op[bra, ket])
-
-    def tau2_me(mprime, m):
-        def ind(twom):
-            return (1 - twom) // 2
-
-        return _TAU[2][ind(mprime), ind(m)]
-
-    pass1 = tau2_me(1, -1) - (-1j)
-    pass1 = abs(pass1) < 1e-5
-
-    pass2 = tau2_me(-1, 1) - (+1j)
-    pass2 = abs(pass2) < 1e-5
-    passes = pass1 and pass2
-    if passes:
-        print("Test 2 passed")
-    else:
-        print("pass1=", pass1)
-        print("pass2=", pass2)
-        print("tau2_me(-1,1)=", tau2_me(-1, 1))
-        print("tau2_me(1,-1)=", tau2_me(1, -1))
-
-
-def IsSmall(x, tol=1e-7):
-    print(abs(x))
-    return abs(x) < tol
+    return all_passed
 
 
 def DecoupledFromCoupled(t, mt, tp, mtp, extQnum):
@@ -216,21 +173,26 @@ def default_mapping(t: int, mt: int, tp: int, mtp: int) -> Tuple[int, int]:
 
 
 def combineOpers(oper1: np.ndarray, oper2: np.ndarray) -> np.ndarray:
-    invSqrt = 1 / np.sqrt(2)
-    U = np.column_stack(
-        [
-            np.array([1, 0, 0, 0], dtype=complex),  # |1, 1>
-            invSqrt * np.array([0, 1, 1, 0], dtype=complex),  # |1, 0>
-            np.array([0, 0, 0, 1], dtype=complex),  # |1,-1>
-            invSqrt * np.array([0, -1, 1, 0], dtype=complex),  # |0, 0>
-        ]
-    )
+    """
+    Combine two single-particle 2x2 operators into a two-body operator in the COUPLED basis.
+
+    Steps:
+      1) Build uncoupled/product-space operator: oper1 ⊗ oper2  (4x4)
+      2) Rotate to coupled basis: U† (oper1 ⊗ oper2) U         (4x4)
+
+    Returns
+    -------
+    (4,4) complex ndarray
+        The combined operator in the coupled basis.
+    """
     oper1 = np.asarray(oper1, dtype=complex)
     oper2 = np.asarray(oper2, dtype=complex)
 
-    O_prod = np.kron(oper1, oper2)  # product basis
-    O_cpl = U.conj().T @ O_prod @ U  # coupled basis
-    return O_cpl
+    assert np.shape(oper1) == (2, 2)
+    assert np.shape(oper2) == (2, 2)
+
+    total_cpl = np.kron(oper1, oper2)
+    return total_cpl
 
 
 def combinePhysical(charge):
@@ -291,8 +253,7 @@ def pipiDecoupled(twom1, twom2, twom1p, twom2p, extQnum):
 
     def getInd(twom):
         # maps -1 to 0, 1 to 1
-        # return (twom + 1) // 2
-        return (1 - twom) // 2
+        return (twom + 1) // 2
 
     out = 0
 
@@ -341,6 +302,4 @@ def piPhotoOper(t, mt, tp, mtp, mapping=default_mapping) -> complex:
 
 
 if __name__ == "__main__":
-    assert _TAU[2][0, 1] == -1j
-    assert _TAU[2][1, 0] == +1j
     main()

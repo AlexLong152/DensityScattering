@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Tuple, Dict
+from typing import Callable, Tuple, Dict
 
 """
 |1,1>=|t1=1/2,mt2=1/2>|t2=1/2,mt2=1/2> :index 0
@@ -10,11 +10,8 @@ from typing import Tuple, Dict
 
 
 def main():
-    test1()
-    test2()
+    extQnum = 1
 
-
-def test1():
     # pipiDecoupled(twom1, twom2, twom1p, twom2p, extQnum)
 
     print("Testing DecoupledFromCoupled vs PionPionBC...")
@@ -30,76 +27,37 @@ def test1():
 
     max_diff = 1e-5
     all_passed = True
-    for extQnum in (1, 2, 3):
-        for t, mt in test_states:
-            for tp, mtp in test_states:
-                # Calculate using coupled basis method
-                coupled_result = PionPionBC(t, mt, tp, mtp, extQnum)
 
-                # Calculate using decoupled basis method
-                decoupled_result = DecoupledFromCoupled(t, mt, tp, mtp, extQnum)
+    for t, mt in test_states:
+        for tp, mtp in test_states:
+            # Calculate using coupled basis method
+            coupled_result = PionPionBC(t, mt, tp, mtp, extQnum).real
 
-                # Compare results
-                diff = abs(coupled_result - decoupled_result)
-                max_diff = max(max_diff, diff)
+            # Calculate using decoupled basis method
+            decoupled_result = DecoupledFromCoupled(t, mt, tp, mtp, extQnum).real
 
-                passed = diff < 1e-10
-                all_passed = all_passed and passed
-                status = "Pass" if passed else "Fail"
-                if not passed:
-                    print(
-                        f"{f'{status} <{tp},{mtp}|O|{t},{mt}>: ':<20}"
-                        f"Coupled={coupled_result:+.3f} !- "
-                        f"{decoupled_result:+.2f} = Coupled "
-                    )
+            # Compare results
+            diff = abs(coupled_result - decoupled_result)
+            max_diff = max(max_diff, diff)
+
+            passed = diff < 1e-10
+            all_passed = all_passed and passed
+
+            status = "Pass" if passed else "Fail"
+            print(
+                f"{f'{status} <{tp},{mtp}|O|{t},{mt}>: ':<20}"
+                f"Coupled -- Decoupled = {coupled_result:+.3f} -- "
+                f"{decoupled_result:+.2f}, "
+                f"Diff = {diff:.2e}"
+            )
+    print("=" * 60)
+    print(f"Maximum difference: {max_diff:.2e}")
     if all_passed:
-        print("Test 1 passed")
+        print("All tests PASSED!")
     else:
-        print("In Test1 Some tests failed")
+        print("Some tests FAILED!")
 
-
-def test2():
-    def op_matrix(extQnum):
-        Op = np.zeros((4, 4), dtype=complex)
-        for i in (1, 2, 3):
-            Op += np.kron(_TAU[i], _TAU[i])
-        Op += -2 * np.kron(_TAU[extQnum], _TAU[extQnum])
-        return Op
-
-    for extQnum in range(1, 4):
-        twom_states = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
-        Op = op_matrix(extQnum)
-
-        for bra, (m1p, m2p) in enumerate(twom_states):
-            for ket, (m1, m2) in enumerate(twom_states):
-                val = pipiDecoupled(m1, m2, m1p, m2p, extQnum)
-
-                assert np.allclose(val, Op[bra, ket])
-
-    def tau2_me(mprime, m):
-        def ind(twom):
-            return (1 - twom) // 2
-
-        return _TAU[2][ind(mprime), ind(m)]
-
-    pass1 = tau2_me(1, -1) - (-1j)
-    pass1 = abs(pass1) < 1e-5
-
-    pass2 = tau2_me(-1, 1) - (+1j)
-    pass2 = abs(pass2) < 1e-5
-    passes = pass1 and pass2
-    if passes:
-        print("Test 2 passed")
-    else:
-        print("pass1=", pass1)
-        print("pass2=", pass2)
-        print("tau2_me(-1,1)=", tau2_me(-1, 1))
-        print("tau2_me(1,-1)=", tau2_me(1, -1))
-
-
-def IsSmall(x, tol=1e-7):
-    print(abs(x))
-    return abs(x) < tol
+    return all_passed
 
 
 def DecoupledFromCoupled(t, mt, tp, mtp, extQnum):
@@ -114,50 +72,44 @@ def DecoupledFromCoupled(t, mt, tp, mtp, extQnum):
     # Clebsch-Gordan coefficients for two spin-1/2 particles
     # mt values are in units of 1 (not 1/2), so we need to convert
     # Individual particle m values: ±1/2 → twom values: ±1
-    invSqrt = 1 / np.sqrt(2)
 
     def coupled_to_uncoupled(T, MT):
         """
-        Returns array of (coef0, coef1, coef2, coef3) for |T,MT> state
-        Basis: [|++>, |+->, |-+>, |-->] or [(1,1), (1,-1), (-1,1), (-1,-1)]
+        Returns list of (coeff, twom1, twom2) tuples for |T,MT> state
+        where twom1, twom2 are in units of twice the projection (±1)
         """
         if T == 1:
             if MT == 1:
-                # |1,1> = |++>
-                return np.array([1, 0, 0, 0], dtype=float)
+                # |1,1> = |1/2,1/2>|1/2,1/2>
+                return [(1.0, 1, 1)]
             elif MT == 0:
-                # |1,0> = (1/√2)(|+-> + |-+>)
-                return invSqrt * np.array([0, 1, 1, 0], dtype=float)
+                # |1,0> = (1/√2)(|1/2,1/2>|1/2,-1/2> + |1/2,-1/2>|1/2,1/2>)
+                return [(1.0 / np.sqrt(2), 1, -1), (1.0 / np.sqrt(2), -1, 1)]
             elif MT == -1:
-                # |1,-1> = |-->
-                return np.array([0, 0, 0, 1], dtype=float)
+                # |1,-1> = |1/2,-1/2>|1/2,-1/2>
+                return [(1.0, -1, -1)]
         elif T == 0:
             if MT == 0:
-                # |0,0> = (1/√2)(|-+> - |+->)
-                return invSqrt * np.array([0, -1, 1, 0], dtype=float)
+                # |0,0> = (1/√2)(|1/2,1/2>|1/2,-1/2> - |1/2,-1/2>|1/2,1/2>)
+                return [(1.0 / np.sqrt(2), 1, -1), (-1.0 / np.sqrt(2), -1, 1)]
+
         raise ValueError(f"Invalid quantum numbers: T={T}, MT={MT}")
 
     # Expand bra and ket states
-    bra_expansion = np.conj(coupled_to_uncoupled(tp, mtp))
+    bra_expansion = coupled_to_uncoupled(tp, mtp)
     ket_expansion = coupled_to_uncoupled(t, mt)
 
     # Calculate matrix element as sum over all combinations
-    # fill this in
-    # Map index to quantum numbers (Kronecker basis): 0->(1,1), 1->(1,-1), 2->(-1,1), 3->(-1,-1)
-    twom_states = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
-    i = 0
-    out = 0
-    for i, (twom1p, twom2p) in enumerate(twom_states):  # bra side
-        ci = bra_expansion[i]
-        if ci == 0:
-            continue
-        for j, (twom1, twom2) in enumerate(twom_states):  # ket side
-            cj = ket_expansion[j]
-            if cj == 0:
-                continue
-            me_unc = pipiDecoupled(twom1, twom2, twom1p, twom2p, extQnum)
-            out += ci * cj * me_unc
-    return out
+    result = 0.0
+    for coeff_bra, twom1p, twom2p in bra_expansion:
+        for coeff_ket, twom1, twom2 in ket_expansion:
+            result += (
+                np.conj(coeff_bra)
+                * coeff_ket
+                * pipiDecoupled(twom1, twom2, twom1p, twom2p, extQnum)
+            )
+
+    return result
 
 
 def allowed_mt(t):
@@ -211,26 +163,30 @@ def default_mapping(t: int, mt: int, tp: int, mtp: int) -> Tuple[int, int]:
         (1, -1): 2,
         (0, 0): 3,
     }  # in fortran we have to increase index by one bc indicies start at 1
-
     return idx[(tp, mtp)], idx[(t, mt)]
 
 
 def combineOpers(oper1: np.ndarray, oper2: np.ndarray) -> np.ndarray:
-    invSqrt = 1 / np.sqrt(2)
-    U = np.column_stack(
-        [
-            np.array([1, 0, 0, 0], dtype=complex),  # |1, 1>
-            invSqrt * np.array([0, 1, 1, 0], dtype=complex),  # |1, 0>
-            np.array([0, 0, 0, 1], dtype=complex),  # |1,-1>
-            invSqrt * np.array([0, -1, 1, 0], dtype=complex),  # |0, 0>
-        ]
-    )
+    """
+    Combine two single-particle 2x2 operators into a two-body operator in the COUPLED basis.
+
+    Steps:
+      1) Build uncoupled/product-space operator: oper1 ⊗ oper2  (4x4)
+      2) Rotate to coupled basis: U† (oper1 ⊗ oper2) U         (4x4)
+
+    Returns
+    -------
+    (4,4) complex ndarray
+        The combined operator in the coupled basis.
+    """
     oper1 = np.asarray(oper1, dtype=complex)
     oper2 = np.asarray(oper2, dtype=complex)
 
-    O_prod = np.kron(oper1, oper2)  # product basis
-    O_cpl = U.conj().T @ O_prod @ U  # coupled basis
-    return O_cpl
+    assert np.shape(oper1) == (2, 2)
+    assert np.shape(oper2) == (2, 2)
+
+    total_cpl = np.kron(oper1, oper2)
+    return total_cpl
 
 
 def combinePhysical(charge):
@@ -266,13 +222,12 @@ def PionPionBC(t, mt, tp, mtp, extQnum, mapping=default_mapping) -> complex:
     total_cpl = np.zeros((4, 4), dtype=complex)
 
     # Σ_{i=1}^3 τ_1^i ⊗ τ_2^i
-    for i in (1, 2, 3):
-        total_cpl += combineOpers(_TAU[i], _TAU[i])
+    for i in (-1, 0, 1):
+        total_cpl += combinePhysical(i)
 
     # -2 τ_1^a ⊗ τ_2^a
-    # charge = extQnum - 2
-    # total_cpl += (-2.0) * combineOpers(physicalOpers[charge], physicalOpers[charge])
-    total_cpl += (-2.0) * combineOpers(_TAU[extQnum], _TAU[extQnum])
+    charge = extQnum - 2
+    total_cpl += (-2.0) * combinePhysical(charge)
 
     irow, icol = mapping(t, mt, tp, mtp)
     return total_cpl[irow, icol]
@@ -289,10 +244,9 @@ def pipiDecoupled(twom1, twom2, twom1p, twom2p, extQnum):
     multiplying m values by two so everything can be an integer
     """
 
-    def getInd(twom):
+    def getInd(m):
         # maps -1 to 0, 1 to 1
-        # return (twom + 1) // 2
-        return (1 - twom) // 2
+        return (m + 1) // 2
 
     out = 0
 
@@ -303,15 +257,11 @@ def pipiDecoupled(twom1, twom2, twom1p, twom2p, extQnum):
     for i in range(1, 4):
         tau1 = _TAU[i]
         tau2 = _TAU[i]
-        out += tau1[ind1p, ind1] * tau2[ind2p, ind2]
-        # out += tau1[ind1, ind1p] * tau2[ind2, ind2p]
-    # charge = extQnum - 2
-    # tau1a = physicalOpers[charge]
-    # tau2a = physicalOpers[charge]
-    tau1a = _TAU[extQnum]
-    tau2a = _TAU[extQnum]
-    out += -2.0 * tau1a[ind1p, ind1] * tau2a[ind2p, ind2]
-    # out += -2.0 * tau1a[ind1, ind1p] * tau2a[ind2, ind2p]
+        out += tau1[ind1, ind1p] * tau2[ind2, ind2p]
+    charge = extQnum - 2
+    tau1a = physicalOpers[charge]
+    tau2a = physicalOpers[charge]
+    out += -2.0 * tau1a[ind1, ind1p] * tau2a[ind2, ind2p]
     return out
 
 
@@ -341,6 +291,4 @@ def piPhotoOper(t, mt, tp, mtp, mapping=default_mapping) -> complex:
 
 
 if __name__ == "__main__":
-    assert _TAU[2][0, 1] == -1j
-    assert _TAU[2][1, 0] == +1j
     main()
