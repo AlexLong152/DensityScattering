@@ -3,6 +3,7 @@ SHELL := $(shell which zsh 2>/dev/null || which bash 2>/dev/null || echo /bin/sh
 
 # Executable name
 COMMAND = twobodyvia2Ndensity.PionPion
+TEST_COMMAND = testIsospin
 
 # Directory paths
 THIS_DIR   := .
@@ -50,6 +51,9 @@ OBJS_COMMON := \
 # All objects
 OBJS := $(OBJS_THIS) $(OBJS_TWOBODY) $(OBJS_COMMON)
 
+# Test objects
+TEST_OBJS := testIsospin.o varsub-IsospinMap.PionPion.o
+
 # Compiler and flags
 FC = mpif90
 
@@ -63,7 +67,7 @@ FFLAGS  = -O3 -fopenmp -Wall -Wno-tabs -ffixed-line-length-0 \
   -finit-integer=-1000 -finit-real=inf -fallow-argument-mismatch \
   -I$(VAR_MODS) -I$(COMMON_DIR) -I/usr/local/hdf5/openmpi/include
 
-FAST_FLAGS  = -O3 -fopenmp -Wall -Wno-tabs -ffixed-line-length-0 \
+debug_FLAGS  = -O0 -fopenmp -Wall -Wno-tabs -ffixed-line-length-0 \
   -ffpe-summary=none -fPIC -cpp -fbacktrace \
   -finit-integer=-1000 -finit-real=inf -fallow-argument-mismatch \
   -I$(VAR_MODS) -I$(COMMON_DIR) -I/usr/local/hdf5/openmpi/include
@@ -74,29 +78,29 @@ LDFLAGS = \
   -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 \
   -llapack -lgomp -ldl -lz -lsz
 
-.PHONY: all clean fast test
+.PHONY: all clean fast test 
 
 all: $(COMMAND)
 	chmod +x $(COMMAND)
 
-# test: tests/testIsospinMap
-# 	chmod +x tests/testIsospinMap
 
 $(COMMAND): $(OBJS)
 	$(FC) $(FFLAGS) -o $@ $^ $(LDFLAGS)
 
-tests/testIsospinMap: testIsospinMap.o varsub-IsospinMap.PionPion.o
-	@mkdir -p tests
+$(TEST_COMMAND): $(TEST_OBJS)
 	$(FC) $(FFLAGS) -o $@ $^
+
+test: $(TEST_COMMAND)
+	chmod +x $(TEST_COMMAND)
+	./$(TEST_COMMAND)
 
 %.o: %.f
 	$(FC) $(FFLAGS) -c $< -o $@
 
 # Build an optimized version with FAST_FLAGS (same executable name)
-fast: clean
-	$(MAKE) -B FFLAGS="$(FAST_FLAGS)" all
+debug: clean
+	$(MAKE) -B FFLAGS="$(debug_FLAGS)" all
 
 clean:
 	find . \( -name '*.o' -o -name '*.mod' \) -delete
-	rm -f $(COMMAND)
-	rm -f tests/testIsospinMap
+	rm -f $(COMMAND) $(TEST_COMMAND)

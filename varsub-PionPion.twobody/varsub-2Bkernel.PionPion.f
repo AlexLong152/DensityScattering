@@ -204,7 +204,7 @@ c      !subroutine calculateqsmass is available for kpVec calculation
       sqrtS=sqrt(mNucl*mNucl+k*k)+sqrt(mPion*mPion+k*k)
 c     assign prefactor=8*Pi*sqrtS to convert from scattering length to matrix element
 c     setting prefactor=1.d0=HC returns scattering length in fm
-      prefactor=8*Pi*sqrtS!matrix elements are unitless
+      prefactor=8*Pi*sqrtS*(1/(1+mPion/mNucl))*(1/(4*Pi))!matrix elements are unitless
       prefactor=1000/mpi0!converts units for scattering length
       diagNumber=1
       ppVecA=0.d0
@@ -221,7 +221,7 @@ c     DIMENSIONAL ANALYSIS: KernelA computed in getDiagABC has units [MeV^-4]
 
       subroutine getDiagABC(Kerneltmp,pVec,uVec,ppVecA,kVec,kpVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,mNucl,verbosity)
       implicit none
-
+c     diagrams B and C combine to one diagram https://arxiv.org/abs/1003.3826v1
       include '../common-densities/constants.def'
 c     Parameters-------------------------------------
       complex*16,intent(out) :: Kerneltmp(1:extQnumlimit,0:1,-1:1,0:1,-1:1)
@@ -237,7 +237,7 @@ c     Internal variables
       complex*16 factorBCsym, factorBCasy
 
       logical useTransform
-      real*8 Jacobian, prefactor,reducedMass
+      real*8 Jacobian, prefactor
       real*8 vecsquare
 c     write(*,*) "shape(Kerneltmp)=", shape(Kerneltmp)
 c     write(*,*) "getDiagAB: extQnumlimit=", extQnumlimit, "s12p=", s12p, "s12=", s12
@@ -262,16 +262,13 @@ c       uVec=qVec=pVec-ppVec+kVec/2+kpVec/2
       qpVec=qVec-kVec
 
 c     fpi=92.42 MeV defined in constants.def
-c     Define from BKM review
-      reducedMass=mpi0/mNucl
-c     prefactor=(1/(32*(1+reducedMass)*(Pi*fpi)**4)) This is prefactor for scattering length
+c     from https://arxiv.org/abs/1003.3826v1 the factor (1/4pi) (1/(1+mpi/mNucl)) is put on the outside
+c     
+c
 c     DIMENSIONAL ANALYSIS: prefactor = mpi0^2/(4*fpi^4) = [MeV^2]/[MeV^4] = [MeV^-2]
       prefactor = mpi0*mpi0/(2*(fpi**4.d0))
-      prefactor = prefactor*(1/(4*Pi))*((1+(mpi0/mNucl))**(-1))
-
 
       if (DOT_PRODUCT(qVec,qVec).lt.1.d-10) then
-         write(*,*) "ERROR in getDiagABC: qVec is too small, will cause division by zero!"
          write(*,*) "DOT_PRODUCT(qVec,qVec)=", DOT_PRODUCT(qVec,qVec)
          stop
       end if
@@ -290,8 +287,7 @@ c     DIMENSIONAL ANALYSIS: prefactor = mpi0^2/(4*fpi^4) = [MeV^2]/[MeV^4] = [Me
         write(*,*) "factorBCsym=", factorBCsym 
         stop
       end if
-      if ((t12 .eq. t12p) .and. (mt12 .eq. mt12p)) then
-
+c     if ((t12 .eq. t12p) .and. (mt12 .eq. mt12p)) then
          if (s12p .eq. s12) then ! spin symmetric part only; s12-s12p=0 => l12-l12p is even
             call CalcKernel2BAsym(Kerneltmp,
      &           factorAsym,
@@ -329,9 +325,9 @@ c     DIMENSIONAL ANALYSIS: prefactor = mpi0^2/(4*fpi^4) = [MeV^2]/[MeV^4] = [Me
               error stop
             end if
          end if                 ! s12 question
-      else                      ! t12!=t12p
-        continue
-      end if                    !t12 question
+c     else                      ! t12!=t12p
+c       continue
+c     end if                    !t12 question
 
       ppVecA=ppVec
       Kerneltmp=Kerneltmp*Jacobian

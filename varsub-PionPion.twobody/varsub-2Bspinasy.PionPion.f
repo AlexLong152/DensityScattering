@@ -61,8 +61,7 @@ c     complex*16 hold(0:1,-1:1,0:1,-1:1)
       complex*16 isospin
 
       do extQnum=1,extQnumlimit!no dependence on this either
-c     call PionPionA(t12,mt12,t12p,mt12p,extQnum,isospin)
-      isospin=1.d0
+      call PionPionA(t12, mt12, t12p, mt12p, extQnum, isospin)
       do Msp=-s12p,s12p
       do Ms=-s12,s12
             tmp=ddelta(s12p,s12)
@@ -118,8 +117,7 @@ c
 
       call doublesigmaasy(hold,qVec(1),qVec(2),qVec(3),qVec(1),qVec(2),qVec(3),s12p,s12,verbosity)
       do extQnum=1,extQnumlimit
-c     call PionPionBC(t12, mt12, t12p, mt12p, extQnum, isospin)
-      isospin=1.d0
+      call PionPionBC(t12, mt12, t12p, mt12p, extQnum, isospin)
       do Msp=-s12p,s12p
       do Ms=-s12,s12
             Kernel2B(extQnum,s12p,Msp,s12,Ms) = Kernel2B(extQnum,s12p,Msp,s12,Ms) + factor*hold(s12p,Msp,s12,Ms)*isospin
