@@ -56,7 +56,7 @@ c     --------------------------------------------------------------------------
 c                                   "mantle" code                                                                   "kernel" code
 c
 c     ===> Overall units of output are MeV^(3-n) for kernel with base units MeV^-n !!!!
-c     ===> The rest of the code besides the kernel as units MeV^3. The scattering matrix has no units for 2->2 reactions. 
+c     ===> The rest of the code besides the kernel as units MeV^3, that is the kernel units get multiplied by MeV^3. The scattering matrix has no units for 2->2 reactions. 
 c         ===> If you want to report back scattering matrix as the result, kernel needs to be in units MeV^-3
 c     The (HC)³/(2π)³ above (programmed in finalstatesums.twobodyvia2Ndensity.f 's "fact=...")
 c     converts between the fm units of the "mantle" and the MeV units of the "kernel".
