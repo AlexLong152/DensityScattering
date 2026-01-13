@@ -227,15 +227,15 @@ c     Sum over i = 1, 2, 3: add 2*τ^i ⊗ τ^i
          call getPauliMatrix(i, tau1)
          call getPauliMatrix(i, tau2)
          call combineOpers(tau1, tau2, combined)
-         total = total + 2.d0 * combined
+         total = total + combined
       enddo
 
 c     Subtract 2 * τ^extQnum ⊗ τ^extQnum
       call getPauliMatrix(extQnum, tau1)
       call getPauliMatrix(extQnum, tau2)
       call combineOpers(tau1, tau2, combined)
-      total = total - 2.d0 * combined
-
+      total = total -  combined
+      total= 2.d0 * total
 c     Get matrix indices from quantum numbers
       call mapping(t, mt, tp, mtp, irow, icol)
 

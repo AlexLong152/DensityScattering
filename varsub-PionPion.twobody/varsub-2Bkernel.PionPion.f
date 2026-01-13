@@ -106,11 +106,12 @@ c    &     l12p,s12p,thetacm,Eprobe,pVec,uVec,numDiagrams,verbosity)
      &      s12,l12p,s12p,thetacm,Eprobe,pVec,
      &      uVec,numDiagrams,calctype,verbosity)
 c     !Alex Long 2024:
-c     !pVec, is the  physical momenta, but uVec is the generic integration variable which may be transformed
-
+c     pVec, is the  physical momenta, but uVec is the generic integration variable which may be transformed
+c     taking uVec=ppVec works when there isn't a singularity.
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     twoSmax/twoMz dependence: none, only on quantum numbers of (12) subsystem
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cc    Momentum vectors passed to this function are in MeV
 cc    NOTE ON UNITS: hgrie Nov 2023
 cc    Overall units here determine the units of the total twobody output ME Result().
 cc            If kernel given in MeV^-n, then output ME will be given in MeV^(3-n). 
@@ -204,14 +205,16 @@ c      !subroutine calculateqsmass is available for kpVec calculation
       sqrtS=sqrt(mNucl*mNucl+k*k)+sqrt(mPion*mPion+k*k)
 c     assign prefactor=8*Pi*sqrtS to convert from scattering length to matrix element
 c     setting prefactor=1.d0=HC returns scattering length in fm
-      prefactor=8*Pi*sqrtS*(1/(1+mPion/mNucl))*(1/(4*Pi))!matrix elements are unitless
-      prefactor=1000/mpi0!converts units for scattering length
+      prefactor=(1/(1+mPion/mNucl))*(1/(4*Pi))!matrix elements are unitless
+      prefactor=prefactor*1000*mpi0
       diagNumber=1
       ppVecA=0.d0
       call getDiagABC(KernelA,pVec,uVec,ppVecA,kVec,kpVec,t12,t12p,
      &      mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,mNucl,verbosity)
       ppVecs(diagNumber,:)=ppVecA
-c     DIMENSIONAL ANALYSIS: KernelA computed in getDiagABC has units [MeV^-4]
+c     KernelA computed in getDiagABC has units [MeV^-4]
+c     Multiply by 1000*mpi0 -> units MeV^-3 -> units of `Result` "unitless" but actually are in (1000*mpi0)^-1 units
+c     prefactor = prefactor*8*pi*sqrtS*HC
       Kernel2B(diagNumber,:,:,:,:,:)=prefactor*KernelA
 
       end
@@ -266,15 +269,17 @@ c     from https://arxiv.org/abs/1003.3826v1 the factor (1/4pi) (1/(1+mpi/mNucl)
 c     
 c
 c     DIMENSIONAL ANALYSIS: prefactor = mpi0^2/(4*fpi^4) = [MeV^2]/[MeV^4] = [MeV^-2]
-      prefactor = mpi0*mpi0/(2*(fpi**4.d0))
+      prefactor = mpi0*mpi0/(4*(fpi**4.d0))
 
       if (DOT_PRODUCT(qVec,qVec).lt.1.d-10) then
          write(*,*) "DOT_PRODUCT(qVec,qVec)=", DOT_PRODUCT(qVec,qVec)
          stop
       end if
 
-      factorAsym=prefactor*(1/(DOT_PRODUCT(qVec,qVec)))
-      factorBCsym=-1*gA*gA*prefactor*(1.d0/((DOT_PRODUCT(qVec,qVec)+mpi0**2)**2))
+      factorAsym=prefactor*(1/(DOT_PRODUCT(qVec,qVec)))! units MeV^-4
+c     factorBCsym=-1*gA*gA*prefactor*(1.d0/((DOT_PRODUCT(qVec,qVec)+mpi0**2)**2))
+c      Fact
+      factorBCsym=-1*gA*gA*prefactor*(1.d0/((DOT_PRODUCT(qVec,qVec)+mpi0**2)**2))!units MeV^-6, but CalcKernel2BBsym/asy adds factor MeV^2, gives result MeV^-4
 
       factorAasy=factorAsym
       factorBCasy=factorBCsym
