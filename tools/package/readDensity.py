@@ -83,6 +83,10 @@ def getQuantNums(filename, returnMat=True):
     """
     out = {}
     if returnMat:
+        raise ValueError(
+            "Updated fortran code to read in pauli matrices in the fortran native column major order,\
+                         need to change the mapping of the matrix from fortran output to python"
+        )
         with open(filename, "r") as f:
             contents = f.read()
             lines = np.array(contents.splitlines())

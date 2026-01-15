@@ -366,8 +366,8 @@ c
             sigmax(1,-1)=dcmplx(1.d0,0)
             sigmax(-1,1)=dcmplx(1.d0,0)
 c
-            sigmay(1,-1)=dcmplx(0, -1.d0)
-            sigmay(-1,1)=dcmplx (0, 1.d0) 
+            sigmay(1,-1)=dcmplx(0, 1.d0)
+            sigmay(-1,1)=dcmplx (0, -1.d0) 
 c
             sigmaz(1,1)=dcmplx(1.d0,0)
             sigmaz(-1,-1)=dcmplx(-1.d0,0)
@@ -393,8 +393,8 @@ c--- Sx pattern: [[0,1,0],[1,0,1],[0,1,0]]
 
 c--- Sy pattern: [[0,1,0],[-1,0,1],[0,-1,0]]
             SpinOney(2,0) = dcmplx(1.d0,0.d0)
-            SpinOney(0,2) = dcmplx(-1.d0,0.d0)
-            SpinOney(0,-2) = dcmplx(1.d0,0.d0)
+            SpinOney(0,2) = dcmplx(1.d0,0.d0)
+            SpinOney(0,-2) = dcmplx(-1.d0,0.d0)
             SpinOney(-2,0) = dcmplx(-1.d0,0.d0)
 
 c--- Sz = diag(1,0,-1)

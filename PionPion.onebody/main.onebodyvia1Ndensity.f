@@ -325,7 +325,7 @@ c           mpi1=mpiArr(extQnum)
             mpi1=mpi!setting mpi=mpi+/- for now
 
             piCharge=extQnum-2
-            piCharge=-1
+c           piCharge=-1
             write(*,*) "piCharge=", piCharge 
             ! Compute the sqrt term
 c           omega=131.8754348d0

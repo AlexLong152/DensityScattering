@@ -214,7 +214,7 @@ c     setting prefactor=1.d0=HC returns scattering length in fm
       ppVecs(diagNumber,:)=ppVecA
 c     KernelA computed in getDiagABC has units [MeV^-4]
 c     Multiply by 1000*mpi0 -> units MeV^-3 -> units of `Result` "unitless" but actually are in (1000*mpi0)^-1 units
-c     prefactor = prefactor*8*pi*sqrtS*HC
+c     prefactor = prefactor*8*pi*sqrtS*HC !uncomment this line to change `Result` to the scattering matrix
       Kernel2B(diagNumber,:,:,:,:,:)=prefactor*KernelA
 
       end

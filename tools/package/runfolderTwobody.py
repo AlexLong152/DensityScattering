@@ -47,7 +47,7 @@ def main(folder, outputfolder):
     if remove.lower() == "y":
         removeSmallOut(outputfolder)
 
-    system("make clean;make fast")
+    system("make clean;make")
     writepyInput()
     writeParCommands()
     # tmp = listdir(folder)

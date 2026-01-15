@@ -1,6 +1,7 @@
 c     =================================================================
 c     Isospin mapping subroutines for Pion-Pion scattering
 c     Based on tests/IsospinMap.py
+c     This could in theory be used for combination of two spin 1/2 matricies in general
 c     =================================================================
 
 c     ----------------------------------------------------------------
@@ -55,18 +56,21 @@ c     ----------------------------------------------------------------
 
       if (i .eq. 1) then
 c        tau^1 = [[0, 1], [1, 0]]
+c        sigmax
          tau(1,1) = (0.d0, 0.d0)
          tau(1,2) = (1.d0, 0.d0)
          tau(2,1) = (1.d0, 0.d0)
          tau(2,2) = (0.d0, 0.d0)
       else if (i .eq. 2) then
 c        tau^2 = [[0, -i], [i, 0]]
+c        sigmay
          tau(1,1) = (0.d0, 0.d0)
-         tau(1,2) = -im
+         tau(1,2) = -im 
          tau(2,1) = im
          tau(2,2) = (0.d0, 0.d0)
       else if (i .eq. 3) then
 c        tau^3 = [[1, 0], [0, -1]]
+c        sigmaz
          tau(1,1) = (1.d0, 0.d0)
          tau(1,2) = (0.d0, 0.d0)
          tau(2,1) = (0.d0, 0.d0)
@@ -151,10 +155,80 @@ c     Compute result = U† * O_prod * U using matmul
       end
 
 c     ----------------------------------------------------------------
+c     SUBROUTINE: getPhysicalOper
+c     Returns physical isospin operators (raising/lowering/z-component)
+c     Based on charge = extQnum - 2:
+c        charge = -1: (1/√2)(τ¹ - iτ²) -- lowering operator
+c        charge =  0: τ³               -- z-component
+c        charge = +1: (1/√2)(τ¹ + iτ²) -- raising operator
+c
+c     Inputs:
+c        extQnum - external quantum number (1, 2, or 3)
+c     Output:
+c        physOper - 2x2 complex physical operator
+c     ----------------------------------------------------------------
+      subroutine getPhysicalOper(extQnum, physOper)
+      implicit none
+      integer extQnum
+      complex*16 physOper(2,2)
+      complex*16 tau1(2,2), tau2(2,2)
+      real*8 invSqrt
+      integer charge
+      complex*16 im
+      parameter (im = (0.d0, 1.d0))
+
+      invSqrt = 1.d0 / dsqrt(2.d0)
+      charge = extQnum - 2
+
+      if (charge .eq. -1) then
+c        Lowering operator: (1/√2)(τ¹ - iτ²)
+         call getPauliMatrix(1, tau1)
+         call getPauliMatrix(2, tau2)
+         physOper = invSqrt * (tau1 - im * tau2)
+      else if (charge .eq. 0) then
+c        Z-component: τ³
+         call getPauliMatrix(3, physOper)
+      else if (charge .eq. 1) then
+c        Raising operator: (1/√2)(τ¹ + iτ²)
+         call getPauliMatrix(1, tau1)
+         call getPauliMatrix(2, tau2)
+         physOper = invSqrt * (tau1 + im * tau2)
+      endif
+
+      return
+      end
+
+c     ----------------------------------------------------------------
+c     SUBROUTINE: combinePhysical
+c     Helper function that combines physical operators
+c     Given extQnum (1, 2, or 3), returns τ_1^phys ⊗ τ_2^phys as 4x4
+c     where the physical operator depends on charge = extQnum - 2
+c
+c     Inputs:
+c        extQnum - external quantum number (1, 2, or 3)
+c     Output:
+c        result  - 4x4 complex matrix in coupled basis
+c     ----------------------------------------------------------------
+      subroutine combinePhysical(extQnum, result)
+      implicit none
+      integer extQnum
+      complex*16 result(4,4)
+      complex*16 physOper(2,2)
+
+c     Get the physical operator for this charge
+      call getPhysicalOper(extQnum, physOper)
+
+c     Combine the operator with itself: τ_1^phys ⊗ τ_2^phys
+      call combineOpers(physOper, physOper, result)
+
+      return
+      end
+
+c     ----------------------------------------------------------------
 c     SUBROUTINE: PionPionBC
 c     Matrix element in coupled basis of:
 c        Σ_{i=1}^3 (τ_1^i τ_2^i) - 2 (τ_1^a τ_2^a)
-c     where a = extQnum
+c     where a = charge=extQnum-2
 c
 c     Inputs:
 c        t, mt   - ket quantum numbers (total isospin, z-projection)
@@ -183,9 +257,9 @@ c     Sum over i = 1, 2, 3: add τ^i ⊗ τ^i
       enddo
 
 c     Subtract 2 * τ^extQnum ⊗ τ^extQnum
-      call getPauliMatrix(extQnum, tau1)
-      call getPauliMatrix(extQnum, tau2)
-      call combineOpers(tau1, tau2, combined)
+c     call getPauliMatrix(extQnum, tau1)
+c     call getPauliMatrix(extQnum, tau2)
+      call combinePhysical(extQnum, combined)
       total = total - 2.d0 * combined
 
 c     Get matrix indices from quantum numbers
@@ -231,9 +305,9 @@ c     Sum over i = 1, 2, 3: add 2*τ^i ⊗ τ^i
       enddo
 
 c     Subtract 2 * τ^extQnum ⊗ τ^extQnum
-      call getPauliMatrix(extQnum, tau1)
-      call getPauliMatrix(extQnum, tau2)
-      call combineOpers(tau1, tau2, combined)
+c     call getPauliMatrix(extQnum, tau1)
+c     call getPauliMatrix(extQnum, tau2)
+      call combinePhysical(extQnum, combined)
       total = total -  combined
       total= 2.d0 * total
 c     Get matrix indices from quantum numbers
@@ -251,7 +325,7 @@ c     Matrix element in coupled basis of:
 c        (τ_1 · τ_2 - τ_1^z τ_2^z)
 c      = τ_1^x τ_2^x + τ_1^y τ_2^y
 c      = Σ_{i=1}^3 τ_1^i τ_2^i - τ_1^extQnum τ_2^extQnum
-c
+c     This isn't actually used in this folder, but its good for comparison
 c     Inputs:
 c        t, mt   - ket quantum numbers (total isospin, z-projection)
 c        tp, mtp - bra quantum numbers
@@ -330,13 +404,13 @@ c     ----------------------------------------------------------------
       real*8 val
       integer delta
       real*8 sign_factor
+      if (extQnum.ne.2) then
+        write(*,*) "Closed Pion photo requires NEUTRAL pion photoproduction with extQnum=2"
+        write(*,*) "passed extQnum=", extQnum 
+        error stop
+      end if 
 
-c     Compute (-1)^(t+1)
-      if (mod(t+1, 2) .eq. 0) then
-         sign_factor = 1.d0
-      else
-         sign_factor = -1.d0
-      endif
+      sign_factor=(-1)**(t+1)
 
 c     val = 2 * (-1)^(t+1) * δ(t,tp) * δ(mt,mtp) * δ(mtp,0)
       val = 2.d0 * sign_factor * dble(delta(t, tp))

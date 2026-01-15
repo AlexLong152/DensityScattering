@@ -4,14 +4,93 @@ from typing import Tuple, Dict
 """
 |1,1>=|t1=1/2,mt2=1/2>|t2=1/2,mt2=1/2> :index 0
 |1,0>=(1/sqrt(2))*(  |t=1/2,mt=1/2>|t2=1/2,mt2=-1/2>  +  |t=1/2,mt=-1/2>|t2=1/2,mt2=1/2>) :index 1
+|1,-1>=|t1=1/2,mt2=-1/2>|t2=1/2,mt2=-1/2> :index 3
 |0,0>=(1/sqrt(2))*(  |t=1/2,mt=1/2>|t2=1/2,mt2=-1/2>  -  |t=1/2,mt=-1/2>|t2=1/2,mt2=1/2>) :index 2
-|1,1>=|t1=1/2,mt2=-1/2>|t2=1/2,mt2=-1/2> :index 3
 """
 
 
 def main():
     test1()
     test2()
+    testGetInd()
+    testPiPhoto()
+    testPiPiA()
+
+
+def testPiPiA():
+    test_states = [
+        (1, 1),  # |1, 1>
+        (1, 0),  # |1, 0>
+        (1, -1),  # |1, -1>
+        (0, 0),  # |0, 0>
+    ]
+
+    all_passed = True
+    tolerance = 1e-5
+    # for extQnum in (1, 2, 3):
+    extQnum = 3
+    for t, mt in test_states:
+        for tp, mtp in test_states:
+            # Calculate using coupled basis method
+            coupled_result = PionPionA(t, mt, tp, mtp, extQnum)
+
+            # Calculate using decoupled basis method
+            closed_result = 2 * ClosedPiPhoto(t, mt, tp, mtp, extQnum)
+
+            # Compare results
+            diff = abs(coupled_result - closed_result)
+            passed = diff < tolerance
+            status = "Pass" if passed else "Fail"
+            if not passed:
+                if all_passed:
+                    print("Test 5 Failed: closed form PiPi vs coupled ")
+                print(
+                    f"{f'{status} <{tp},{mtp}|O|{t},{mt}>: ':<20}"
+                    f"Coupled={coupled_result:+.2f} != "
+                    f"{closed_result:+.2f} = closed form result "
+                )
+
+            all_passed = all_passed and passed
+    if all_passed:
+        print("Test 5 passed: closed form PiPi vs coupled ")
+
+
+def testPiPhoto():
+    test_states = [
+        (1, 1),  # |1, 1>
+        (1, 0),  # |1, 0>
+        (1, -1),  # |1, -1>
+        (0, 0),  # |0, 0>
+    ]
+
+    all_passed = True
+    tolerance = 1e-5
+    # for extQnum in (1, 2, 3):
+    extQnum = 3
+    for t, mt in test_states:
+        for tp, mtp in test_states:
+            # Calculate using coupled basis method
+            coupled_result = piPhotoOper(t, mt, tp, mtp, extQnum)
+
+            # Calculate using decoupled basis method
+            closed_result = ClosedPiPhoto(t, mt, tp, mtp, extQnum)
+
+            # Compare results
+            diff = abs(coupled_result - closed_result)
+            passed = diff < tolerance
+            status = "Pass" if passed else "Fail"
+            if not passed:
+                if all_passed:
+                    print("Test 4 Failed: closed form vs coupled pion photo")
+                print(
+                    f"{f'{status} <{tp},{mtp}|O|{t},{mt}>: ':<20}"
+                    f"Coupled={coupled_result:+.2f} != "
+                    f"{closed_result:+.2f} = closed form result "
+                )
+
+            all_passed = all_passed and passed
+    if all_passed:
+        print("Test 4 Passed: closed form vs coupled pion photo")
 
 
 def test1():
@@ -28,8 +107,8 @@ def test1():
         (0, 0),  # |0, 0>
     ]
 
-    max_diff = 1e-5
     all_passed = True
+    tolerance = 1e-5
     for extQnum in (1, 2, 3):
         for t, mt in test_states:
             for tp, mtp in test_states:
@@ -41,24 +120,26 @@ def test1():
 
                 # Compare results
                 diff = abs(coupled_result - decoupled_result)
-                max_diff = max(max_diff, diff)
-
-                passed = diff < 1e-10
+                passed = diff < tolerance
                 all_passed = all_passed and passed
                 status = "Pass" if passed else "Fail"
                 if not passed:
                     print(
                         f"{f'{status} <{tp},{mtp}|O|{t},{mt}>: ':<20}"
-                        f"Coupled={coupled_result:+.3f} !- "
+                        f"Coupled={coupled_result:+.2f} != "
                         f"{decoupled_result:+.2f} = Coupled "
                     )
     if all_passed:
-        print("Test 1 passed")
+        print("Test 1 passed: check explicit decoupled vs coupled result")
     else:
-        print("In Test1 Some tests failed")
+        print("In Test 1 Some tests failed")
 
 
 def test2():
+    """
+    Tests explicit index, and sanity check on kronecker product
+    """
+
     def op_matrix(extQnum):
         Op = np.zeros((4, 4), dtype=complex)
         for i in (1, 2, 3):
@@ -77,29 +158,52 @@ def test2():
                 assert np.allclose(val, Op[bra, ket])
 
     def tau2_me(mprime, m):
-        def ind(twom):
-            return (1 - twom) // 2
+        return _TAU[2][getInd(mprime), getInd(m)]
 
-        return _TAU[2][ind(mprime), ind(m)]
+    indAnswers = [[(1, -1), -1j], [(-1, 1), 1j]]
+    passes = []
+    for indAnswer in indAnswers:
+        inds, ans = indAnswer
+        a, b = inds
+        diff = tau2_me(a, b) - ans
+        test = abs(diff) < 1e-5
+        passes.append(test)
+        if not test:
+            if all(passes[:-1]):  # first time failing
+                print("Test 2 Failed: explicit index checking and kronocker product")
+            print(f"tau2_me({a},{b})=", tau2_me(a, b), "!=", ans)
 
-    pass1 = tau2_me(1, -1) - (-1j)
-    pass1 = abs(pass1) < 1e-5
-
-    pass2 = tau2_me(-1, 1) - (+1j)
-    pass2 = abs(pass2) < 1e-5
-    passes = pass1 and pass2
-    if passes:
-        print("Test 2 passed")
+    if all(passes):
+        print("Test 2 Passed: explicit index checking and kronocker product")
     else:
-        print("pass1=", pass1)
-        print("pass2=", pass2)
-        print("tau2_me(-1,1)=", tau2_me(-1, 1))
-        print("tau2_me(1,-1)=", tau2_me(1, -1))
+        print("\n")
 
 
-def IsSmall(x, tol=1e-7):
-    print(abs(x))
-    return abs(x) < tol
+def testGetInd():
+    """
+    Tests for index consistency
+    """
+    twom_states = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
+    all_pass = True
+
+    for extQnum in (1, 2, 3):
+        Op = np.zeros((4, 4), dtype=complex)
+        for i in (1, 2, 3):
+            Op += np.kron(_TAU[i], _TAU[i])
+        Op += -2 * np.kron(_TAU[extQnum], _TAU[extQnum])
+
+        for bra, (m1p, m2p) in enumerate(twom_states):
+            for ket, (m1, m2) in enumerate(twom_states):
+                val = pipiDecoupled(m1, m2, m1p, m2p, extQnum)
+                if not np.allclose(val, Op[bra, ket]):
+                    if all_pass:
+                        print("In test_getInd")
+                    print(f"getInd broken at <{m1p},{m2p}|O|{m1},{m2}>")
+                    all_pass = False
+    if all_pass:
+        print("Test 3 Passed: getInd, for index check")
+    else:
+        print("Test Failed: getInd -- for index check")
 
 
 def DecoupledFromCoupled(t, mt, tp, mtp, extQnum):
@@ -160,15 +264,6 @@ def DecoupledFromCoupled(t, mt, tp, mtp, extQnum):
     return out
 
 
-def allowed_mt(t):
-    if t == 0:
-        return [0]
-    elif t == 1:
-        return [-1, 0, 1]
-    else:
-        raise ValueError("t must be 0 or 1")
-
-
 # ============================================================
 # Two spin/isospin-1/2 particles: coupled <-> uncoupled helpers
 # ============================================================
@@ -180,10 +275,6 @@ _TAU: Dict[int, np.ndarray] = {
     3: np.array([[1, 0], [0, -1]], dtype=complex),  # τ^3 = σz
 }
 
-# matNeg1 = (1 / np.sqrt(2)) * (_TAU[1] + 1j * _TAU[2])
-# mat1 = (1 / np.sqrt(2)) * (_TAU[1] + 1j * _TAU[2])
-# mat0 = _TAU[3]
-
 physicalOpers = {
     -1: (1 / np.sqrt(2)) * (_TAU[1] - 1j * _TAU[2]),
     1: (1 / np.sqrt(2)) * (_TAU[1] + 1j * _TAU[2]),
@@ -194,7 +285,7 @@ physicalOpers = {
 # Coupled basis order: (1,+1), (1,0), (1,-1), (0,0)
 
 
-def default_mapping(t: int, mt: int, tp: int, mtp: int) -> Tuple[int, int]:
+def mapping(t: int, mt: int, tp: int, mtp: int) -> Tuple[int, int]:
     """
     Map coupled quantum numbers (t, mt), (t', mt') to matrix indices
     in the coupled-basis ordering:
@@ -215,7 +306,19 @@ def default_mapping(t: int, mt: int, tp: int, mtp: int) -> Tuple[int, int]:
     return idx[(tp, mtp)], idx[(t, mt)]
 
 
+def combineTaus(i):
+    return combineOpers(_TAU[i], _TAU[i])
+
+
 def combineOpers(oper1: np.ndarray, oper2: np.ndarray) -> np.ndarray:
+    """
+    Combine two spin 1/2 operators, and gives the result in the spin 1 + 0 basis
+
+    |1,1>=|t1=1/2,mt2=1/2>|t2=1/2,mt2=1/2> :index 0
+    |1,0>=(1/sqrt(2))*(  |t=1/2,mt=1/2>|t2=1/2,mt2=-1/2>  +  |t=1/2,mt=-1/2>|t2=1/2,mt2=1/2>) :index 1
+    |1,-1>=|t1=1/2,mt2=-1/2>|t2=1/2,mt2=-1/2> :index 3
+    |0,0>=(1/sqrt(2))*(  |t=1/2,mt=1/2>|t2=1/2,mt2=-1/2>  -  |t=1/2,mt=-1/2>|t2=1/2,mt2=1/2>) :index 2
+    """
     invSqrt = 1 / np.sqrt(2)
     U = np.column_stack(
         [
@@ -233,15 +336,56 @@ def combineOpers(oper1: np.ndarray, oper2: np.ndarray) -> np.ndarray:
     return O_cpl
 
 
-def combinePhysical(charge):
+def combinePhysical(extQnum):
     """
     Helper function, given integer charge=-1,0,1
     returns τ_1^i τ_2^i as a 4x4 matrix
     """
+    charge = extQnum - 2
     return combineOpers(physicalOpers[charge], physicalOpers[charge])
 
 
-def PionPionBC(t, mt, tp, mtp, extQnum, mapping=default_mapping) -> complex:
+def PionPionA(t, mt, tp, mtp, extQnum, mapping=mapping) -> complex:
+    r"""
+    Matrix element in coupled basis of the isotensor-like structure (a=b=extQnum):
+        Σ_{i=1}^3 2(τ_1^i τ_2^i)  - 2 (τ_1^a τ_2^a)
+    with a = extQnum.
+
+    Factor of 2 comes from a=b
+
+    Implemented term-by-term:
+      add  2τ^1⊗τ^1
+      add  2τ^2⊗τ^2
+      add  2τ^3⊗τ^3
+      add -2 τ^a⊗τ^a
+
+    Returns
+    -------
+    complex
+        <t' mt' | O | t mt>
+    """
+    if extQnum not in (1, 2, 3):
+        raise ValueError("extQnum must be 1, 2, or 3.")
+
+    total_cpl = np.zeros((4, 4), dtype=complex)
+
+    # Σ_{i=1}^3 τ_1^i ⊗ τ_2^i
+    # ExtCharge = extQnum - 2
+    for i in (1, 2, 3):
+        total_cpl += 2 * combineOpers(_TAU[i], _TAU[i])
+        # total_cpl += combinePhysical(i-2)
+
+    # -2 τ_1^a ⊗ τ_2^a
+    # total_cpl += (-2.0) * combineOpers(
+    #     physicalOpers[ExtCharge], physicalOpers[ExtCharge]
+    # )
+    total_cpl += (-2.0) * combineOpers(_TAU[extQnum], _TAU[extQnum])
+
+    irow, icol = mapping(t, mt, tp, mtp)
+    return total_cpl[irow, icol]
+
+
+def PionPionBC(t, mt, tp, mtp, extQnum, mapping=mapping) -> complex:
     r"""
     Matrix element in coupled basis of the isotensor-like structure (a=b=extQnum):
         Σ_{i=1}^3 (τ_1^i τ_2^i)  - 2 (τ_1^a τ_2^a)
@@ -266,12 +410,15 @@ def PionPionBC(t, mt, tp, mtp, extQnum, mapping=default_mapping) -> complex:
     total_cpl = np.zeros((4, 4), dtype=complex)
 
     # Σ_{i=1}^3 τ_1^i ⊗ τ_2^i
+    # ExtCharge = extQnum - 2
     for i in (1, 2, 3):
         total_cpl += combineOpers(_TAU[i], _TAU[i])
+        # total_cpl += combinePhysical(i-2)
 
     # -2 τ_1^a ⊗ τ_2^a
-    # charge = extQnum - 2
-    # total_cpl += (-2.0) * combineOpers(physicalOpers[charge], physicalOpers[charge])
+    # total_cpl += (-2.0) * combineOpers(
+    #     physicalOpers[ExtCharge], physicalOpers[ExtCharge]
+    # )
     total_cpl += (-2.0) * combineOpers(_TAU[extQnum], _TAU[extQnum])
 
     irow, icol = mapping(t, mt, tp, mtp)
@@ -288,11 +435,6 @@ def pipiDecoupled(twom1, twom2, twom1p, twom2p, extQnum):
 
     multiplying m values by two so everything can be an integer
     """
-
-    def getInd(twom):
-        # maps -1 to 0, 1 to 1
-        # return (twom + 1) // 2
-        return (1 - twom) // 2
 
     out = 0
 
@@ -315,7 +457,7 @@ def pipiDecoupled(twom1, twom2, twom1p, twom2p, extQnum):
     return out
 
 
-def piPhotoOper(t, mt, tp, mtp, mapping=default_mapping) -> complex:
+def piPhotoOper(t, mt, tp, mtp, extQnum) -> complex:
     r"""
     Matrix element in coupled basis of:
         (τ_1 · τ_2 - τ_1^z τ_2^z)
@@ -332,12 +474,33 @@ def piPhotoOper(t, mt, tp, mtp, mapping=default_mapping) -> complex:
         <t' mt' | O | t mt>
     """
     total_cpl = np.zeros((4, 4), dtype=complex)
+    # total_cpl2 = np.zeros((4, 4), dtype=complex)
 
-    for i in (1, 2):  # x,y only
-        total_cpl += combineOpers(_TAU[i], _TAU[i])
+    for i in (1, 2, 3):  # x,y only
+        total_cpl += combineTaus(i)
+    # for i in (-1, 0, 1):
+    #     total_cpl2 += combinePhysical(i)
+    # print(np.allclose(total_cpl, total_cpl2))
+    total_cpl += -combineTaus(extQnum)
 
     irow, icol = mapping(t, mt, tp, mtp)
     return total_cpl[irow, icol]
+
+
+def ClosedPiPhoto(t, mt, tp, mtp, extQnum):
+    assert extQnum == 3
+    val = 2 * (-1) ** (t + 1)
+    return val * delta(t, tp) * delta(mt, mtp) * delta(mtp, 0)
+
+
+def delta(a, b):
+    return int(a == b)
+
+
+def getInd(twom):
+    # maps 1 to 0, -1 to 1
+    # return (1 + twom) // 2
+    return (1 - twom) // 2
 
 
 if __name__ == "__main__":

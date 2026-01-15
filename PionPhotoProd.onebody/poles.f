@@ -513,8 +513,8 @@ c     Define Pauli matrices
       sigmaX(1, 2) = dcmplx(1.0d0, 0.0d0)
       sigmaX(2, 1) = dcmplx(1.0d0, 0.0d0)
       
-      sigmaY(2, 1) = dcmplx(0.0d0, -1.0d0)
-      sigmaY(1, 2) = dcmplx(0.0d0, 1.0d0)
+      sigmaY(2, 1) = dcmplx(0.0d0, 1.0d0)
+      sigmaY(1, 2) = dcmplx(0.0d0, -1.0d0)
       
       sigmaZ(1, 1) = dcmplx(1.0d0, 0.0d0)
       sigmaZ(2, 2) = dcmplx(-1.0d0, 0.0d0)

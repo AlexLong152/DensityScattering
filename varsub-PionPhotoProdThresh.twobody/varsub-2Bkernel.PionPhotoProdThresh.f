@@ -255,7 +255,7 @@ c       uVec=pVec-ppVec+kVec/2!-> ppVec= pVec-uVec+kVec/2 -> jacobian on the int
 
       factorDsym = factor * (2.d0*ga*ga) * (1.d0 / (vecsquare(qVec) + mpi*mpi))
 
-      factorEsym=factor*(-1.d0+2*ga*ga)*(1.d0+2.d0*(dot_product(qVec,pVec)/vecsquare(qVec)))
+      factorEsym=factor*(-1.d0+2*ga*ga)*(1.d0+2.d0*(dot_product(qVec,ppVec)/vecsquare(qVec)))
      & *(1/(vecsquare(qpVec)+mpi**2))
 
       factorAasy=factorAsym
@@ -288,7 +288,7 @@ c     write(*,*) ""
 
             call StaticKernelBsym(Kerneltmp,
      &           factorBsym, qVec,
-     &           pVec,kVec,
+     &           ppVec,kVec,
      &           s12p,s12,extQnumlimit,verbosity)
 
             call StaticKernelCsym(Kerneltmp,
@@ -303,7 +303,7 @@ c     write(*,*) ""
 
             call StaticKernelEsym(Kerneltmp,
      &           factorEsym, qVec,
-     &           qpVec,pVec,
+     &           qpVec,
      &           s12p,s12,extQnumlimit,verbosity)
 
 
@@ -316,7 +316,7 @@ c     write(*,*) ""
       
               call StaticKernelBasym(Kerneltmp,
      &           factorBsym, qVec,
-     &           pVec,kVec,
+     &           ppVec,kVec,
      &           s12p,s12,extQnumlimit,verbosity)
       
               call StaticKernelCasym(Kerneltmp,
@@ -331,7 +331,7 @@ c     write(*,*) ""
 
             call StaticKernelEasym(Kerneltmp,
      &           factorEsym, qVec,
-     &           qpVec,pVec,
+     &           qpVec,
      &           s12p,s12,extQnumlimit,verbosity)
 
          end if                 ! s12 question
@@ -398,12 +398,12 @@ c     Internal variables
 
       useTransform=.true.
       if (useTransform) then
-c       uVec=pVec-ppVec+kVec/2!-> ppVec= pVec-uVec+kVec/2 -> jacobian on the integration gives a factor of -1
-        ppVec=pVec-uVec+kVec/2
-        Jacobian=-1.d0!TODO: check if this is needed
+c        uVec=pVec-ppVec+kVec/2!-> ppVec= pVec-uVec+kVec/2 -> jacobian on the integration gives a factor of -1
+         ppVec=pVec-uVec+kVec/2
+         Jacobian=-1.d0
       else
-          ppVec=uVec
-          Jacobian=1.d0
+         ppVec=uVec
+         Jacobian=1.d0
       end if
       qVec=pVec-ppVec+(kVec/2)!qVec=uVec with the substitution
       qpVec=pVec-ppVec-(kVec/2)
