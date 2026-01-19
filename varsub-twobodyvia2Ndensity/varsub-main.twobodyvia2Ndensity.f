@@ -422,8 +422,8 @@ c            KernelFarewell() set in <process-dir>/2BKernel*.f
       
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     hgrie May 2018: output to file, to stdout(if wanted) and to mathematica friendly format (if wanted)
-            call outputroutine(outUnitno,twoSnucl,extQnumlimit,
-     &           Result,verbosity)
+            call outputKernel(outUnitno,twoSnucl,extQnumlimit,
+     &           Result,Mnucl,verbosity)
             
 c     be a good boy and deallocate arrays. Compilers do that automatically for simple programs. Better safe than sorry.
             deallocate (Result, STAT=test ) ! test becomes nonzero if this fails

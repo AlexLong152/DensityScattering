@@ -194,9 +194,11 @@ c     call getDiagABfinite(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,kpVec,ppV
       !StaticDiags O(q^4) uses some variable substitution as diagAB
       !would need to reassign ppVecs(diagNumber,:), and diagNumber if this wasn't the case
       call getStaticDiags(KernelStatic,pVec,uVec,kVec,kpVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
-      Kernel2B(diagNumber,:,:,:,:,:)=Kernel2B(diagNumber,:,:,:,:,:)+KernelStatic*(-1/(4.d0*mNucl*mpi))
+      Kernel2B(diagNumber,:,:,:,:,:)=Kernel2B(diagNumber,:,:,:,:,:)+KernelStatic*(-1/(4.d0*Mnucleon*mpi))
 
       if (calctype.eq.Odelta4) return 
+      write(*,*) "Something went wrong with calctype Odelta, check input file"
+      error stop
       end
 
 

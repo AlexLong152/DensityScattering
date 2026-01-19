@@ -5,7 +5,8 @@ c               Based on Compton density code v2.0: D. Phillips/A. Nogga/hgrie s
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     CONTAINS SUBROUTINES:
 c              outputroutine        : output result to stdout and output file
-c      
+c              outputroutinelabeled : output result with custom label to stdout and output file
+c
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     TO DO:
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -90,3 +91,60 @@ c     hgrie Aug 2020: if so wanted, output first independent MEs also to screen 
 
       return
       end                       ! outputroutine
+
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+      subroutine outputroutinelabeled(outUnitno,twoSnucl,extQnumlimit,
+     &     Result,verbosity,label)
+c
+c**********************************************************************
+c     Same as outputroutine but with custom label instead of "Result"
+c
+      implicit none
+c
+c**********************************************************************
+c
+c     INPUT/OUTPUT VARIABLE:
+c
+c     amplitudes with photon helicities
+c
+      complex*16,intent(in) :: Result(1:extQnumlimit,-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
+
+      integer,intent(in) :: extQnumlimit
+      integer,intent(in) :: twoSnucl
+      integer,intent(in) :: outUnitno
+
+      integer,intent(in) :: verbosity
+
+      character(len=*),intent(in) :: label
+
+      integer :: extQnum,twoMzp,twoMz
+c     integer i
+c**********************************************************************
+c
+      if (verbosity.eq.1000) continue
+
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     output to file !This should be taken care of by run.system file
+
+      write(*,'(A)') REPEAT("%",100)
+      write(outUnitno,'(A)') REPEAT("%",100)
+      do extQnum=1,extQnumlimit
+         do twoMzp=twoSnucl,-twoSnucl,-2
+            do twoMz=twoSnucl,-twoSnucl,-2
+                  write(outUnitno,'("( ",E24.17,SP,E24.17,"i)")') Result(extQnum,twoMzp,twoMz)
+                  write (*,'(A,A,I4,A,I4,A,I4,A,F24.19,SP,F24.19," i")') !outputs to top of file
+     &                 trim(label),"(extQnum=",extQnum,",twoMzp=",twoMzp,", twoMz=",twoMz,"): ",Result(extQnum,twoMzp,twoMz)
+               end do           ! extQnum
+         end do                 ! twoMzp
+      end do                    ! extQnum
+
+      write(*,'(A)') REPEAT("%",100)
+      write(outUnitno,'(A)') REPEAT("%",100)
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     hgrie Aug 2020: if so wanted, output first independent MEs also to screen in a form that can directly be pasted into mathematica
+      if (verbosity.ge.0) call outputtomath(Result,twoSnucl,extQnumlimit,verbosity)
+
+      return
+      end                       ! outputroutinelabeled
+

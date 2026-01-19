@@ -49,7 +49,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       PROGRAM onebodydensitymain
 
       USE CompDens              ! needs module CompDens.mod
-
+      use, intrinsic :: ieee_arithmetic
       IMPLICIT NONE
 c**********************************************************************
       include '../common-densities/params.def'
@@ -148,7 +148,7 @@ c     integer twoMzlimit ! for symmetry calculation: Mzp>=0 *and* for Mzp=0, onl
 
 c     complex*16, allocatable :: SResultx(:,:),SResulty(:,:), SResultz(:,:) ! twoMz from -twoSnucl to
 c     complex*16, allocatable :: VResultx(:,:),VResulty(:,:), VResultz(:,:) ! twoMz from -twoSnucl to
-      complex*16, allocatable :: FSPlusV(:,:), FSMinusV(:,:)
+      complex*16, allocatable :: FSPlusV(:,:,:), FSMinusV(:,:,:)
 c     complex*16 :: nucS(3)
 c     That means arrays are less than 2^2=4 times bigger than need be, but that's ok since quite small anyway. 
 
@@ -196,7 +196,6 @@ c     0: do not delete; 1: delete un-gz'd file; 2: delete downloaded and un-gz'd
       complex*16 :: tmp2(-1:1,-1:1) 
       complex*16 :: SigmaVec(3,-1:1,-1:1)
       complex*16 tmp
-
       complex*16 :: Opermat(-1:1,-1:1) 
       complex*16 :: Mmat(-1:1,-1:1) 
 
@@ -351,8 +350,8 @@ c      Initialise everything to 0, overwriting entries from previous ω/θ
 c**********************************************************************
 
 
-            allocate(FSPlusV(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
-            allocate(FSMinusV(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
+            allocate(FSPlusV(1:3,-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
+            allocate(FSMinusV(1:3,-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
             allocate(Result(1:extQnumlimit,-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
             FSPlusV=c0
             FSMinusV=c0
@@ -452,9 +451,10 @@ c           tmpPlus and tmpMinus combines spin and isospin part of diagrams
 
             if (allocated(SpinVec2D)) deallocate(SpinVec2D)
             allocate(SpinVec2D(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
-            do ieps=1,3
+
             FSMinusV=c0
             FSPlusV=c0
+            do ieps=1,3
 
             SpinVec2D = SpinVec(ieps,:,:)
             if (ieps.ne.3) then
@@ -470,9 +470,9 @@ c           tmpPlus and tmpMinus combines spin and isospin part of diagrams
                If (L1N.eq.0) then
                    Sigma=SigmaVec(ieps,:,:)
 
-                   FSPlusV(twoMzp,twoMz)=FSPlusV(twoMzp,twoMz)+Anucl*rho1b(rindx)*Sigma(twom1Np,twom1N)
+                   FSPlusV(ieps,twoMzp,twoMz)=FSPlusV(ieps,twoMzp,twoMz)+Anucl*rho1b(rindx)*Sigma(twom1Np,twom1N)
      &                     *tmpPlus(twomt1Np,twomt1N)
-                   FSMinusV(twoMzp,twoMz)=FSMinusV(twoMzp,twoMz)+Anucl*rho1b(rindx)*Sigma(twom1Np,twom1N)
+                   FSMinusV(ieps,twoMzp,twoMz)=FSMinusV(ieps,twoMzp,twoMz)+Anucl*rho1b(rindx)*Sigma(twom1Np,twom1N)
      &                     *tmpMinus(twomt1Np,twomt1N)
 
                    PlusConst=Sigma(twom1Np,twom1N)* tmpPlus(twomt1Np,twomt1N)
@@ -480,50 +480,33 @@ c           tmpPlus and tmpMinus combines spin and isospin part of diagrams
                    tmp=(10**3)*K1N*(prot*PlusConst+neut*MinusConst)*Anucl*rho1b(rindx)!matrix element 
                    Result(ieps,twoMzp,twoMz)= Result(ieps,twoMzp,twoMz)+tmp
      &            
-                    if (rindx.eq.1) then
-                      write(*,*) ""
-                      write(*,*) ""
-                    end if
-                    if (tmp.ne.c0) then
-                    write(*,"(A,' ',F11.8,1X,SP,F11.8,'i',SS,A,I4,A,I4)",advance='no')
-     &                  "mat=", tmp, ",  rindx=", rindx, ",  extQnum=", ieps
-      
-                    write(*,"(A,F10.8)") "   abs(rho1b(rindx)*mat)=  ",  abs(rho1b(rindx)*tmp)
-                    end if
               end if ! L1N
 
             end do              !rindx   
-            FSPlusV=FSPlusV/SpinVec(ieps,:,:)
-            FSMinusV=FSMinusV/SpinVec(ieps,:,:)
 
 c           Create contiguous 2D array to avoid temporary array warning
             PlusConst=NonZeroAve(FSPlusV,SpinVec2D,twoSnucl)
             MinusConst=NonZeroAve(FSMinusV,SpinVec2D,twoSnucl)
 
-            write(*,'(A)') "############################################"
-            write(*,'(A,I1,",",I1,",",I1,A)') "eps=", int(eps(ieps,:)), " Result"
-            call ResultWrite(FSPlusV,FSMinusV,SpinVec2D,twoSnucl,outUnitno)
-            write(*,*) ""
-            if (ieps.ne.3) then
-              write(*,'(A,F10.6)',advance='no') "F_T^{S-V}=", MinusConst 
-              write(*,'(A,F10.6)') "F_T^{S+V}=", PlusConst 
-            else
-              write(*,'(A,F10.6)',advance='no') "F_L^{S-V}=", MinusConst 
-              write(*,'(A,F10.6)') "F_L^{S+V}=", PlusConst 
-            end if
+            where (SpinVec(ieps,:,:) /= 0.d0)
+                FSPlusV(ieps,:,:)  = FSPlusV(ieps,:,:)  / SpinVec(ieps,:,:)
+                FSMinusV(ieps,:,:) = FSMinusV(ieps,:,:) / SpinVec(ieps,:,:)
+            elsewhere
+                FSPlusV(ieps,:,:)  = 0.0d0
+                FSMinusV(ieps,:,:) = 0.0d0
+            end where
             end do!ieps
 
 
             if (twoSnucl.eq.1) then
-              aveE0=(real(Result(1,1,-1))+aimag(Result(2,-1,1)))/2.d0
+              aveE0=(real(Result(1,1,-1))+aimag(Result(2,1,-1)))/2.d0
               aveL0=real(Result(3,1,1))
             else if (twoSnucl.eq.2) then
-              write(*,*) "IMPLIMENT ME "
-              aveE0=(real(Result(1,2,0))+aimag(Result(2,0,2)))/2.d0
+              aveE0=(real(Result(1,2,0))+aimag(Result(2,2,0)))/2.d0
+              aveL0=real(Result(3,2,2))
             else if  (twoSnucl.eq.0) then
-              write(*,*) "IMPLIMENT ME "
-              aveE0=(real(Result(1,0,0))+aimag(Result(2,0,0)))/2.d0
-              write(*,*) ""
+              write(*,*) "IMPLIMENT ME for 4He"
+              stop
             end if
 
             write(*,'(A)') "############################################"
@@ -533,14 +516,25 @@ c           Create contiguous 2D array to avoid temporary array warning
 
 
             write(outUnitno,*) "cm omega=",omega, "thetacm=",thetacm
-c           write(*,*) ""
-c           ! write(*,'(A)') "Scattering Matrix"
-c    !        call outputroutine(outUnitno,twoSnucl,extQnumlimit,
-c    ! &           Result,verbosity)
-            ! In units of m_pi^+
- 
-            call outputroutine(outUnitno,twoSnucl,extQnumlimit,
-     &           Result ,verbosity)
+
+            call outputKernel(outUnitno,twoSnucl,extQnumlimit,
+     &           FSPlusV ,-1,"F^{S+V}")
+            call outputKernel(outUnitno,twoSnucl,extQnumlimit,
+     &           FSMinusV ,-1,"F^{S-V}")
+
+            write(*,'(A)') ""
+            write(*,'(A)') ""
+            write(*,'(A)') "Now printing 2 Body values of E_{0+} and L_{0+}"
+            write(*,'(A)') "Differs from matrix elements by 2i, in the Lenkewitz convention if you set:"
+            write(*,'(A)') "\mathcal{M} = 2i E_{0+} (\vec{ε}_T· S) + 2i L_{0+} (\vec{ε}_L· S)"
+            write(*,'(A)') "See Lenkewitz 2011 equation 2, arXiv:1103.3400 [nucl-th]"
+            write(*,*) ""
+            write(*,'(A)') "Using units 10^-3/mπ"
+            write(*,'(A)') "E_{0+} in extQnum=1,2"
+            write(*,'(A)') "L_{0+} in extQnum=3"
+            call outputKernel(outUnitno,twoSnucl,extQnumlimit,
+     &           Result ,verbosity,"ScatMat")
+
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     be a good boy and deallocate arrays. Compilers do that automatically for simple programs. Better safe than sorry.
             deallocate (FSMinusV,FSPlusV,SpinVec2D,SpinVec, STAT=test ) ! test becomes nonzero if this fails

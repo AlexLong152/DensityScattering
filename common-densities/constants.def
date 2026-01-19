@@ -38,7 +38,7 @@ c
 c    Identity matrix and Pauli matrices for spin-1/2 operators
 c
         real*8 M6Li,M4He,M3He,Md,Mproton,Mneutron,Mnucleon,Binding
-	real*8 mpi,mpi0,HC,fpi,ga,kappap,kappan,ep,en,alphaem
+	real*8 mpi,mpi0,HC,fpi,ga,kappap,kappan,ep,en,alphaem,echarge
         real*8 muv,mup,mun
         real*8 kappas,kappanu
         
@@ -57,10 +57,11 @@ c	parameter (gpinn=14.4)
 
 c  hgrie: all numbers taken from rescattering code unless specified otherwise
 c       take AVERAGE nucleon mass, NOT proton mass!: M=938.3d0 before v6
-	parameter (mpi=139.5675d0,mpi0=134.97d0)
-	parameter (Mproton=938.27231d0,Mneutron=939.56563d0) ! proton, neutron mass
-	parameter (Mnucleon=(Mproton+Mneutron)/2.)              ! avg nucleon mass: 938.919..
+        parameter (mpi=139.5675d0,mpi0=134.97d0)
+        parameter (Mproton=938.27231d0,Mneutron=939.56563d0) ! proton, neutron mass
+        parameter (Mnucleon=(Mproton+Mneutron)/2.)              ! avg nucleon mass: 938.919..
 	
+        parameter (echarge=0.302d0)
         parameter (fpi=92.42,alphaem=1.d0/137.03599d0,HC=197.327d0)
         parameter (ga=1.267d0)
 c	parameter (ga=sqrt(gpinn*4.d0*Pi)*fpi/M)
