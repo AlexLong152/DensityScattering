@@ -23,18 +23,17 @@ outputfolder = r"/home/alexander/Dropbox/PionPhotoProduction/results-3He/2bod/13
 
 executableName = ""
 
-# if folder[-1] != r"/":
-#     folder += r"/"
-#
-# if outputfolder[-1] != r"/":
-#     outputfolder += r"/"
-
 
 # This shouldn't change for pion photoproduction below/at Odelta^4 at least
 numDiagrams = 1
 
 
 def main(folder, outputfolder):
+    if folder[-1] != r"/":
+        folder += r"/"
+
+    if outputfolder[-1] != r"/":
+        outputfolder += r"/"
     assert Odelta > 0
     assert j12max > 0
 

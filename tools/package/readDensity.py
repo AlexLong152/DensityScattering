@@ -5,134 +5,116 @@
 """
 
 import numpy as np
-
-# from matplotlib import pyplot as plt
-from os import listdir
-from os.path import isfile, join
-from matplotlib import rcParams
+import re
 from copy import copy
-# import re
-
-rcParams["text.usetex"] = True
-rcParams["font.family"] = "serif"
-
-mypath = "."
-onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f)) and f[-3:] == "dat"]
 
 
 def main():
-    file1 = r"/home/alexander/OneDrive/DensityScattering/varsub-PionPhotoProdThresh.twobody/Out-No-static.dat"
-    file2 = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/2bod/60MeV/twobody-6Li.060MeV-180deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG1.880setNtotmax14omegaH18.Odelta2-j12max=2-.denshash=0580caf788c054fd7c2ce946d49030d91120d46c0671f1f274704d5be9bf1aa0.v2.0.dat"
-    for f in [file1, file2]:
-        tmp = getQuantNums(f)["MatVals"]
+    file1 = r"/home/alexander/OneDrive/DensityScattering/tools/package/twobody-3He.132MeV-060deg.dens-chiralsmsN4LO+3nfN2LO-lambda450-lambdaSRG0.000setNtotmax00omegaH00.Odelta2-j12max=1-.denshash=e8f1ba5e7fafac8431e05ae0e6b63381f668664f52d39abfcea0830f420f4706.v2.0.dat"
+    for f in [file1]:
+        tmp = getQuantNums(f, kind="FormFactors")["MatVals"]
+        print(tmp)
+        print(50 * "%")
+        tmp = getQuantNums(f, kind="Matrix")["MatVals"]
         print(tmp)
         print(50 * "%")
 
 
-def main2():
-    breakStr = 20 * "#" + "\n"
-    breakStr = breakStr + breakStr
+def getBlock(filetext, kind):
+    """
+    Extracts the text block corresponding to 'kind' from the file contents.
 
-    onlyfiles = [
-        r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/chiralsmsN4LO+3nfN2LO-lambda400/twobody/twobody-6Li.060MeV-040deg.dens-chiralsmsN4LO+3nfN2LO-lambda400-lambdaSRG1.880setNtotmax06omegaH14.Odelta2-j12max=2-.v2.0.dat"
-    ]
-    f = onlyfiles[0]
-    f = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/chiralsmsN4LO+3nfN2LO-lambda550/onebody/onebody-6Li.060MeV-040deg.dens-chiralsmsN4LO+3nfN2LO-lambda550-lambdaSRG1.880setNtotmax06omegaH10.Odelta2-.denshash=0d7417d10a4d4a7ac0a3bf3f1ba864813227ec751d7c2b6300fcd29a0515dd1f.v2.0.dat"
-    # f = r"/home/alexander/OneDrive/DensityScattering/varsub-PionPhotoProdThresh.twobody/results/4He-trivial-test.dat"
-    # for f in onlyfiles:
-    #     print(breakStr)
-    #     getTheta(f)
-    #     out = output(f)
-    #     print(out)
-    out = getQuantNums(f)
-    print("out=", out)
+    Parameters
+    ----------
+    filetext : str
+        The full text contents of the file
+    kind : str
+        The block type to extract (e.g., "FormFactors" or "Matrix")
 
-    # varyFile = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/chiralsmsN4LO+3nfN2LO-lambda550/onebody/onebody-6Li.060MeV-040deg.dens-chiralsmsN4LO+3nfN2LO-lambda550-lambdaSRG1.880setNtotmax06omegaH10.VaryA1p-.denshash=0d7417d10a4d4a7ac0a3bf3f1ba864813227ec751d7c2b6300fcd29a0515dd1f.v2.0.dat"
+    Returns
+    -------
+    str
+        The text block containing lines matching the kind pattern
+    """
+    lines = filetext.splitlines()
+    block_lines = []
 
+    for line in lines:
+        # Check if line contains the kind pattern
+        if kind + "(extQnum=" in line:
+            block_lines.append(line)
 
-# def getVaryA(filename):
-#     # A regex pattern to capture lines like:
-#     # A1p =    137.03599000000000
-#     pattern = re.compile(r"(A\d[pn])\s*=\s*([0-9.+\-E]+)")
-#
-#     with open(filename, "r") as f:
-#         data = f.read()
-#
-#     for match in pattern.finditer(data):
-#         amp_name = match.group(1)  # e.g. "A1p"
-#         amp_value_str = match.group(2)  # e.g. "137.03599000000000"
-#         try:
-#             amp_value = float(amp_value_str)
-#         except ValueError:
-#             # If for some reason conversion fails, skip
-#             continue
-#
-#         # Store only non-zero values
-#         if amp_value != 0.0:
-#             return amp_value
-#
-#     raise ValueError("Value not found")
+    if not block_lines:
+        raise BadDataError(f"No block found for kind='{kind}'")
+
+    return "\n".join(block_lines)
 
 
-def getQuantNums(filename, returnMat=True):
+def parseBlock(block):
+    """
+    Parses a block of text and extracts quantum numbers and complex values.
+
+    Parameters
+    ----------
+    block : str
+        Text block containing lines with quantum numbers and values
+
+    Returns
+    -------
+    list
+        List of tuples, each containing (extQnum, twoMzp, twoMz, complex_number)
+    """
+
+    lines = block.splitlines()
+    result = []
+
+    for line in lines:
+        # Parse pattern: kind(extQnum=X,twoMzp=Y, twoMz=Z): real_part +/- imag_part i
+        # Example: FormFactors(extQnum=   1,twoMzp=   1, twoMz=   1):   -0.053... +0.000... i
+
+        # Extract quantum numbers
+        match = re.search(
+            r"extQnum=\s*(\d+),\s*twoMzp=\s*(-?\d+),\s*twoMz=\s*(-?\d+)", line
+        )
+        if not match:
+            BadDataError(f"Bad data, line={line}")
+
+        extQnum = int(match.group(1))
+        twoMzp = int(match.group(2))
+        twoMz = int(match.group(3))
+
+        # Extract complex number (after the colon)
+        value_part = line.split(":", 1)[1].strip()
+
+        # Replace 'i' with 'j' and remove spaces, then cast to complex
+        value_part = value_part.replace(" ", "").replace("i", "j")
+        complex_number = complex(value_part)
+
+        result.append((extQnum, twoMzp, twoMz, complex_number))
+
+    return result
+
+
+def getQuantNums(filename, returnMat=True, kind="Result"):
     """
     Reads in quantum numbers as real numbers from filename
-
-    output values are in the order:
-    out[extNum, mzp, mz]
     """
     out = {}
+    nucName = getNucName(filename)
+    out["nuc"] = nucName
     if returnMat:
-        raise ValueError(
-            "Updated fortran code to read in pauli matrices in the fortran native column major order,\
-                         need to change the mapping of the matrix from fortran output to python"
-        )
         with open(filename, "r") as f:
             contents = f.read()
-            lines = np.array(contents.splitlines())
-            indx = -1
-            for i in range(len(lines)):
-                if "(" in lines[i]:
-                    indx = i
-                    break
-                # print("lines[i]=\n", lines[i])
-                # print("indx=", indx)
-            if indx == -1:
-                raise BadDataError(f"Bad file {filename}")
 
-            # print("filename=", filename)
-            lines = lines[indx:]
-            lines = "".join(lines)
+            # Use new approach with getBlock and parseBlock
+            block = getBlock(contents, kind)
+            parsed_data = parseBlock(block)
 
-            lines = lines.split("=")
-            lines = lines[0]
-
-            lines = lines.split("%")
-            lines = lines[0]
-            lines = lines.replace("(", "")
-            lines = lines.split(")")
-            lines = np.array(
-                [x.strip() for x in lines if x.strip() != "" and "Repeated" not in x]
-            )
-            vals = np.zeros(len(lines), dtype=np.complex128)
-            for i in range(len(vals)):
-                if "," in lines[i]:
-                    tmp = lines[i].split(",")
-                    # print("tmp=", tmp)
-                    # print("vals=\n", vals, "\n")
-                    try:
-                        vals[i] = float(tmp[0]) + 1j * float(tmp[1])
-                    except ValueError:
-                        return None
-                else:
-                    tmp = lines[i].strip().replace("i", "j")
-                    vals[i] = complex(tmp)
-
-        try:
-            densityName = densityFileName(filename)
-        except UnboundLocalError:
-            densityName = filename
-        out["MatVals"] = vals2matrix(densityName, vals)
+            out["MatVals"] = vals2matrix(nucName, parsed_data)
+    try:
+        densityName = densityFileName(filename)
+    except UnboundLocalError:
+        densityName = filename
 
     densityName = densityFileName(filename)
     out["name"] = filename
@@ -153,12 +135,12 @@ def getQuantNums(filename, returnMat=True):
     out["lambdaSRG"] = getLambdaSRG(densityName)
     out["numBodies"] = getNumBodies(densityName)
     out["Odelta"] = getOdelta(densityName)
-    out["nuc"] = getNucName(filename)
     # print("len(vals)=", len(vals))
     # print(np.shape(out["MatVals"]))
     return out
 
 
+# def data2array(parsed_data):
 class BadDataError(Exception):
     def __init__(self, message):
         super().__init__(message)
@@ -169,7 +151,7 @@ def densityFileName(filename):
     Gets the density file name from input file
     if the input file exists at the end of the output file
     """
-    substr = r"**************************************************"
+    substr = r"**************************************************"  # gets contents in input file
     with open(filename, "r") as f:
         contents = f.read()
         contents = contents.split(substr)[-1]
@@ -258,52 +240,80 @@ def spin4Nuc(nuc):
             raise ValueError(f"Unknown nucleus '{nuc}'")
 
 
-def vals2matrix(filename, vals):
-    name = filename.split(r"/")[-1]
+def mapping(twoMz, twospin):
+    """
+    Mappings are from twoMz and twoMzp twoMzp to python indexes.
+    """
+    # match twospin:
+    # fill me in
+    # return out
 
-    # if "6Li" in filename or "4He" in name or "3He" in name:
-    #     tmpName = name
-    # else:
-    #     tmpName = getNucFromInputFile(filename)
 
-    match name:
-        case _ if "6Li" in name:
+def vals2matrix(nucName, parsed_data):
+    """
+    Converts parsed data to a 3D matrix using proper quantum number to index mapping.
+
+    Parameters
+    ----------
+    nucName : str
+        Nucleus name ("3He", "4He", or "6Li")
+    parsed_data : list
+        List of tuples (extQnum, twoMzp, twoMz, complex_number)
+
+    Returns
+    -------
+    numpy.ndarray
+        3D array with shape (numextQnums, numStates, numStates)
+
+    Notes
+    -----
+    The mapping from quantum numbers to array indices follows the convention
+    from IsospinMap.py and the Fortran code: index = (twoSpin - twoMz) // 2
+    This ensures consistency with the spin matrix definitions.
+    """
+    # Determine twoSpin from nucleus name
+    match nucName:
+        case "6Li":
             twoSpin = 2
-        case _ if "4He" in name:
+        case "4He":
             twoSpin = 0
-        case _ if "3He" in name:
+        case "3He":
             twoSpin = 1
         case _:
-            print("readDensity.py: function vals2matrix filename=", filename)
-            raise ValueError("Nucleus not found")
+            raise ValueError(f"Unknown nucleus: {nucName}")
 
-    # if twoSpin==1:
-    #     numStates=2
-    # if twoSpin==2:
-    #     numStates=3
-    numStates = twoSpin + 1  # 2l+1 quantum states
+    numStates = twoSpin + 1  # 2S+1 quantum states
 
-    # twoMz = np.arange(-1 * twoSpin, twoSpin + 1, 1, dtype=int)
-    # twoMzp = np.arange(-1 * twoSpin, twoSpin + 1, 1, dtype=int)
-    # mzStates = np.arange(0, numStates + 1, dtype=int)
-    # mzpStates = np.arange(0, numStates + 1, dtype=int)
-    numextQnums = len(vals) // (numStates**2)
+    # Find number of external quantum numbers
+    extQnums = set(item[0] for item in parsed_data)
+    numextQnums = len(extQnums)
+
+    # Initialize output array
     out = np.zeros((numextQnums, numStates, numStates), dtype=np.complex128)
-    # print(np.shape(vals))
-    # print("np.shape(out)=", np.shape(out))
-    # print("twoMz=", twoMz)
+
+    # Mapping function: twoMz -> array index
+    # Follows the convention from IsospinMap.py: index = (twoSpin - twoMz) // 2
+    def get_index(twoMz):
+        return (twoSpin - twoMz) // 2
+
+    # Fill the array using quantum numbers from parsed_data
     allZeros = True
-    i = 0
-    for extNum in range(numextQnums):
-        for mzp in range(numStates):
-            for mz in range(numStates):
-                # print("vals[i]=", vals[i])
-                out[extNum, mzp, mz] = vals[i]
-                if vals[i] != 0:
-                    allZeros = False
-                i += 1
+    for extQnum, twoMzp, twoMz, complex_number in parsed_data:
+        # extQnum starts at 1, array index starts at 0
+        ext_idx = extQnum - 1
+
+        # Map quantum numbers to array indices
+        mzp_idx = get_index(twoMzp)
+        mz_idx = get_index(twoMz)
+
+        # Store the value
+        out[ext_idx, mzp_idx, mz_idx] = complex_number
+
+        if complex_number != 0:
+            allZeros = False
+
     if allZeros:
-        raise ValueError(f"All zero entries for file: {filename}")
+        raise ValueError("All zero entries in parsed data")
 
     return out
 
