@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
-"""Form factor calculation utilities for pion photoproduction.
+"""Form factor and scattering amplitude utilities for pion photoproduction.
 
-Extracts and calculates form factors from nuclear matrix elements in output
-files from one-body and two-body calculations (Odelta2 and Odelta4 orders).
+Extracts form factors (F_T, F_L) from nuclear matrix elements, and scattering
+amplitudes (E_0+^1N, L_0+^1N) from output files of one-body and two-body
+calculations (Odelta2 and Odelta4 orders).
+
+One-body scattering amplitudes are read directly from the output text.
+Two-body scattering amplitudes are computed from the Matrix section divided
+by spin operators.
 
 Author: alexl
 """
@@ -19,6 +24,8 @@ import re
 # ============================================================================
 # Core extraction functions
 # ============================================================================
+
+percent = 2  # assumed percent error from densities
 
 
 def getSpinOperFromFile(path):
@@ -127,15 +134,23 @@ def getScatMatFromFile(path):
     One-body: reads directly from text.
     Two-body: reads Matrix section and divides by spin operator.
     """
-    # Fallback: calculate from Matrix section (two-body files)
     if "onebody" in path:
-        mat = extractMatrixFromFile(path, kind="ScatMat")
-        oper = getSpinOperFromFile(path)
+        with open(path, "r") as f:
+            contents = f.read()
+
+        e_match = re.search(r"E_0\+\^1N=\s*([-\d.]+)", contents)
+        l_match = re.search(r"L_0\+\^1N=\s*([-\d.]+)", contents)
+
+        if not e_match or not l_match:
+            raise ValueError(f"Could not find E_0+^1N or L_0+^1N in file {path}")
+
+        return np.array([float(e_match.group(1)), float(l_match.group(1))])
     else:
+        assert "twobody" in path
         mat = extractMatrixFromFile(path, kind="Matrix")
         oper = getSpinOperFromFile(path)
 
-    return calculateFormFactors(mat, oper, divide=True)
+        return calculateFormFactors(mat, oper, divide=True)
 
 
 def getCombinedResults(path):
@@ -222,7 +237,10 @@ def analyzeTwoBodyFiles(files, extraction_func=getCombinedResults):
     output = {}
     for key, vals in results.items():
         arr = np.array(vals)
-        output[key] = {"mean": np.mean(arr, axis=0), "spread": calculateSpread(arr)}
+        spread = calculateSpread(arr)
+        mean = np.mean(arr, axis=0)
+        spread = np.sqrt(((percent * mean / 100) ** 2) + (spread**2))
+        output[key] = {"mean": mean, "spread": spread}
 
     return output
 
@@ -250,6 +268,7 @@ def analyzeOneBodyFiles(files):
         mean = np.mean(values, axis=0)
         spread = calculateSpread(values)
 
+        spread = np.sqrt(((percent * mean / 100) ** 2) + (spread**2))
         # Flatten to [[mean1, spread1], [mean2, spread2]]
         results.extend([[m, s] for m, s in zip(mean, spread)])
 
@@ -259,6 +278,13 @@ def analyzeOneBodyFiles(files):
 # ============================================================================
 # Output formatting
 # ============================================================================
+
+
+def _format_parens(mean, spread, precision=3):
+    """Format mean(uncertainty) string for LaTeX, e.g. -0.047(5) or -0.047(13)."""
+    scale = 10**precision
+    unc = int(round(abs(spread) * scale))
+    return rf"${mean:.{precision}f}({unc})$"
 
 
 def _format_value(mean, spread, width, precision):
@@ -336,6 +362,130 @@ def printTwoBodyTable(results, labels, precision=3):
     print()
 
 
+def createOneBodyLatexTable(all_data):
+    """Create LaTeX table for one-body results across all nuclei.
+
+    all_data: dict mapping nucleus name to (6, 2) array from analyzeOneBodyFiles.
+    Rows are nuclei, columns are quantities.
+    """
+    header_map = {
+        "Lithium 6": r"\LiS",
+        "Helium 4": r"\HeF",
+        "Helium 3": r"\HeT",
+        "Hydrogen 3": r"\HThree",
+    }
+
+    nuc_order = ["Hydrogen 3", "Helium 3", "Lithium 6"]
+
+    col_labels = [
+        r"$F_T^{S+V}$",
+        r"$F_T^{S-V}$",
+        r"$E^{1N}_{0+}\ [10^{-3}/m_\pi]$",
+        r"$F_L^{S+V}$",
+        r"$F_L^{S-V}$",
+        r"$L^{1N}_{0+}\ [10^{-3}/m_\pi]$",
+    ]
+    # Indices into the (6,2) data array for the column order above
+    col_data_idx = [0, 2, 4, 1, 3, 5]
+
+    num_rows = 1 + len(nuc_order)  # 1 header + nuclei
+    num_cols = 1 + len(col_labels)  # 1 label + quantities
+
+    out = np.empty((num_rows, num_cols), dtype="U50")
+    out[:, :] = ""
+
+    # Header row: quantity labels
+    for i, label in enumerate(col_labels):
+        out[0, i + 1] = label
+
+    # Data rows: one per nucleus
+    for j, nuc in enumerate(nuc_order):
+        out[j + 1, 0] = r"\hline$" + header_map.get(nuc, nuc) + "$"
+        if nuc in all_data:
+            data = all_data[nuc]
+            for i, di in enumerate(col_data_idx):
+                m, s = data[di, 0], data[di, 1]
+                out[j + 1, i + 1] = _format_parens(m, s)
+
+    col_spec = "l|" + "c|" * (len(col_labels) - 1) + "c"
+    latex_str = a2l.to_ltx(out, arraytype="tabular", print_out=False)
+    replaceStr = (
+        r"\begin{table}[H]"
+        + "\n"
+        + r"\centering"
+        + "\n"
+        + r"\begin{tabular}{"
+        + col_spec
+        + "}"
+    )
+    latex_str = latex_str.replace(r"\begin{tabular}", replaceStr)
+    latex_str = r"\renewcommand{\arraystretch}{1.4}" + "\n" + latex_str
+    latex_str += "\n" + r"\end{table}"
+    return latex_str
+
+
+def createComparisonLatexTable():
+    """Create LaTeX comparison table of F_T results: Braun vs Lenkewitz.
+
+    Excludes 2H. Shows F_T^{S+V}, F_T^{S-V}, E_{0+}^{1N} with hardcoded
+    values from Braun and Lenkewitz.
+    """
+    # Rows: [nucleus_label, Braun (F_T^{S+V}, F_T^{S-V}, E_{0+}^{1N}),
+    #                       Lenkewitz (F_T^{S+V}, F_T^{S-V}, E_{0+}^{1N})]
+    data = [
+        # ³H
+        [
+            r"$\HThree$",
+            "$1.551(78)$",
+            "$0.039(2)$",
+            "$-0.94(5)(5)$",
+            "$1.493(25)$",
+            "$0.012(13)$",
+            "$-0.93(3)(5)$",
+        ],
+        # ³He
+        [
+            r"$\HeT$",
+            "$0.041(2)$",
+            "$1.544(77)$",
+            "$1.77(9)(9)$",
+            "$0.017(13)$",
+            "$1.480(26)$",
+            "$1.71(4)(9)$",
+        ],
+        # ⁶Li
+        [r"$\LiS$", "$0.476(24)$", "$0.479(24)$", "$0.26(3)(3)$", "", "", ""],
+    ]
+
+    lines = []
+    lines.append(r"\renewcommand{\arraystretch}{1.2}")
+    lines.append(r"\begin{table}[H]")
+    lines.append(r"\centering")
+    lines.append(r"\begin{tabular}{|l||c|c|c||c|c|c|}\hline")
+    lines.append(
+        r" & \multicolumn{3}{c||}{Braun}"
+        r" & \multicolumn{3}{c|}{Lenkewitz} \\"
+    )
+    lines.append(r"\hline")
+    lines.append(r"\renewcommand{\arraystretch}{1.4}")
+    lines.append(
+        r" & $F_T^{S+V}$ & $F_T^{S-V}$"
+        r" & $E^{1N}_{0+}\ [10^{-3}/M_{\pi^+}]$"
+        r" & $F_T^{S+V}$ & $F_T^{S-V}$"
+        r" & $E^{1N}_{0+}\ [10^{-3}/M_{\pi^+}]$ \\"
+    )
+    lines.append(r"\hline")
+
+    for row in data:
+        lines.append(" & ".join(row) + r" \\")
+        lines.append(r"\hline")
+
+    lines.append(r"\end{tabular}")
+    lines.append(r"\end{table}")
+
+    return "\n".join(lines)
+
+
 def createLatexTable(results, nuc_name):
     """Create LaTeX table for two-body results."""
     header_map = {
@@ -349,16 +499,14 @@ def createLatexTable(results, nuc_name):
     data_cols = [results[key] for key in ["o2", "o4", "static"]]
     out = np.empty((4, 3), dtype="U50")
     for i, data in enumerate(data_cols):
-        out[:, i] = [
-            rf"${m:.3f} \pm {u:.3f} $" for m, u in zip(data["mean"], data["spread"])
-        ]
+        out[:, i] = [_format_parens(m, u) for m, u in zip(data["mean"], data["spread"])]
 
     # Build full table with headers
     row_labels = [
         r"\hline$F_T  \;\;\;[\mathrm{fm}^{-1}]$",
         r"\hline$F_L  \;\;\;[\mathrm{fm}^{-1}]$",
-        r"\hline$E^{1N}_{0+}\ [10^{-3}/m_\pi]$",
-        r"\hline$L^{1N}_{0+}\ [10^{-3}/m_\pi]$",
+        r"\hline$E^{2N}_{0+}\ [10^{-3}/m_\pi]$",
+        r"\hline$L^{2N}_{0+}\ [10^{-3}/m_\pi]$",
     ]
     column_labels = [
         r"$\calO(\delta^2)$",
@@ -375,12 +523,21 @@ def createLatexTable(results, nuc_name):
 
     latex_str = a2l.to_ltx(out2, arraytype="tabular", print_out=False)
     replaceStr = (
-        r"\begin{table}[H]" + "\n" + r"\centering" + "\n" + r"\begin{tabular}{l|c|c|c}"
+        r"\begin{table}[H]"
+        + "\n"
+        + r"\centering"
+        + "\n"
+        + r"\begin{tabular}{|l||c|c|c|}\hline"
     )
     latex_str = latex_str.replace(r"\begin{tabular}", replaceStr)
+    latex_str = latex_str.replace(r"\end{tabular}", r"\hline\end{tabular}")
     latex_str = r"\renewcommand{\arraystretch}{1.4}" + "\n" + latex_str
 
     latex_str += "\n" + r"\end{table}"
+
+    latex_str = latex_str.replace(
+        "\n" + r"\hline\end{tabular}", r"\\" + "\n" + r"\hline\end{tabular}"
+    )
     return latex_str
 
 
@@ -425,6 +582,7 @@ H3 = "Hydrogen 3"
 He4 = "Helium 4"
 Li6 = "Lithium 6"
 breakLine = "\n" + 150 * "%"
+breakLine2 = "\n" + 100 * "%"
 
 
 def runTwoBodyAnalysis():
@@ -451,9 +609,16 @@ def runOneBodyAnalysis():
         Li6: "/home/alexander/Dropbox/PionPhotoProduction/results-6Li/133MeV/1bod/thresh",
     }
 
+    all_data = {}
     for name, folder in folders.items():
         processOneBodyFolder(folder, name)
-        print(breakLine)
+        files = _get_files_from_folder(folder)
+        all_data[name] = analyzeOneBodyFiles(files)
+        print(breakLine2)
+
+    print(createOneBodyLatexTable(all_data))
+    print()
+    print(createComparisonLatexTable())
 
 
 if __name__ == "__main__":
