@@ -128,7 +128,7 @@ c     Mnucl = 0. ! initialise Mnucl so that we can later ask if it was adapted b
          nucleus = "3H"
          Anucl = 3
          twoSnucl = 1           ! 2*target spin
-c         Mnucl = M3H
+         Mnucl = M3H
          write (*,'(A,I2,A,A,A,G13.7,A)') '   Target Nucleus: 3H, Anucl = ',Anucl,
      &        ', spin Snucl = ', halfinteger(twoSnucl),', mass Mnucl = ',Mnucl,'MeV'
       else if ((index(stringtolower(densityFileName),'deuteron').ne.0).or.(index(stringtolower(densityFileName),'2h').ne.0)) then

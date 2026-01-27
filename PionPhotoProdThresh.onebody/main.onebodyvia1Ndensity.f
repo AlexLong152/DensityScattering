@@ -365,8 +365,8 @@ c
             sigmax(1,-1)=dcmplx(1.d0,0)
             sigmax(-1,1)=dcmplx(1.d0,0)
 c
-            sigmay(1,-1)=dcmplx(0, 1.d0)
-            sigmay(-1,1)=dcmplx (0, -1.d0) 
+            sigmay(1,-1)=dcmplx(0, -1.d0)
+            sigmay(-1,1)=dcmplx (0, 1.d0) 
 c
             sigmaz(1,1)=dcmplx(1.d0,0)
             sigmaz(-1,-1)=dcmplx(-1.d0,0)
@@ -375,10 +375,18 @@ c
             Iden(-1,-1)=1
             Iden(1,1)=1
 
+            sigmax=sigmax
+            sigmay=sigmay
+            sigmaz=sigmaz
+
             SigmaVec(1,:,:)=sigmax
             SigmaVec(2,:,:)=sigmay
             SigmaVec(3,:,:)=sigmaz
             SigmaVec=SigmaVec/2.d0
+
+c           call commutator(sigmay,sigmaz,sigmax,twoSnucl)
+c           sigmay=sigma/ci
+
             SpinOnex = c0
             SpinOney = c0
             SpinOnez = c0
@@ -389,25 +397,14 @@ c--- Sx pattern: [[0,1,0],[1,0,1],[0,1,0]]
             SpinOnex(0,2) = dcmplx(1.d0,0.d0)
             SpinOnex(0,-2) = dcmplx(1.d0,0.d0)
             SpinOnex(-2,0) = dcmplx(1.d0,0.d0)
-
-c--- Sy pattern: [[0,1,0],[-1,0,1],[0,-1,0]]
-            SpinOney(2,0) = dcmplx(1.d0,0.d0)
-            SpinOney(0,2) = dcmplx(1.d0,0.d0)
-            SpinOney(0,-2) = dcmplx(-1.d0,0.d0)
-            SpinOney(-2,0) = dcmplx(-1.d0,0.d0)
+            SpinOnex = (1/dsqrt(2.d0)) * SpinOnex
 
 c--- Sz = diag(1,0,-1)
             SpinOnez(2,2) = dcmplx(1.d0,0.d0)
-            SpinOnez(0,0) = dcmplx(0.d0,0.d0)
-            SpinOnez(-2,-2) = dcmplx(-1.d0,0.d0)
+            SpinOnez(-2,-2) = dcmplx(-1.d0,0.d0)! S_z |s, m_s> = m_s |s,m_s>
 
-c--- Apply normalization factors
-            factorx = 1.d0 / dsqrt(2.d0)
-            factory = 1.d0 / (ci * dsqrt(2.d0))
-
-            SpinOnex = factorx * SpinOnex
-            SpinOney = factory * SpinOney
-
+            call commutator(SpinOney,SpinOneZ,SpinOneX,twoSnucl) ![Sz,Sx] = i*Sy
+            SpinOneY=SpinOney/ci
 c--- Assemble vector
             SpinOneVec(1,:,:) = SpinOnex
             SpinOneVec(2,:,:) = SpinOney
@@ -447,6 +444,10 @@ c           tmpPlus and tmpMinus combines spin and isospin part of diagrams
             else if (twoSnucl.eq.0) then
               SpinVec=SpinZeroVec
             end if
+
+            if(twoSnucl.ne.0)then
+              call checkCommutes(SpinVec, twoSnucl)
+            end if
             result=c0
 
             if (allocated(SpinVec2D)) deallocate(SpinVec2D)
@@ -477,13 +478,21 @@ c           tmpPlus and tmpMinus combines spin and isospin part of diagrams
 
                    PlusConst=Sigma(twom1Np,twom1N)* tmpPlus(twomt1Np,twomt1N)
                    MinusConst=Sigma(twom1Np,twom1N)* tmpMinus(twomt1Np,twomt1N)
-                   tmp=(10**3)*K1N*(prot*PlusConst+neut*MinusConst)*Anucl*rho1b(rindx)!matrix element 
+                   tmp=0.5d0*(10**3)*K1N*(prot*PlusConst+neut*MinusConst)*Anucl*rho1b(rindx)!matrix element
+                   if (tmp.ne.tmp) then
+                      write(*,*) "NaN detected! rindx=",rindx," ieps=",ieps
+                      write(*,*) "  twoMzp=",twoMzp," twoMz=",twoMz
+                      write(*,*) "  prot=",prot," neut=",neut
+                      write(*,*) "  K1N=",K1N," Anucl=",Anucl
+                      write(*,*) "  PlusConst=",PlusConst," MinusConst=",MinusConst
+                      write(*,*) "  rho1b(rindx)=",rho1b(rindx)
+                      write(*,*) "  tmp=",tmp
+                   end if
                    Result(ieps,twoMzp,twoMz)= Result(ieps,twoMzp,twoMz)+tmp
      &            
               end if ! L1N
 
             end do              !rindx   
-
 c           Create contiguous 2D array to avoid temporary array warning
             PlusConst=NonZeroAve(FSPlusV,SpinVec2D,twoSnucl)
             MinusConst=NonZeroAve(FSMinusV,SpinVec2D,twoSnucl)
@@ -491,22 +500,26 @@ c           Create contiguous 2D array to avoid temporary array warning
             where (SpinVec(ieps,:,:) /= 0.d0)
                 FSPlusV(ieps,:,:)  = FSPlusV(ieps,:,:)  / SpinVec(ieps,:,:)
                 FSMinusV(ieps,:,:) = FSMinusV(ieps,:,:) / SpinVec(ieps,:,:)
+c               Result(ieps,:,:) = Result(ieps,:,:) / SpinVec(ieps,:,:)
             elsewhere
                 FSPlusV(ieps,:,:)  = 0.0d0
                 FSMinusV(ieps,:,:) = 0.0d0
+                ! Result(ieps,:,:)=0.d0
             end where
             end do!ieps
 
 
+            Result=Result*2.d0!from 2.0 in from of \mathcal{M}= 2i*E0 eps dot S
             if (twoSnucl.eq.1) then
-              aveE0=(real(Result(1,1,-1))+aimag(Result(2,1,-1)))/2.d0
+              write(*,*) real(Result(1,1,-1)),aimag(Result(2,-1,1))
+              aveE0=(real(Result(1,1,-1))+aimag(Result(2,-1,1)))/2.d0
               aveL0=real(Result(3,1,1))
             else if (twoSnucl.eq.2) then
-              aveE0=(real(Result(1,2,0))+aimag(Result(2,2,0)))/2.d0
+              aveE0=(real(Result(1,2,0))+aimag(Result(2,0,2)))/2.d0
               aveL0=real(Result(3,2,2))
             else if  (twoSnucl.eq.0) then
-              write(*,*) "IMPLIMENT ME for 4He"
-              stop
+              aveE0=real(Result(1,0,0))-aimag(Result(2,0,0))
+              aveL0=real(Result(3,0,0))
             end if
 
             write(*,'(A)') "############################################"
@@ -518,16 +531,13 @@ c           Create contiguous 2D array to avoid temporary array warning
             write(outUnitno,*) "cm omega=",omega, "thetacm=",thetacm
 
             call outputKernel(outUnitno,twoSnucl,extQnumlimit,
+     &           SpinVec ,-1,"SpinVec")
+
+            call outputKernel(outUnitno,twoSnucl,extQnumlimit,
      &           FSPlusV ,-1,"F^{S+V}")
             call outputKernel(outUnitno,twoSnucl,extQnumlimit,
      &           FSMinusV ,-1,"F^{S-V}")
 
-            write(*,'(A)') ""
-            write(*,'(A)') ""
-            write(*,'(A)') "Now printing 2 Body values of E_{0+} and L_{0+}"
-            write(*,'(A)') "Differs from matrix elements by 2i, in the Lenkewitz convention if you set:"
-            write(*,'(A)') "\mathcal{M} = 2i E_{0+} (\vec{ε}_T· S) + 2i L_{0+} (\vec{ε}_L· S)"
-            write(*,'(A)') "See Lenkewitz 2011 equation 2, arXiv:1103.3400 [nucl-th]"
             write(*,*) ""
             write(*,'(A)') "Using units 10^-3/mπ"
             write(*,'(A)') "E_{0+} in extQnum=1,2"
@@ -703,3 +713,76 @@ c    &       trim(name), i, j, real(mat(i,j)), aimag(mat(i,j))
 
       write(*,*) !newline
       end subroutine DividePrint
+
+      subroutine commutator(C, A, B, twoSnucl)
+c     Calculates the commutator [A,B] = A.B - B.A
+      implicit none
+      integer, intent(in) :: twoSnucl
+      complex*16, intent(in) :: A(-twoSnucl:twoSnucl,
+     &                             -twoSnucl:twoSnucl)
+      complex*16, intent(in) :: B(-twoSnucl:twoSnucl,
+     &                             -twoSnucl:twoSnucl)
+      complex*16, intent(out) :: C(-twoSnucl:twoSnucl,
+     &                              -twoSnucl:twoSnucl)
+
+      C = matmul(A,B) - matmul(B,A)
+
+      end subroutine commutator
+
+      subroutine checkCommutes(SpinVec, twoSnucl)
+c     Checks that the spin matrices in SpinVec satisfy the
+c     SU(2) commutation relations:
+c       [Sx,Sy] - i*Sz = 0
+c       [Sy,Sz] - i*Sx = 0
+c       [Sz,Sx] - i*Sy = 0
+      implicit none
+      include '../common-densities/constants.def'
+      integer, intent(in) :: twoSnucl
+      complex*16, intent(in) :: SpinVec(3,-twoSnucl:twoSnucl,
+     &                                    -twoSnucl:twoSnucl)
+
+      complex*16 :: Spinx(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
+      complex*16 :: Spiny(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
+      complex*16 :: Spinz(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
+      complex*16 :: t1(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
+      complex*16 :: t2(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
+      complex*16 :: t3(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
+      logical passes
+
+      passes=.True.
+      Spinx = SpinVec(1,:,:)
+      Spiny = SpinVec(2,:,:)
+      Spinz = SpinVec(3,:,:)
+
+      call commutator(t1, Spinx, Spiny, twoSnucl)
+      t1 = t1 - ci*Spinz
+
+      call commutator(t2, Spiny, Spinz, twoSnucl)
+      t2 = t2 - ci*Spinx
+
+      call commutator(t3, Spinz, Spinx, twoSnucl)
+      t3 = t3 - ci*Spiny
+
+      if (maxval(abs(t1)) .gt. 1D-10) then
+        write(*,*) "ERROR: [Sx,Sy] - i*Sz != 0"
+        write(*,*) "Max deviation: ", maxval(abs(t1))
+        passes=.False.
+      end if
+      if (maxval(abs(t2)) .gt. 1D-10) then
+        write(*,*) "ERROR: [Sy,Sz] - i*Sx != 0"
+        write(*,*) "Max deviation: ", maxval(abs(t2))
+        passes=.False.
+      end if
+      if (maxval(abs(t3)) .gt. 1D-10) then
+        write(*,*) "ERROR: [Sz,Sx] - i*Sy != 0"
+        write(*,*) "Max deviation: ", maxval(abs(t3))
+        passes=.False.
+      end if
+      if(.not.passes) then
+        stop
+      end if
+
+      write(*,*) "Spin commutation relations verified."
+
+      end subroutine checkCommutes
+

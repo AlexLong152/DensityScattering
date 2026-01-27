@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Tuple, Dict
+from defs import _TAU, physicalOpers
 
 """
 |1,1>=|t1=1/2,mt2=1/2>|t2=1/2,mt2=1/2> :index 0
@@ -264,22 +265,6 @@ def DecoupledFromCoupled(t, mt, tp, mtp, extQnum):
     return out
 
 
-# ============================================================
-# Two spin/isospin-1/2 particles: coupled <-> uncoupled helpers
-# ============================================================
-
-# Pauli matrices (τ^a); use for isospin or spin as needed
-_TAU: Dict[int, np.ndarray] = {
-    1: np.array([[0, 1], [1, 0]], dtype=complex),  # τ^1 = σx
-    2: np.array([[0, -1j], [1j, 0]], dtype=complex),  # τ^2 = σy
-    3: np.array([[1, 0], [0, -1]], dtype=complex),  # τ^3 = σz
-}
-
-physicalOpers = {
-    -1: (1 / np.sqrt(2)) * (_TAU[1] - 1j * _TAU[2]),
-    1: (1 / np.sqrt(2)) * (_TAU[1] + 1j * _TAU[2]),
-    0: _TAU[3],
-}
 # Unitary map between coupled and uncoupled bases.
 # Uncoupled/product basis order: |++>, |+->, |-+>, |-->
 # Coupled basis order: (1,+1), (1,0), (1,-1), (0,0)
@@ -499,7 +484,6 @@ def delta(a, b):
 
 def getInd(twom):
     # maps 1 to 0, -1 to 1
-    # return (1 + twom) // 2
     return (1 - twom) // 2
 
 

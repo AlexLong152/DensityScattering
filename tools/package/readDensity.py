@@ -7,6 +7,7 @@
 import numpy as np
 import re
 from copy import copy
+from defs import pauliVec, spin1Vec, getSpinOper
 
 
 def main():
@@ -14,10 +15,10 @@ def main():
     for f in [file1]:
         tmp = getQuantNums(f, kind="FormFactors")["MatVals"]
         print(tmp)
-        print(50 * "%")
+        print(75 * "%")
         tmp = getQuantNums(f, kind="Matrix")["MatVals"]
         print(tmp)
-        print(50 * "%")
+        print(75 * "%")
 
 
 def getBlock(filetext, kind):
@@ -105,9 +106,14 @@ def getQuantNums(filename, returnMat=True, kind="Result"):
     if returnMat:
         with open(filename, "r") as f:
             contents = f.read()
-
-            # Use new approach with getBlock and parseBlock
-            block = getBlock(contents, kind)
+            if isinstance(kind, (list, np.ndarray)):
+                for tmp in kind:
+                    try:
+                        block = getBlock(contents, kind)
+                    except BadDataError:
+                        pass
+            else:
+                block = getBlock(contents, kind)
             parsed_data = parseBlock(block)
 
             out["MatVals"] = vals2matrix(nucName, parsed_data)
@@ -116,6 +122,7 @@ def getQuantNums(filename, returnMat=True, kind="Result"):
     except UnboundLocalError:
         densityName = filename
 
+    out["twoSpin"] = getTwoSpin(nucName)
     densityName = densityFileName(filename)
     out["name"] = filename
     out["file"] = filename
@@ -138,6 +145,11 @@ def getQuantNums(filename, returnMat=True, kind="Result"):
     # print("len(vals)=", len(vals))
     # print(np.shape(out["MatVals"]))
     return out
+
+
+def getTwoSpin(NucName):
+    out = {"3He": 1, "3H": 1, "4He": 0, "6Li": 2}
+    return out[NucName]
 
 
 # def data2array(parsed_data):
@@ -203,50 +215,20 @@ def spin4Nuc(nuc):
         If the nucleus name is not recognized.
     """
 
-    # Define reusable operators --------------------------------------
-    # Pauli matrices
-    sigma_x = np.array([[0, 1], [1, 0]], dtype=float)
-
-    sigma_y = np.array([[0, -1j], [1j, 0]], dtype=complex)
-
-    sigma_z = np.array([[1, 0], [0, -1]], dtype=float)
-
-    pauli_half = np.array([sigma_x / 2, sigma_y / 2, sigma_z / 2], dtype=complex)
-
-    # Spin-1 matrices (|1,0,-1> basis)
-    Sx = (1 / np.sqrt(2)) * np.array([[0, 1, 0], [1, 0, 1], [0, 1, 0]], dtype=float)
-
-    Sy = (1 / np.sqrt(2)) * np.array(
-        [[0, -1j, 0], [1j, 0, -1j], [0, 1j, 0]], dtype=complex
-    )
-
-    Sz = np.array([[1, 0, 0], [0, 0, 0], [0, -0, -1]], dtype=float)
-
-    spin1 = np.array([Sx, Sy, Sz], dtype=complex)
-
-    # ---------------------------------------------------------------
-
     match nuc:
         case "4He":
-            return np.array([1.0, 1.0, 1.0])
+            return getSpinOper(0)
 
         case "3He":
-            return pauli_half
+            return getSpinOper(1)
 
+        case "3H":
+            return getSpinOper(1)
         case "6Li":
-            return spin1
+            return getSpinOper(2)
 
         case _:
             raise ValueError(f"Unknown nucleus '{nuc}'")
-
-
-def mapping(twoMz, twospin):
-    """
-    Mappings are from twoMz and twoMzp twoMzp to python indexes.
-    """
-    # match twospin:
-    # fill me in
-    # return out
 
 
 def vals2matrix(nucName, parsed_data):
@@ -278,6 +260,8 @@ def vals2matrix(nucName, parsed_data):
         case "4He":
             twoSpin = 0
         case "3He":
+            twoSpin = 1
+        case "3H":
             twoSpin = 1
         case _:
             raise ValueError(f"Unknown nucleus: {nucName}")
@@ -333,10 +317,12 @@ def getNucName(filepath):
     path = path.split(r"/")[-1]
     name = getStringbtwn(path, "body", "MeV")
 
-    nuclei = ["6Li", "4He", "3He"]
+    nuclei = ["6Li", "4He", "3He", "3H"]
 
     for nuc in nuclei:
         if nuc in name:
+            if "3H" in name:
+                assert "3He" not in filepath[:20]
             return nuc
 
     print("readDensity.py:getNucName path=", path)
