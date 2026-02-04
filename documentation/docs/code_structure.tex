@@ -1,0 +1,567 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+\title{Code Structure: Twobody Nuclear Reaction Calculations}
+\author{}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Overview}
+
+The twobody code computes nuclear reaction amplitudes by convoluting process-specific kernels with 2N density matrices. The code is split into two independent components that communicate through well-defined interfaces.
+
+\subsection{Two-Component Architecture}
+
+\begin{description}
+    \item[Mantle Code] (\texttt{varsub-twobodyvia2Ndensity/}): Process-independent framework that handles quantum number summations, angular integrations, and density matrix interpolation. Works in units of \textbf{fm}.
+
+    \item[Kernel Code]: Process-specific physics implementation. Works in units of \textbf{MeV}. Two implementations are currently available:
+    \begin{itemize}
+        \item \texttt{varsub-PionPhotoProdThresh.twobody/}: Pion photoproduction at threshold
+        \item \texttt{varsub-PionPion.twobody/}: Pion-pion scattering
+    \end{itemize}
+\end{description}
+
+\subsection{Unit Conversion}
+
+The mantle code (fm) and kernel code (MeV) use different unit systems. Unit conversion occurs in \texttt{finalstatesums.twobodyvia2Ndensity.f} via the factor $(HC)^3/(2\pi)^3$. If the kernel has units MeV$^{-n}$, the final output has units MeV$^{3-n}$.
+
+\section{Call Hierarchy}
+
+\subsection{Main Control Flow}
+
+\begin{enumerate}[leftmargin=2cm]
+    \item[\textbf{Level 1:}] \texttt{varsub-main.twobodyvia2Ndensity.f} \\
+    Main program: controls energy/angle loops, reads input/density files, outputs results
+
+    \item[\textbf{Level 2:}] \texttt{varsub-finalstatesums.twobodyvia2Ndensity.f} \\
+    Function: \texttt{twobodyfinalstatesumsvia2Ndensity()} \\
+    Loops over final state quantum numbers, accumulates contributions
+
+    \item[\textbf{Level 3:}] \texttt{varsub-calculate2BI2.f} \\
+    Function: \texttt{Calculate2BIntegralI2()} \\
+    Performs angular integrals and spin sums, interpolates density matrix
+
+    \item[\textbf{Level 4:}] \texttt{varsub-2Bkernel.PionPhotoProdThresh.f} \\
+    Function: \texttt{Calc2Bspinisospintrans()} \\
+    Computes process-specific kernel amplitudes
+
+    \item[\textbf{Level 5:}] \texttt{varsub-2Bspinsym.PionPhotoProdThresh.f} (and \texttt{*asym.f}) \\
+    Functions: \texttt{CalcKernel2B*()} and \texttt{StaticKernel*()} \\
+    Evaluate spin structures for specific diagrams
+\end{enumerate}
+
+\section{File Descriptions}
+
+\subsection{Mantle Code Files}
+
+\subsubsection{\texttt{varsub-main.twobodyvia2Ndensity.f}}
+
+\textbf{Purpose:} Program entry point and orchestration
+
+\textbf{Responsibilities:}
+\begin{itemize}
+    \item Parse input file (energies, angles, nucleus properties, quadrature parameters)
+    \item Set up radial and angular quadrature grids
+    \item Loop over energies and scattering angles
+    \item Read 2N density matrix from HDF5 files
+    \item Loop over initial quantum numbers (mt12, j12, s12, l12, m12, ip12)
+    \item Call \texttt{twobodyfinalstatesumsvia2Ndensity()} for each configuration
+    \item Write results to output file
+\end{itemize}
+
+\textbf{Key Variables:}
+\begin{itemize}
+    \item \texttt{Result(extQnum, twoMzp, twoMz)}: Output array storing computed amplitudes
+    \item \texttt{P12MAG(ip12)}: Radial momentum grid points
+    \item \texttt{AP12MAG(ip12)}: Radial momentum integration weights
+    \item \texttt{rhoDensity}: 2N density matrix (read from file, stored in module)
+\end{itemize}
+
+\subsubsection{\texttt{varsub-finalstatesums.twobodyvia2Ndensity.f}}
+
+\textbf{Purpose:} Sum over final state quantum numbers
+
+\textbf{Responsibilities:}
+\begin{itemize}
+    \item Loop over final state quantum numbers: j12p, s12p, l12p, m12p, ip12p, twoMzp, twoMz
+    \item Call \texttt{Calculate2BIntegralI2()} to compute angular integrals
+    \item Multiply by integration weights (momentum weights, phase space factors)
+    \item Apply unit conversion factor: $(HC)^3/(2\pi)^3$
+    \item Accumulate into \texttt{Result()} array
+\end{itemize}
+
+\textbf{Key Constraint:} mt12p = mt12 (isospin projection is conserved)
+
+\subsubsection{\texttt{varsub-calculate2BI2.f}}
+
+\textbf{Purpose:} Perform angular integrals and spin sums
+
+\textbf{Responsibilities:}
+\begin{itemize}
+    \item Loop over spin projections (ms, msp) of the (12) subsystem
+    \item Nested loops over angular quadrature points: ($\theta_{12}$, $\phi_{12}$) and ($\theta_{12}'$, $\phi_{12}'$)
+    \item Convert spherical to Cartesian coordinates
+    \item Compute spherical harmonics
+    \item Call \texttt{Calc2Bspinisospintrans()} to get kernel amplitudes
+    \item Interpolate density matrix at required momentum values (bilinear interpolation)
+    \item Weight by spherical harmonics, quadrature weights, and Clebsch-Gordan coefficients
+    \item Sum over all angular points and spin projections
+\end{itemize}
+
+\textbf{Quadrature Options:}
+\begin{itemize}
+    \item Gaussian: Separate 1D quadratures for $\theta$ and $\phi$
+    \item Lebedev-Laikov: Spherical quadrature on unit sphere
+\end{itemize}
+
+\subsubsection{Supporting Files in \texttt{varsub-twobodyvia2Ndensity/}}
+
+\begin{itemize}
+    \item \texttt{varsub-read2Ndensity.f}: Reads HDF5 density files into module variables
+    \item \texttt{varsub-setquads.f}: Sets up angular quadrature grids
+    \item \texttt{varsub-LebedevLaikov.f}: Lebedev-Laikov quadrature implementation
+    \item \texttt{varsub-spinstructures.f}: General spin algebra routines (\texttt{singlesigmasym()}, \texttt{doublesigmasym()})
+\end{itemize}
+
+\subsection{Kernel Code Files}
+
+\subsubsection{\texttt{varsub-2Bkernel.PionPhotoProdThresh.f}}
+
+\textbf{Purpose:} Main kernel computation for pion photoproduction
+
+\textbf{Responsibilities:}
+\begin{itemize}
+    \item \texttt{KernelGreeting()}: Print process name and version to stdout
+    \item \texttt{KernelFarewell()}: Print description of computed quantities and units
+    \item \texttt{Calc2Bspinisospintrans()}: Main kernel calculation routine
+    \begin{itemize}
+        \item Receives momentum vectors (pVec, uVec) and quantum numbers
+        \item Performs variable substitution to simplify momentum transfers
+        \item Computes momentum vectors for use in diagrams (qVec, qpVec, kVec, kpVec)
+        \item Calls diagram-specific routines based on \texttt{calctype} parameter
+        \item Returns \texttt{Kernel2B(diagNum, extQnum, s12p, msp, s12, ms)}
+    \end{itemize}
+    \item \texttt{getDiagAB()}: Computes leading order contributions
+    \item \texttt{getStaticDiags()}: Computes next-to-leading order corrections
+\end{itemize}
+
+\textbf{Chiral Order Organization:}
+\begin{itemize}
+    \item O($\delta^2$): Leading order contributions
+    \item O($\delta^4$): Next-to-leading order corrections
+\end{itemize}
+
+Calculation terminates at the order specified by \texttt{calctype}.
+
+\textbf{Variable Substitution:}
+
+The code uses $\vec{u} = \vec{p}_{12} - \vec{p}_{12}' + \vec{k}/2$ as the integration variable instead of $\vec{p}_{12}'$. This simplifies the momentum transfer and introduces a Jacobian factor of $-1$.
+
+\subsubsection{\texttt{varsub-2Bspinsym.PionPhotoProdThresh.f}}
+
+\textbf{Purpose:} Spin structures for symmetric diagrams (s12p = s12)
+
+\textbf{Functions:}
+\begin{itemize}
+    \item \texttt{CalcKernel2BAsym()}: Leading order contribution (type A)
+    \item \texttt{CalcKernel2BBsymVec()}: Leading order contribution (type B)
+    \item \texttt{StaticKernelAsym()}: NLO correction (type A)
+    \item \texttt{StaticKernelBsym()}: NLO correction (type B)
+    \item \texttt{StaticKernelCsym()}: NLO correction (type C)
+    \item \texttt{StaticKernelDsym()}: NLO correction (type D)
+    \item \texttt{StaticKernelEsym()}: NLO correction (type E)
+\end{itemize}
+
+Each function receives prefactors and momentum vectors, computes spin matrix elements, and adds contributions to the kernel array.
+
+\subsubsection{\texttt{varsub-2Bspinasy.PionPhotoProdThresh.f}}
+
+\textbf{Purpose:} Spin structures for antisymmetric diagrams (s12p $\neq$ s12)
+
+Contains analogous functions to the symmetric file but for spin-flip transitions:
+\texttt{CalcKernel2BAasy()}, \texttt{CalcKernel2BBasyVec()}, \texttt{StaticKernelAasym()}, etc.
+
+\subsubsection{Other Kernel Files}
+
+\begin{itemize}
+    \item \texttt{varsub-calculateQs.PionPhotoProdThresh.f}: Momentum kinematics calculations
+    \item \texttt{varsub-usesymmetries.PionPhotoProdThresh.f}: Symmetry relations (currently not used)
+    \item \texttt{readinput.twobody.PionPhotoProdThresh.f}: Kernel-specific input parsing
+\end{itemize}
+
+\subsection{Pion-Pion Scattering Kernel Files}
+
+The pion-pion scattering kernel (\texttt{varsub-PionPion.twobody/}) implements elastic pion scattering from nuclei based on chiral perturbation theory. The structure closely parallels the photoproduction kernel but with different physics and kinematics.
+
+\subsubsection{\texttt{varsub-2Bkernel.PionPion.f}}
+
+\textbf{Purpose:} Main kernel computation for pion-pion scattering
+
+\textbf{Responsibilities:}
+\begin{itemize}
+    \item \texttt{KernelGreeting()}: Print process name, compute probe energy from gamma energy
+    \begin{itemize}
+        \item Converts lab-frame energy to probe pion energy via relativistic kinematics
+        \item Handles near-threshold kinematics where $k^2$ may be slightly negative
+    \end{itemize}
+    \item \texttt{KernelFarewell()}: Print description (references BKM review equation 5.30)
+    \item \texttt{Calc2Bspinisospintrans()}: Main kernel calculation routine
+    \begin{itemize}
+        \item Performs variable substitution: $\vec{u} = \vec{p}_{12} - \vec{p}_{12}' + (\vec{k} + \vec{k}')/2$
+        \item Calculates final pion momentum $\vec{k}'$ using \texttt{calculateqs2Mass()}
+        \item Computes momentum transfer vector $\vec{q}$
+        \item Applies overall prefactor: $8\pi\sqrt{s}$ where $\sqrt{s} = E_{\text{nuc}} + E_{\pi}$
+        \item Calls \texttt{getDiagAB()} to compute kernel contributions
+        \item Returns kernel in units MeV$^{-3}$ (so Result has units MeV$^0$)
+    \end{itemize}
+    \item \texttt{getDiagAB()}: Computes diagram contributions (A, B, C)
+    \begin{itemize}
+        \item Diagram A: Contact interaction, prefactor $\propto 1/q^2$
+        \item Diagram B: Single-sigma structure, prefactor $\propto 1/(q^2 + m_\pi^2)$
+        \item Diagram C: Double-sigma structure, prefactor $\propto 1/(q^2 + m_\pi^2)^2$
+        \item All diagrams include isospin factors depending on $(t_{12}, m_{t12})$
+        \item Separates symmetric (s12p = s12) and antisymmetric (s12p $\neq$ s12) contributions
+    \end{itemize}
+\end{itemize}
+
+\textbf{Physics Basis:}
+\begin{itemize}
+    \item Based on BKM (Bernard-Kaiser-Mei{\ss}ner) review equation 5.30
+    \item Implements chiral EFT for pion-nucleon interactions
+    \item Reduced mass: $\mu = m_\pi/m_N$
+    \item Base prefactor: $\frac{1}{32(1+\mu)(\pi f_\pi)^4}$ where $f_\pi = 92.42$ MeV
+\end{itemize}
+
+\textbf{Kinematics:}
+\begin{itemize}
+    \item Elastic scattering: $\pi + N \to \pi + N$
+    \item Uses center-of-mass kinematics via \texttt{calculateqs2Mass()}
+    \item Momentum vectors: $\vec{p}, \vec{p}', \vec{k}, \vec{k}'$ for initial/final nucleon and pion momenta
+    \item Momentum transfer: $\vec{q} = \vec{p} - \vec{p}' + (\vec{k} + \vec{k}')/2$
+\end{itemize}
+
+\subsubsection{\texttt{varsub-2Bspinsym.PionPion.f}}
+
+\textbf{Purpose:} Spin structures for symmetric diagrams (s12p = s12)
+
+\textbf{Functions:}
+\begin{itemize}
+    \item \texttt{CalcKernel2BAsym()}: Diagram A contribution
+    \begin{itemize}
+        \item Pure isospin structure, no momentum dependence
+        \item Includes factor $(-1)^{t_{12}} \delta_{m_{t12},0}$
+        \item Diagonal in spin: $\delta_{s_{12}',s_{12}} \delta_{m_{s}',m_s}$
+    \end{itemize}
+    \item \texttt{CalcKernel2BBsym()}: Diagram B contribution
+    \begin{itemize}
+        \item Calls \texttt{doublesigmasym()} for $\vec{\sigma}_1 \cdot \vec{q} \; \vec{\sigma}_2 \cdot \vec{q}$ structure
+        \item Isospin factor: $(2t_{12}(t_{12}+1) - 3)$
+    \end{itemize}
+    \item \texttt{CalcKernel2BCsym()}: Diagram C contribution
+    \begin{itemize}
+        \item Same spin structure as B but different momentum dependence
+        \item Includes $(q^2 + m_\pi^2)^{-2}$ instead of $(q^2 + m_\pi^2)^{-1}$
+    \end{itemize}
+    \item \texttt{CalcKernel2BDsym()}: Diagram D (not currently used)
+\end{itemize}
+
+\subsubsection{\texttt{varsub-2Bspinasy.PionPion.f}}
+
+\textbf{Purpose:} Spin structures for antisymmetric diagrams (s12p $\neq$ s12)
+
+Contains analogous functions for spin-flip transitions:
+\begin{itemize}
+    \item \texttt{CalcKernel2BAasy()}: Spin-flip version of diagram A
+    \item \texttt{CalcKernel2BBasy()}: Uses \texttt{doublesigmaasy()} instead of \texttt{doublesigmasym()}
+    \item \texttt{CalcKernel2BCasy()}: Spin-flip version of diagram C
+    \item \texttt{CalcKernel2BDasy()}: Diagram D (not implemented)
+\end{itemize}
+
+\subsubsection{\texttt{varsub-calculateQs.PionPion.f}}
+
+\textbf{Purpose:} Momentum kinematics for pion-pion scattering
+
+\textbf{Key Subroutines:}
+\begin{itemize}
+    \item \texttt{calculateqs2Mass()}: Elastic scattering kinematics
+    \begin{itemize}
+        \item Input: momenta $\vec{p}, \vec{p}', \vec{k}$ and masses $m_1, m_2, m_3, m_4$
+        \item Calculates final pion momentum $\vec{k}'$ from energy-momentum conservation
+        \item Uses Mandelstam $s = (E_1 + E_2)^2$ in CM frame
+        \item Output momentum magnitude: $|\vec{k}'| = \sqrt{E_4^2 - m_4^2}$
+        \item Direction: $\vec{k}' = (0, |\vec{k}'|\sin\theta_{\text{cm}}, |\vec{k}'|\cos\theta_{\text{cm}})$
+    \end{itemize}
+    \item \texttt{CalculateQs()}: Legacy routine (not currently used in PionPion)
+\end{itemize}
+
+\textbf{Kinematic Relations:}
+\begin{itemize}
+    \item $E_1 = \sqrt{m_1^2 + \vec{k}^2}$, $E_2 = \sqrt{m_2^2 + \vec{k}^2}$
+    \item $\sqrt{s} = E_1 + E_2$
+    \item $E_3 = \frac{1}{2\sqrt{s}}(s + m_3^2 - m_4^2)$
+    \item $E_4 = \sqrt{s} - E_3$
+\end{itemize}
+
+\subsubsection{Other PionPion Kernel Files}
+
+\begin{itemize}
+    \item \texttt{varsub-usesymmetries.PionPion.f}: Symmetry relations (currently not used)
+    \item \texttt{varsub-readinput.twobody.PionPion.f}: Kernel-specific input parsing
+\end{itemize}
+
+\subsection{Comparison: Photoproduction vs Pion-Pion}
+
+\begin{center}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Feature} & \textbf{Photoproduction} & \textbf{Pion-Pion} \\
+\hline
+Process & $\gamma + N \to \pi + N$ & $\pi + N \to \pi + N$ \\
+\hline
+Theory & Threshold expansion & Chiral EFT (BKM 5.30) \\
+\hline
+Orders & O($\delta^2$), O($\delta^4$) & Single order \\
+\hline
+Diagrams & A, B, Static (A--E) & A, B, C \\
+\hline
+Kinematics & Photoproduction threshold & Elastic scattering \\
+\hline
+Output units & fm$^{-1}$ & MeV$^0$ (dimensionless) \\
+\hline
+Kernel units & MeV$^{-2}$ & MeV$^{-3}$ \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Common Features:}
+\begin{itemize}
+    \item Both use variable substitution in momentum integration
+    \item Both separate symmetric/antisymmetric spin contributions
+    \item Both use same mantle code infrastructure
+    \item Both implement isospin algebra
+    \item Both call \texttt{doublesigmasym()/doublesigmaasy()} from \texttt{varsub-spinstructures.f}
+\end{itemize}
+
+\section{Data Flow}
+
+\subsection{Input Data}
+
+\begin{enumerate}
+    \item \textbf{Input file} (text): Energies, angles, quadrature parameters, file paths
+    \item \textbf{Density file} (HDF5): 2N density matrix $\rho(p_{12}, p_{12}', \text{quantum numbers})$
+\end{enumerate}
+
+\subsection{Computational Flow}
+
+\begin{verbatim}
+Main Program
+    | (loops: energy, angle, quantum numbers)
+    |
+    +---> Read Density Matrix (once per energy/angle)
+    |
+    +---> twobodyfinalstatesumsvia2Ndensity()
+            | (loop: final state quantum numbers)
+            |
+            +---> Calculate2BIntegralI2()
+                    | (loops: spin projections, angles)
+                    | (interpolate density)
+                    |
+                    +---> Calc2Bspinisospintrans()
+                            | (compute momenta)
+                            |
+                            +---> getDiagAB()
+                            |       +---> CalcKernel2B*sym/asy()
+                            |
+                            +---> getStaticDiags()
+                                    +---> StaticKernel*sym/asy()
+                                    +---> (multiple contributions)
+                    |
+                    | <--- returns: Kernel2B(...)
+                    |
+                | (weight and sum)
+            |
+            | <--- returns: Int2B(diagNum, extQnum)
+            |
+        | (accumulate with weights)
+    |
+    | <--- updates: Result(extQnum, twoMzp, twoMz)
+    |
++---> Write Results to File
+\end{verbatim}
+
+\subsection{Output Data}
+
+\begin{enumerate}
+    \item \textbf{Output file} (text): \texttt{Result(extQnum, twoMzp, twoMz)} for each energy and angle
+    \item \textbf{extQnum}: Index for external quantum numbers
+    \begin{itemize}
+        \item For photoproduction: polarization indices (1=x, 2=y, 3=z)
+        \item For pion-pion: typically 1 (no polarization dependence)
+    \end{itemize}
+    \item \textbf{twoMzp, twoMz}: Initial and final nuclear spin projections (times 2)
+\end{enumerate}
+
+\textbf{Output units vary by process:}
+\begin{itemize}
+    \item Pion photoproduction: fm$^{-1}$ (proportional to $F_{TL}$ functions)
+    \item Pion-pion scattering: MeV$^0$ (dimensionless, proportional to scattering amplitude)
+\end{itemize}
+
+\section{Key Interfaces}
+
+\subsection{Mantle $\rightarrow$ Kernel Interface}
+
+The mantle code calls \texttt{Calc2Bspinisospintrans()} with:
+
+\textbf{Inputs:}
+\begin{itemize}
+    \item \texttt{pVec(3)}: Physical momentum vector in MeV
+    \item \texttt{uVec(3)}: Integration variable vector in MeV
+    \item Quantum numbers: \texttt{ml12, ml12p, t12, mt12, t12p, mt12p, l12, s12, l12p, s12p}
+    \item Kinematics: \texttt{thetacm, Eprobe, Mnucl}
+    \item Control: \texttt{calctype, numDiagrams, extQnumlimit}
+\end{itemize}
+
+\textbf{Outputs:}
+\begin{itemize}
+    \item \texttt{Kernel2B(diagNum, extQnum, s12p, msp, s12, ms)}: Complex kernel amplitudes
+    \item \texttt{ppVecs(diagNum, 1:3)}: Transformed momentum vectors for each diagram
+\end{itemize}
+
+The kernel has no knowledge of:
+\begin{itemize}
+    \item Density matrices
+    \item Angular integrals or quadratures
+    \item Final state summations
+    \item Output file formats
+\end{itemize}
+
+\subsection{Density Matrix Interface}
+
+The density matrix is read once per energy/angle and stored in a Fortran module (\texttt{CompDens}). It is accessed throughout the calculation via:
+
+\begin{itemize}
+    \item \texttt{rhoDensity(ip12, ip12p, rindx)}: 3D array
+    \item \texttt{ip12, ip12p}: Momentum grid indices
+    \item \texttt{rindx}: Composite index for all quantum numbers of the (12) channel
+\end{itemize}
+
+The mantle code performs bilinear interpolation to evaluate the density at arbitrary momentum values needed for the kernel.
+
+\section{Extensibility}
+
+\subsection{Adding a New Process}
+
+To compute a different reaction (e.g., Compton scattering, kaon production), follow these steps. The pion photoproduction and pion-pion scattering kernels serve as reference implementations.
+
+\begin{enumerate}
+    \item Create new kernel directory: \texttt{varsub-<Process>.twobody/}
+    \item Implement required subroutines:
+    \begin{itemize}
+        \item \texttt{KernelGreeting()}: Identify your process, compute kinematic variables
+        \item \texttt{KernelFarewell()}: Describe your output and units
+        \item \texttt{Calc2Bspinisospintrans()}: Main kernel computation
+        \begin{itemize}
+            \item Set up kinematics and momentum vectors
+            \item Call diagram calculation routines
+            \item Apply overall prefactors
+            \item Return kernel with proper units
+        \end{itemize}
+        \item Diagram-specific spin structure routines (sym/asy versions)
+        \item Kinematic calculation routines (analogous to \texttt{calculateqs2Mass()})
+    \end{itemize}
+    \item Ensure proper unit handling:
+    \begin{itemize}
+        \item Kernel should work in MeV
+        \item Choose units so Result() has desired output units
+        \item Remember: Result units = MeV$^{3-n}$ if kernel has units MeV$^{-n}$
+    \end{itemize}
+    \item The mantle code remains completely unchanged
+    \item Update Makefile to link new kernel files
+\end{enumerate}
+
+\textbf{Key Design Principles:}
+\begin{itemize}
+    \item Keep kernel code independent of mantle infrastructure
+    \item Separate symmetric and antisymmetric spin contributions
+    \item Use variable substitution if it simplifies integrals (include Jacobian!)
+    \item Implement isospin algebra explicitly in diagram prefactors
+    \item Document physics basis (review paper, equation numbers)
+\end{itemize}
+
+\subsection{Adding Higher Orders}
+
+To add higher order contributions (e.g., O($\delta^6$)):
+
+\begin{enumerate}
+    \item Add new diagram calculation routines in kernel files
+    \item Update \texttt{Calc2Bspinisospintrans()} to call new diagrams when appropriate \texttt{calctype} is set
+    \item Update \texttt{calctype.def} to include new order definitions
+    \item No changes needed to mantle code structure
+\end{enumerate}
+
+\section{Important Conventions}
+
+\subsection{Quantum Numbers}
+
+\begin{itemize}
+    \item Nuclear spin quantum numbers are stored as \texttt{twoMz} = $2M_z$ (integers)
+    \item Allows half-integer spins to be represented exactly
+    \item (12) subsystem quantum numbers (j12, s12, l12, etc.) are integers (0 or 1 for spin)
+    \item All loops over \texttt{twoMz} use steps of 2: \texttt{do twoMz = twoSnucl, -twoSnucl, -2}
+\end{itemize}
+
+\subsection{Array Indexing}
+
+\begin{itemize}
+    \item \texttt{Result(extQnum, twoMzp, twoMz)}
+    \begin{itemize}
+        \item extQnum: 1 to extQnumlimit (typically 1--3 for polarizations)
+        \item twoMzp, twoMz: -twoSnucl to +twoSnucl in steps of 2
+    \end{itemize}
+    \item \texttt{Kernel2B(diagNum, extQnum, s12p, msp, s12, ms)}
+    \begin{itemize}
+        \item diagNum: 1 to numDiagrams (currently 1 for this process)
+        \item s12p, s12: 0 or 1
+        \item msp, ms: -1, 0, or +1 (but only -s12 to +s12 are physical)
+    \end{itemize}
+\end{itemize}
+
+\subsection{Module Usage}
+
+The code uses a Fortran module \texttt{CompDens} (defined in \texttt{CompDens.F90}) to share density matrix data without passing large arrays through function arguments. This module is imported via \texttt{USE CompDens} in relevant files.
+
+\section{Summary}
+
+The code architecture cleanly separates process-independent framework (mantle) from process-specific physics (kernel):
+
+\begin{description}
+    \item[Mantle] Handles all bookkeeping: quantum number loops, angular integrals, density interpolation, unit conversion, I/O. Works in fm.
+
+    \item[Kernel] Implements physics: Feynman diagrams, spin structures, momentum kinematics. Works in MeV. Two kernels currently implemented:
+    \begin{itemize}
+        \item \textbf{Pion Photoproduction}: Threshold expansion with O($\delta^2$) and O($\delta^4$) contributions
+        \item \textbf{Pion-Pion Scattering}: Chiral EFT elastic scattering (BKM review)
+    \end{itemize}
+
+    \item[Interface] Well-defined: kernel receives momenta and quantum numbers, returns amplitudes. No shared knowledge of implementation details.
+
+    \item[Result] Reusable framework. Same mantle code used for multiple processes by swapping kernel implementation. This document demonstrates extensibility with two working examples.
+\end{description}
+
+\textbf{Code Organization:}
+\begin{itemize}
+    \item Mantle files: \texttt{varsub-twobodyvia2Ndensity/*}
+    \item Photoproduction kernel: \texttt{varsub-PionPhotoProdThresh.twobody/*}
+    \item Pion-pion kernel: \texttt{varsub-PionPion.twobody/*}
+    \item Common utilities: \texttt{common-densities/*}
+\end{itemize}
+
+\end{document}

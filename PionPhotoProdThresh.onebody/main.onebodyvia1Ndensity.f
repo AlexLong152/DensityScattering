@@ -403,7 +403,7 @@ c--- Sz = diag(1,0,-1)
             SpinOnez(2,2) = dcmplx(1.d0,0.d0)
             SpinOnez(-2,-2) = dcmplx(-1.d0,0.d0)! S_z |s, m_s> = m_s |s,m_s>
 
-            call commutator(SpinOney,SpinOneZ,SpinOneX,twoSnucl) ![Sz,Sx] = i*Sy
+            call commutator(SpinOney,SpinOneZ,SpinOneX,2) ![Sz,Sx] = i*Sy
             SpinOneY=SpinOney/ci
 c--- Assemble vector
             SpinOneVec(1,:,:) = SpinOnex
@@ -426,7 +426,7 @@ c     hgrie May 2018: outsourced into subroutine common-densities/makedensityfil
 c**********************************************************************
 c     hgrie May 2018: read 1N density
             call read1Ndensity(densityFileName,Anucl,twoSnucl,omega,thetacm,verbosity)
-
+c           64 pi^2 S built into these
             E_prot = -1.16E-3
             E_neut = 2.13E-3
             L_prot = -1.35E-3
@@ -478,7 +478,7 @@ c           tmpPlus and tmpMinus combines spin and isospin part of diagrams
 
                    PlusConst=Sigma(twom1Np,twom1N)* tmpPlus(twomt1Np,twomt1N)
                    MinusConst=Sigma(twom1Np,twom1N)* tmpMinus(twomt1Np,twomt1N)
-                   tmp=0.5d0*(10**3)*K1N*(prot*PlusConst+neut*MinusConst)*Anucl*rho1b(rindx)!matrix element
+                   tmp=(10**3)*K1N*(prot*PlusConst+neut*MinusConst)*Anucl*rho1b(rindx)!matrix element, K1N/2 cancels with 2i*E_0{+}
                    if (tmp.ne.tmp) then
                       write(*,*) "NaN detected! rindx=",rindx," ieps=",ieps
                       write(*,*) "  twoMzp=",twoMzp," twoMz=",twoMz
@@ -509,7 +509,6 @@ c               Result(ieps,:,:) = Result(ieps,:,:) / SpinVec(ieps,:,:)
             end do!ieps
 
 
-            Result=Result*2.d0!from 2.0 in from of \mathcal{M}= 2i*E0 eps dot S
             if (twoSnucl.eq.1) then
               write(*,*) real(Result(1,1,-1)),aimag(Result(2,-1,1))
               aveE0=(real(Result(1,1,-1))+aimag(Result(2,-1,1)))/2.d0

@@ -99,7 +99,7 @@ def dataExpCheck(dataExp):
     for i, theta in enumerate(thetas):
         x = np.cos(theta * np.pi / 180)
         # ccs[i] = ppl.calcCrossSection(S, x, nucs, poleData)
-        ccs[i] = ppl.calcCrossSectionFromRaw(S, x, nucs, poleData)
+        ccs[i] = ppl.calcCCFromRaw(S, x, nucs, poleData)
 
     plt.plot(thetas, ccs, label="Calculated From Poles")
     plt.plot(dataExp[0], dataExp[1], label="Experimental")
@@ -326,11 +326,7 @@ def makeResPlots():
     data = ppl.Poles()
 
     _, axs = plt.subplots(3, 4)
-    targets = [
-        "32q",
-        "p12",
-        "n12",
-    ]
+    targets = ["32q", "p12", "n12"]
     targTex = ["$I=3/2$", "$I=p 1/2$", "$I= n1/2$"]
     for ell in [0, 1]:
         for num, t in enumerate(targets):
@@ -624,7 +620,6 @@ def checkGetFFortran():
             passing = False
     if passing:
         print("Passed")
-
 
 
 if __name__ == "__main__":

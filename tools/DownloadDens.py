@@ -37,7 +37,7 @@ def main():
     # df = df.reset_index()
 
     thetas = np.array([60])
-    energies = np.array([132])
+    energies = np.array([133])
 
     eps = 2
     omega_masks = [(df["omega"] - e).abs() < eps for e in energies]
@@ -45,10 +45,23 @@ def main():
     theta_masks = [(df["theta"] - t).abs() < eps for t in thetas]
     theta_mask = np.logical_or.reduce(theta_masks)
 
+    # select = (
+    #     (df["N"] == 3)
+    #     & (df["Z"] == 3)
+    #     & (df["kind"] == "one")
+    #     & ((df["LambdaNN"] == 450) | (df["LambdaNN"] == 500))
+    #     #     # & (df["lambdaSRGNN"] == 1.880)
+    #     #     # & (df["Nmax"] == 14)
+    #     #     # & ((df["OmegaHO"] == 14) | (df["OmegaHO"] == 16))
+    #     & theta_mask
+    #     & omega_mask
+    # )
+    # df = df[select]
+
     select = (
-        (df["N"] == 1)
-        & (df["Z"] == 2)
-        & (df["kind"] == "two")
+        (df["N"] == 2)
+        & (df["Z"] == 1)
+        # & (df["kind"] == "one")
         & ((df["LambdaNN"] == 450) | (df["LambdaNN"] == 500))
         #     # & (df["lambdaSRGNN"] == 1.880)
         #     # & (df["Nmax"] == 14)
@@ -56,8 +69,6 @@ def main():
         & theta_mask
         & omega_mask
     )
-    # df = df[select]
-
     df = df[select]
     colsel = [
         "E[MeV]",

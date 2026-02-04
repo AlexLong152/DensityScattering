@@ -18,6 +18,8 @@
 *.synctex.gz
 *__pycache__/
 .pyinput-*
+testGetCS
+tesetGetMat
 #Exclude the executables
 common-densities/2Ndensity-module/testcompdens
 onebodyvia1Ndensity/onebodyvia1Ndensity
@@ -48,7 +50,7 @@ twobodyvia2Ndensity/output*/*
 
 #Exclude contents of results*/ folders -- these should not be part of code!
 results*/
-.calude/
+.claude/
 #Exclude all "working directories" which end on "-play"
 *-play/
 

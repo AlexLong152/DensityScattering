@@ -79,5 +79,13 @@ test: testing.o $(CHECK_OBJS)
 %.o: %.f $(INCS)
 	$(FC) $(FFLAGS) $< -o $@
 
+# testRawM target for Python comparison tests
+RAWM_OBJS := poles.o said_subs.o utility_suite.o subroutines.o \
+             ../common-densities/gauleg.o
+
+testRawM: testRawM.o pyVersion/test_helpers.o $(RAWM_OBJS)
+	$(FC) -o $@ testRawM.o pyVersion/test_helpers.o $(RAWM_OBJS)
+	chmod +x $@
+
 clean:
-	rm -f $(OBJS) testing.o $(COMMAND) testCrossSec testCrossSec.o TestCrossSec
+	rm -f $(OBJS) testing.o $(COMMAND) testCrossSec testCrossSec.o TestCrossSec testRawM testRawM.o pyVersion/test_helpers.o

@@ -61,7 +61,11 @@ c             write(*,*) "reset k"
           k=omegaThreshold
       else
         write(*,*) "kp^2<0 -> given masses/energy are incompatable"
-        stop
+        write(*,*) "k=", k 
+        write(*,*) "mNucl=", mNucl 
+        write(*,*) "mPion=", mPion 
+        write(*,*) "omegaThreshold=", omegaThreshold 
+        error stop
       end if
       ENuc=sqrt((mNucl**2) + (k**2))
       mandalS=(ENuc + k)**2 !lab frame

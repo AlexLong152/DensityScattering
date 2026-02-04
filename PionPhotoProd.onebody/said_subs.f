@@ -25,8 +25,11 @@ c       Constants
 c       Nucleon mass parameter (needed for CM energy conversion)
         double precision, parameter :: mN = Mnucleon  ! Average nucleon mass from constants.def
         
-c       Units conversion factor
-        double precision, parameter :: UNITS_FACTOR = 1.0d0 / (1000.0d0)
+c       Units conversion factor: converts milli-femtometers to MeV^-1
+c       SAID data is in mfm, and 1 mfm = 10^-3 fm = 10^-3 / HC MeV^-1
+c       After conversion, all E and M poles (Eplus, Mplus, Eminus, Mminus)
+c       returned by getPoles are in units of MeV^-1
+        double precision, parameter :: UNITS_FACTOR = 1.0d-3 / HC
       end module said_data_cache
 
 c     Implementation of the getPoles function that uses cached SAID data
@@ -35,19 +38,22 @@ c     Implementation of the getPoles function that uses cached SAID data
 c-----------------------------------------------------------------------
 c     Retrieves the E and M amplitudes for a given target, angular momentum ell,
 c     and center-of-mass energy sqrtS by using cached data from the said-SM22.txt file.
-c     
+c
 c     Based on the Python implementation in readData.py, particularly the functions:
 c     - parseSpinString
 c     - buildspinstring
 c     - getPoles
 c
-c     Parameters:
+c     Parameters (with units):
 c         target_str - String, one of 'p12', 'n12', '32q'
 c         ell - Integer, the angular momentum (0 for S-wave, 1 for P-wave, etc.)
-c         sqrtS - Double precision, the center-of-mass energy in MeV
+c         sqrtS - [MeV] Double precision, the center-of-mass energy
 c
 c     Returns (through arguments):
-c         Eplus, Mplus, Eminus, Mminus - Complex values representing amplitudes
+c         Eplus, Mplus, Eminus, Mminus - [MeV^-1] Complex multipole amplitudes
+c
+c     UNITS: Raw SAID data is in milli-femtometers (mfm).
+c            Converted to MeV^-1 via UNITS_FACTOR = 10^-3/HC
 c
       use said_data_cache
       implicit none
@@ -72,10 +78,10 @@ c     Variables for linear interpolation
       double precision sqrtS1, sqrtS2
       double complex amp1, amp2, amp_interp, t
       integer waveIndex
-
+      logical setZero
 c     Loop indices
       integer i, j, k
-      
+      setZero=.False.
 c     Initialize output values to zero
       Eplus = dcmplx(0.0d0, 0.0d0)
       Mplus = dcmplx(0.0d0, 0.0d0)
@@ -180,9 +186,14 @@ c         Found a match, now perform linear interpolation
 c           Find the two closest energy points that bracket sqrtS
 c           First, check if sqrtS is outside the data range
             if (sqrtS .le. energy_data(waveIndex, 1)) then
-c             Below the minimum energy, use first two points for extrapolation
+c             Below the minimum energy - clamp to first data point (no extrapolation)
+c             This is important for threshold reactions where sqrtS may be just below
+c             the minimum table energy. Extrapolating can cause large numerical errors.
               idx1 = 1
-              idx2 = 2
+              idx2 = 1
+c             OLD BEHAVIOR: extrapolate using first two points (can cause instability)
+c             To restore extrapolation, uncomment the line below and comment idx2=1 above
+c              idx2 = 2
             else if (sqrtS .ge.
      &               energy_data(waveIndex, energy_counts(waveIndex))) then
 c             Above the maximum energy, use the last point (no extrapolation)
@@ -215,6 +226,9 @@ c           Perform linear interpolation: y = y1 + (y2-y1)/(x2-x1) * (x-x1)
 c           Handle the case where E1 == E2 (exact match or outside range)
             if (abs(sqrtS2 - sqrtS1) .lt. 1.0d-10) then
               amp_interp = amp1
+              if (amp1.eq.dcmplx(0.d0,0.d0)) then
+                setZero=.True.
+              end if
             else
 c             Linear interpolation 
               t = (amp1-amp2)/(sqrtS1-sqrtS2)
@@ -241,7 +255,8 @@ c     This allows for cases like ell=0 with minus amplitudes, which are physical
      &    Mplus .eq. dcmplx(0.0d0, 0.0d0) .and.
      &    Eminus .eq. dcmplx(0.0d0, 0.0d0) .and.
      &    Mminus .eq. dcmplx(0.0d0, 0.0d0)) then
-      if(ell.ne.4) then
+
+      if((ell.ne.4). and.(.not.(setZero)))then
           write(*,*) 'WARNING: No amplitude data found for:'
           write(*,*) '  target = ', target_str
           write(*,*) '  ell = ', ell

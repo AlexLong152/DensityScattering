@@ -35,21 +35,28 @@ c     Get the raw matrix element.
 c
 c     Parameters
 c     ----------
-c     sqrtS: double precision
-c         The equivalent sqrtS for the kinetmatics we have
+c     sqrtS: double precision [MeV]
+c         The equivalent sqrtS for the kinematics we have
 c         if the reaction was single nucleon scattering
-c     x: double precision
+c     x: double precision [dimensionless]
 c         x=cos(theta)
 c     nucs: character*3
 c         Specifies the reaction ("pp0", "nn0", "pn+", "np-")
-c     Mmat: double complex, dimension(2,2) (output)
-c         2x2 complex matrix representing the amplitude
-c     mNucl: double precision
-c         Mass of the nucleon
-c     sqrtS: double precision
-c         The square root of the Mandelstam variable S
+c     Mout: double complex, dimension(-1:1,-1:1) (output) [dimensionless]
+c         2x2 complex matrix representing the scattering amplitude
+c     mNucl: double precision [MeV]
+c         Mass of the target nucleus
+c     sqrtSReal: double precision [MeV]
+c         The actual square root of the Mandelstam variable S
 c     MaxEll: integer
 c         Maximum ell value for pole summation
+c     epsVec: complex*16, dimension(3) [dimensionless]
+c         Photon polarization vector
+c
+c     UNITS FLOW:
+c       fResult from f(): [MeV^-1]
+c       prefactor = 8*pi*sqrtS: [MeV]
+c       Mout = prefactor * sum(coefs * fResult): [MeV * MeV^-1] = [dimensionless]
 c     ==================================================
       implicit none
       include '../common-densities/constants.def'
@@ -123,7 +130,8 @@ c     Set coefficients based on reaction type
           coefs(2) = 1.0d0 * sqrtTwo
           coefs(3) = 1.0d0 / 3.0d0 * sqrtTwo
       else
-          !write(*,*) 'Error: nucs value not supported:', nucs
+          write(*,*) 'Error: nucs value not supported:', nucs
+          stop
           Mmat=c0
           return
       endif
@@ -139,9 +147,10 @@ c     Terms of the nucleON - photon system
       ! write(*,*) "qVec=", qVec 
 
 
-c     Calculate prefactor
-      prefactor = 8.0d0 * Pi * sqrtSReal
-      
+c     use sqrtS here bc thats what is built into the single nucleon multipoles
+c     the single nucleon multipoles don't "know" about the true nucleus mass
+c     UNITS: prefactor has units [MeV], which converts fResult [MeV^-1] to dimensionless Mmat
+      prefactor = 8.0d0 * Pi * sqrtS
 c     Initialize Mmat
       Mmat = dcmplx(0.0d0, 0.0d0)
       
@@ -186,49 +195,17 @@ c             Add to this polarization's contribution
       enddo
       
 c         Apply prefactor to this polarization's contribution
-      do k = 1, 2
-          polContribution(k,:) = polContribution(k,:) * prefactor
-      enddo
-      
 c         Add to total matrix
-      Mmat = Mmat + polContribution
+      Mmat = Mmat + polContribution * prefactor
 c     enddo
       
 c     Cast the "regular" matricies generated from f to the spin indicies 
 c     we assigned in main
 
-c     sigmaX(1, 1) = dcmplx(0.0d0, 0.0d0)!mapping is defined by
-c     sigmaX(1, 2) = dcmplx(1.0d0, 0.0d0)
-c     sigmaX(2, 1) = dcmplx(1.0d0, 0.0d0)
-c     sigmaX(2, 2) = dcmplx(0.0d0, 0.0d0)
-    
-      Mout(-1,-1)=Mmat(1,1)
-      Mout(-1,1)=Mmat(1,2)
-      Mout(1,-1)=Mmat(2,1)
-      Mout(1,1)=Mmat(2,2)
-c     write(*,*) "poles.f 292"
-c     call printmat(Mout,"Mout")
-c     stop
+      call map(Mmat, Mout)
       return
       end subroutine
 
-      subroutine printmat(mat, name)
-      implicit none
-      double complex mat(-1:1,-1:1)
-      character(*) name
-      integer i, j
-
-      do i = -1, 1,2
-        do j = -1, 1,2
-c         write(*,'(A,"(",I1,",",I1,")=",F15.13,1x,F15.13,"j")')
-c    &       trim(name), i, j, real(mat(i,j)), aimag(mat(i,j))
-          write(*,'(A,"(",I2,",",I2,")=",E18.10,1x,E18.10,"j")')
-     &       trim(name), i, j, real(mat(i,j)), aimag(mat(i,j))
-
-        end do 
-      end do
-      write(*,*) "" 
-      end subroutine printmat
 
 
 
@@ -236,6 +213,28 @@ c     ==================================================
       subroutine f(x, sqrtS, qVec, kVec, epsVec, target, result, MaxEll)
 c     Calculate F term for given inputs
 c     Valid targets are: "p12", "n12", "32q"
+c
+c     Parameters (with units)
+c     -----------------------
+c     x: [dimensionless] cos(theta)
+c     sqrtS: [MeV] center-of-mass energy
+c     qVec: [MeV] pion 3-momentum
+c     kVec: [MeV] photon 3-momentum
+c     epsVec: [dimensionless] photon polarization vector
+c     target: isospin channel identifier
+c     result: [MeV^-1] output 2x2 amplitude matrix
+c     MaxEll: maximum partial wave
+c
+c     UNITS FLOW:
+c       f1,f2,f3,f4 from getF(): [MeV^-1]
+c       epsVec·σ: [dimensionless]
+c       qVec·σ, kVec·σ: [MeV]
+c       qAbs, kAbs: [MeV]
+c       F1Term = (epsVec·σ)*f1*i: [MeV^-1]
+c       F2Term = (qVec·σ)@(kVec×epsVec)·σ*f2/(qAbs*kAbs): [MeV*MeV*MeV^-1/MeV^2] = [MeV^-1]
+c       F3Term = (kVec·σ)*(qVec·epsVec)*f3/(qAbs*kAbs): [MeV*MeV*MeV^-1/MeV^2] = [MeV^-1]
+c       F4Term = (qVec·σ)*(qVec·epsVec)*f4/(qAbs^2): [MeV*MeV*MeV^-1/MeV^2] = [MeV^-1]
+c       result: [MeV^-1]
 c     ==================================================
       implicit none
 c     Input parameters
@@ -278,12 +277,6 @@ c     Calculate absolute values of vectors
       f2Term=0.d0
       f3Term=0.d0
       f4Term=0.d0
-c     Calculate F terms
-c     if (qAbs.eq.0) then
-c       !Trick here, just change qAbs, but not q, so that the other terms vanish
-c       !And we don't get a divide by zero issue
-c       qAbs=1.d0
-c     end if
 
       f1=cmplx(0.d0,KIND=8)
       f2=cmplx(0.d0,KIND=8)
@@ -300,18 +293,20 @@ c     f4=cmplx(real(f4),0.d0)
 
 
 c     Calculate cross product of kVec and epsVec
-      call crossProduct(kVec, epsVec, crossTmp)
-      
-      qVecComplex=dcmplx(qVec,0.d0)
-
-      epsDotP=dot_product(qVec,epsVec)
-c     Calculate F1 term: vec · σ (epsVec dot product with Pauli matrices) * F1 * 1j
-c     write(*,*) "epsVec=", real(epsVec)
       call complexVecDotSigma(epsVec, matRes1)
 
+c     Calculate F1 term: vec · σ (epsVec dot product with Pauli matrices) * F1 * 1j
       f1Term = matRes1 * f1 * ci
 
       if (qAbs.ne.0.d0) then!avoid divide by zero errors
+        write(*,*) "Above threshold"
+        stop
+        call crossProduct(kVec, epsVec, crossTmp)
+        
+        qVecComplex=dcmplx(qVec,0.d0)
+
+        epsDotP=dot_product(qVec,epsVec)
+c       write(*,*) "epsVec=", real(epsVec)
 c       Calculate F2 term: (qVec · σ) @ [(kVec × epsVec) · σ] * F2
         call realVecDotSigma(qVec, matRes1)
         call complexVecDotSigma(crossTmp, matRes2)
@@ -327,13 +322,13 @@ c       Calculate F3 term: 1j * (kVec · σ) * dot(qVec, epsVec) * F3
 c     Calculate F4 term: 1j * (qVec · σ) * dot(qVec, epsVec) * F4
         call realVecDotSigma(qVec, matRes1)
 
-        f4Term = matRes1 * ci * epsdotP * f4 / (qAbs * kAbs)
+        f4Term = matRes1 * ci * epsdotP * f4 / (qAbs * qAbs)
 
         result = f1Term + f2Term + f3Term + f4Term
-        result=result/HC
+c       Poles already converted to MeV^-1 by UNITS_FACTOR in said_subs.f
       else
         result=f1Term
-        result=result/HC
+c       Poles already converted to MeV^-1 by UNITS_FACTOR in said_subs.f
       end if      
       
       
@@ -363,10 +358,21 @@ c     stop
 
 c     ==================================================
       subroutine getF(x, sqrtS, fi, target, result, MaxEll)
-c     Calculate F value for given index
-c     x=cos(theta)
-c     Fi is which F value is being use, i=1,2,3,4
+c     Calculate F value for given index by summing over partial waves
+c
+c     Parameters (with units)
+c     -----------------------
+c     x: [dimensionless] cos(theta)
+c     sqrtS: [MeV] center-of-mass energy
+c     fi: which F value (1,2,3,4)
+c     target: isospin channel ('p12', 'n12', '32q')
+c     result: [MeV^-1] output amplitude
 c     MaxEll: maximum ell value for summation
+c
+c     UNITS FLOW:
+c       ePlus, mPlus, eMinus, mMinus from getPoles(): [MeV^-1]
+c       Legendre polynomials legP(): [dimensionless]
+c       result = sum over ell of (poles * Legendre): [MeV^-1]
 c     ==================================================
       implicit none
 c     Input parameters
@@ -456,37 +462,68 @@ c     ==================================================
 c     Input parameters
       double precision vec(3)
       double complex result(2, 2)
-      
+
 c     Local variables
       double complex sigmaX(2, 2), sigmaY(2, 2), sigmaZ(2, 2)
-      double complex sigVec(3, 2, 2)
-      external matDotVec
-      
+      double complex sigmaXmapped(-1:1, -1:1)
+      double complex sigmaYmapped(-1:1, -1:1)
+      double complex sigmaZmapped(-1:1, -1:1)
+      double complex sigVec(3, -1:1, -1:1)
+      external map
+
       include '../common-densities/constants.def'
 
-c     Define Pauli matrices
-      sigmaX=c0
-      sigmaY=c0
-      sigmaZ=c0
+c     Define Pauli matrices (same convention as complexVecDotSigma)
+      sigmaX = c0
+      sigmaY = c0
+      sigmaZ = c0
 
       sigmaX(1, 2) = dcmplx(1.0d0, 0.0d0)
       sigmaX(2, 1) = dcmplx(1.0d0, 0.0d0)
-      
+
       sigmaY(1, 2) = dcmplx(0.0d0, -1.0d0)
       sigmaY(2, 1) = dcmplx(0.0d0, 1.0d0)
-      
+
       sigmaZ(1, 1) = dcmplx(1.0d0, 0.0d0)
       sigmaZ(2, 2) = dcmplx(-1.0d0, 0.0d0)
-c     Populate Pauli vector
-c     sigVec(1, 1:2, 1:2) = sigmaX(1:2, 1:2)
-c     sigVec(2, 1:2, 1:2) = sigmaY(1:2, 1:2)
-c     sigVec(3, 1:2, 1:2) = sigmaZ(1:2, 1:2)
-      
-c     Perform matrix-vector multiplication
-      call matDotVec(sigVec, vec, result)
-      
+
+c     Map to (-1:1,-1:1) indexing using map subroutine
+      call map(sigmaX, sigmaXmapped)
+      call map(sigmaY, sigmaYmapped)
+      call map(sigmaZ, sigmaZmapped)
+    
+c     Populate sigVec array with mapped matrices
+      sigVec(1, :, :) = sigmaXmapped
+      sigVec(2, :, :) = sigmaYmapped
+      sigVec(3, :, :) = sigmaZmapped
+      sigVec=sigVec/2.d0
+c     Verify commutation relations (twoSnucl=1 for spin-1/2)
+      call checkCommutes(sigVec, 1)
+
+c     Compute result: vec · σ = vec(1)*σx + vec(2)*σy + vec(3)*σz
+      result = vec(1)*sigmaX + vec(2)*sigmaY + vec(3)*sigmaZ
+
       return
       end
+
+c     ==================================================
+      subroutine map(matPoles, matMain)
+c     Map a 2x2 matrix from (1:2,1:2) indexing to (-1:1,-1:1) indexing
+c     Mapping: index 1 -> +1 (spin up), index 2 -> -1 (spin down)
+c     ==================================================
+      implicit none
+      double complex, intent(in) :: matPoles(2, 2)
+      double complex, intent(out) :: matMain(-1:1, -1:1)
+
+      matMain = dcmplx(0.0d0, 0.0d0)
+c     (1,1) -> (1,1), (1,2) -> (1,-1), (2,1) -> (-1,1), (2,2) -> (-1,-1)
+      matMain(1, 1) = matPoles(1, 1)
+      matMain(1, -1) = matPoles(1, 2)
+      matMain(-1, 1) = matPoles(2, 1)
+      matMain(-1, -1) = matPoles(2, 2)
+
+      return
+      end subroutine
 
 c     ==================================================
       subroutine complexVecDotSigma(vec, result)
@@ -497,58 +534,78 @@ c     ==================================================
 c     Input parameters
       double complex vec(3)
       double complex result(2, 2)
-      
+
 c     Local variables
       double complex sigmaX(2, 2), sigmaY(2, 2), sigmaZ(2, 2)
-      double precision realVec(3)
+      double complex sigmaXmapped(-1:1, -1:1)
+      double complex sigmaYmapped(-1:1, -1:1)
+      double complex sigmaZmapped(-1:1, -1:1)
+      double complex sigVec(3, -1:1, -1:1)
       integer i
-      external matDotVec
-      
+      external map
+
       include '../common-densities/constants.def'
-c     Define Pauli matrices
-      sigmaX=c0
-      sigmaY=c0
-      sigmaZ=c0
+c     Define Pauli matrices in (1:2,1:2) indexing
+      sigmaX = c0
+      sigmaY = c0
+      sigmaZ = c0
 
       sigmaX(1, 2) = dcmplx(1.0d0, 0.0d0)
       sigmaX(2, 1) = dcmplx(1.0d0, 0.0d0)
-      
-      sigmaY(2, 1) = dcmplx(0.0d0, 1.0d0)
+
       sigmaY(1, 2) = dcmplx(0.0d0, -1.0d0)
-      
+      sigmaY(2, 1) = dcmplx(0.0d0, 1.0d0)
+
       sigmaZ(1, 1) = dcmplx(1.0d0, 0.0d0)
       sigmaZ(2, 2) = dcmplx(-1.0d0, 0.0d0)
-      
-c     Populate Pauli vector
-c     sigVec(1, 1:2, 1:2) = sigmaX(1:2, 1:2)
-c     sigVec(2, 1:2, 1:2) = sigmaY(1:2, 1:2)
-c     sigVec(3, 1:2, 1:2) = sigmaZ(1:2, 1:2)
-      
-      result=vec(1)*sigmaX+vec(2)*sigmaY+vec(3)*sigmaZ
-      
+
+c     Map to (-1:1,-1:1) indexing using map subroutine
+      call map(sigmaX, sigmaXmapped)
+      call map(sigmaY, sigmaYmapped)
+      call map(sigmaZ, sigmaZmapped)
+      if (sigmaZmapped(-1,-1).ne.dcmplx(-1,0)) then
+        write(*,*) "sigmaZmapped(-1,-1)=", sigmaZmapped(-1,-1) ,"!=-1"
+        write(*,*) "oops"
+        stop
+      end if
+
+c     Populate sigVec array with mapped matrices
+      sigVec(1, :, :) = sigmaXmapped
+      sigVec(2, :, :) = sigmaYmapped
+      sigVec(3, :, :) = sigmaZmapped
+
+c     In case we're feeling extra paranoid...
+c     call outputroutinelabeled(10,1,3,
+c    &           sigVec,1,"Matrix")
+
+c     Verify commutation relations (twoSnucl=1 for spin-1/2)
+      sigVec=sigVec/2.d0 !commutation relations only hold for spin operator, which is sigmaVec/2
+      call checkCommutes(sigVec, 1)
+
+c     Compute result using original (1:2,1:2) matrices
+      result = vec(1)*sigmaX + vec(2)*sigmaY + vec(3)*sigmaZ
+
       return
       end
-
 c     ==================================================
       subroutine getKinematics(sqrtS, x, nucs, S, kVec, qVec, mNucl)
 c     Calculate kinematic variables for a given reaction.
-c     
-c     Parameters
-c     ----------
-c     sqrtS: double precision
-c         The square root of the Mandelstam variable S
-c     x: double precision
-c         cos(theta)
-c     nucs: character*3
-c         Specifies the reaction ("pp0", "nn0", "pn+", "np-")
-c     S: double precision (output)
-c         Mandelstam S
-c     kVec: double precision, dimension(3) (output)
-c         photon momentum vector
-c     qVec: double precision, dimension(3) (output)
-c         pion momentum vector
-c     mNucl: double precision
-c         Mass of the nucleon
+c
+c     Parameters (with units)
+c     -----------------------
+c     sqrtS: [MeV] The square root of the Mandelstam variable S
+c     x: [dimensionless] cos(theta)
+c     nucs: Specifies the reaction ("pp0", "nn0", "pn+", "np-")
+c     S: [MeV^2] (output) Mandelstam S
+c     kVec: [MeV] (output) photon 3-momentum vector
+c     qVec: [MeV] (output) pion 3-momentum vector
+c     mNucl: [MeV] Mass of the target nucleus
+c
+c     Internal variables:
+c       omega: [MeV] photon energy in CM frame
+c       Epi: [MeV] pion energy in CM frame
+c       mPion: [MeV] pion mass (mpi0 or mpi from constants.def)
+c       absQ: [MeV] magnitude of pion 3-momentum
 c     ==================================================
       implicit none
 c     Input parameters
@@ -602,7 +659,6 @@ c     Calculate pion energy
       Epi = (S + mPion**2 - mNucl**2) / (2.0d0 * sqrtS)
 
       if (abs(Epi-mPion).le.2.5d0) then
-c       write(*,*) "Set to zero"
         Epi=mPion!Just assume the user meant to input threshold energy
       end if
 
@@ -642,3 +698,20 @@ c     stop
       end
 
 c     ==================================================
+      subroutine printmat(mat, name)
+      implicit none
+      double complex mat(-1:1,-1:1)
+      character(*) name
+      integer i, j
+
+      do i = -1, 1,2
+        do j = -1, 1,2
+c         write(*,'(A,"(",I1,",",I1,")=",F15.13,1x,F15.13,"j")')
+c    &       trim(name), i, j, real(mat(i,j)), aimag(mat(i,j))
+          write(*,'(A,"(",I2,",",I2,")=",E18.10,1x,E18.10,"j")')
+     &       trim(name), i, j, real(mat(i,j)), aimag(mat(i,j))
+
+        end do 
+      end do
+      write(*,*) "" 
+      end subroutine printmat

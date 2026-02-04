@@ -141,11 +141,14 @@ c       Calculate P_n(x)
         else if (n .eq. 5) then
           legP=(1.d0 / 8.d0) * (15.d0 * x - 70.d0 * x**(3.d0)
      &    + 63.d0 * x**5.d0)
+        else if (n .eq. 6) then
+          legP = (1.d0/16.d0) * (231.d0*x**6 - 315.d0*x**4
+     &         + 105.d0*x**2 - 5.d0)
         else
           write(*,*) 'Error: legendreP not implemented for n=', n
           stop
         end if
-        
+
       else if (deriv .eq. 1) then
 c       Calculate first derivative dP_n(x)/dx
         if (n .eq. -1 .or. n .eq. 0) then
@@ -165,11 +168,14 @@ c       Calculate first derivative dP_n(x)/dx
           legP = tmp / 8.0d0
         else if (n .eq. 5) then
           legP= (15.d0 - 210.d0 * x**2.d0 + 315.d0 * x**4.d0) / 8.d0
+        else if (n .eq. 6) then
+          legP = (693.d0*x**5)/8.d0 - (315.d0*x**3)/4.d0
+     &         + (105.d0*x)/8.d0
         else
           write(*,*) 'Error: legendreP not implemented for n=', n
           stop
         end if
-        
+
       else if (deriv .eq. 2) then
 c       Calculate second derivative d^2P_n(x)/dx^2
         if (n .eq. -1 .or. n .eq. 0 .or. n .eq. 1) then
@@ -184,11 +190,14 @@ c       Calculate second derivative d^2P_n(x)/dx^2
           legP = tmp
         else if (n .eq. 5) then
           legP= (-420.d0 * x + 1260.d0 * x**3.d0) / 8.d0
+        else if (n .eq. 6) then
+          legP = (3465.d0*x**4)/8.d0 - (945.d0*x**2)/4.d0
+     &         + 105.d0/8.d0
         else
           write(*,*) 'Error: legendreP not implemented for n=', n
           stop
         end if
-        
+
       else
         write(*,*) 'Error: Invalid derivative order in legP'
         stop

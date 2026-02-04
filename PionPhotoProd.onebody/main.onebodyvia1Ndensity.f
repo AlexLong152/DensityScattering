@@ -179,18 +179,35 @@ c     0: do not delete; 1: delete un-gz'd file; 2: delete downloaded and un-gz'd
 
 
       complex*16 :: Mmat(-1:1,-1:1)
-      complex*16, allocatable :: outputMat(:,:,:) 
-      real*8 sqrtS,x,sqrtSReal 
-      complex*16 tmpMat, relDev
+      complex*16, allocatable :: outputMat(:,:,:), SpinVec(:,:,:), FormFacts(:,:,:)
+      real*8 sqrtS,x,sqrtSReal, sqrtSThresh
+      complex*16 tmpMat
       character*3 nuc
       character piCharges(3)
       character isospin2Str(-1:1)
+      real*8 isospin2Mass(-1:1)
       integer lab, cm, MaxEll
 
       complex*16 :: sigmax(-1:1,-1:1)  ! (ms3p,ms3): sigma-x
       complex*16 :: sigmay(-1:1,-1:1) ! (ms3p,ms3): sigma-y
       complex*16 :: sigmaz(-1:1,-1:1)  ! (ms3p,ms3): sigma-z
+
+c     complex*16 :: testx(-1:1,-1:1) 
+c     complex*16 :: testy(-1:1,-1:1)
+c     complex*16 :: testz(-1:1,-1:1)
+c     complex*16 :: testA(-1:1,-1:1)
       complex*16 :: SigmaVec(3,-1:1,-1:1)
+
+      complex*16 :: SpinOnex(-2:2,-2:2)  ! (ms3p,ms3): sigma-x
+      complex*16 :: SpinOney(-2:2,-2:2) ! (ms3p,ms3): sigma-y
+      complex*16 :: SpinOnez(-2:2,-2:2)  ! (ms3p,ms3): sigma-z
+      complex*16 :: SpinOneVec(3,-2:2,-2:2)
+
+      complex*16 :: SpinZeroVec(3,-0:0,-0:0)
+      real*8 K1N,unitsFactor, prefactor
+      logical threshold ! set to .True. if we want to run the code at threshold
+c     Test variable for verifying complexVecDotSigma mapping
+      complex*16 :: testVec(3)
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     end OF VARIABLE DECLARATIONS, BEGINNING OF CODING
@@ -211,7 +228,7 @@ c     if you have 1 argument, write it to inputfile, otherwise stop
       end if
       lab=1
       cm=2 
-      frame=2 !TODO: fix this so that it actually reads from the file
+      frame=2 
 c     
 c     
 c**********************************************************************
@@ -254,13 +271,66 @@ c     hgrie June 2017: keep original filename: needed for replacements of energy
 c
       sigmay(1,-1)=dcmplx(0, -1.d0)
       sigmay(-1,1)=dcmplx (0, 1.d0) 
-c
       sigmaz(1,1)=dcmplx(1.d0,0)
       sigmaz(-1,-1)=dcmplx(-1.d0,0)
+
+c     testx=0.5*sigmax
+c     testz=0.5*sigmaz
+c     call commutator(testy,testz,testx,1) ![Sz,Sx] = i*Sy
+c     testy=2.0*testy/ci
+c     write(*,*) testy-sigmay
       SigmaVec(1,:,:)=sigmax
       SigmaVec(2,:,:)=sigmay
       SigmaVec(3,:,:)=sigmaz
       SigmaVec=SigmaVec/2.d0
+
+c     Test that complexVecDotSigma + map gives same matrices as main
+      testVec = c0
+      testVec(1) = dcmplx(1.d0, 0.d0)
+      call testSigmaMapping(testVec, sigmax, "x")
+
+      testVec = c0
+      testVec(2) = dcmplx(1.d0, 0.d0)
+      call testSigmaMapping(testVec, sigmay, "y")
+
+      testVec = c0
+      testVec(3) = dcmplx(1.d0, 0.d0)
+      call testSigmaMapping(testVec, sigmaz, "z")
+
+      write(*,*) "PASSED: complexVecDotSigma + map matches main's sigma"
+      SpinOnex(2,0) = dcmplx(1.d0,0.d0)
+      SpinOnex(0,2) = dcmplx(1.d0,0.d0)
+      SpinOnex(0,-2) = dcmplx(1.d0,0.d0)
+      SpinOnex(-2,0) = dcmplx(1.d0,0.d0)
+      SpinOnex = (1/dsqrt(2.d0)) * SpinOnex
+      SpinOnez(2,2) = dcmplx(1.d0,0.d0)
+      SpinOnez(-2,-2) = dcmplx(-1.d0,0.d0)! S_z |s, m_s> = m_s |s,m_s>
+      call commutator(SpinOney,SpinOneZ,SpinOneX,2) ![Sz,Sx] = i*Sy
+      SpinOneY=SpinOney/ci
+      SpinOneVec(1,:,:)=SpinOnex
+      SpinOneVec(2,:,:)=SpinOney
+      SpinOneVec(3,:,:)=SpinOnez
+
+
+c     Strictly SpinZeroVec doesn't make physical sense, so just use 1.0 here so we can see the answer
+c     That the code has calculated
+      SpinZeroVec(:,:,:) = 1.d0 
+
+      allocate(SpinVec(1:extQnumlimit,-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
+      SpinVec=c0
+      if (twoSnucl.eq.0) then
+        SpinVec=SpinZeroVec
+      else if (twoSnucl.eq.1) then
+        SpinVec=SigmaVec
+      else if (twoSnucl.eq.2) then 
+        SpinVec= SpinOneVec
+      else
+        write(*,*) "twoSnucl=", twoSnucl, "something went wrong"
+        stop
+      end if
+      if (twoSnucl.ne.0) then
+        call checkCommutes(SpinVec, twoSnucl)
+      end if 
 c     Initialize pion photoproduction data
 c     Setting up quadratures for the Feynman integrals
       call AnglePtsWts(Nx,1,Nxmax,0.d0,1.0d0,xq,wx,Nx,verbosity)
@@ -326,15 +396,17 @@ c     hgrie May 2018: outsourced into subroutine common-densities/makedensityfil
 
 
             allocate(outputMat(1:extQnumlimit,-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
+            allocate(FormFacts(1:extQnumlimit,-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
             outputMat=c0
-
+            FormFacts=c0
 
             call makedensityfilename(densityFileName,Egamma,thetacm,rmDensityFileLater,verbosity)
 c**********************************************************************
 c     hgrie May 2018: read 1N density
             call read1Ndensity(densityFileName,Anucl,twoSnucl,omega,thetacm,verbosity)
             outputMat=c0
-            nuc='###'!pp0 for example, there is definetly a more effecient way to do this than strings... too bad!
+            nuc='###'!pp0 for example mean proton in, proton out, neutral pion photoproduction
+c           I should definitely not be doing this with strings... too bad!
             piCharges(1)="-"
             piCharges(2)="0"
             piCharges(3)="+"
@@ -342,14 +414,36 @@ c     hgrie May 2018: read 1N density
             isospin2Str(-1)="n"
             isospin2Str(0)="#" !This should not happen
             isospin2Str(1)="p"
-            x=cos(thetacm)
+            isospin2Mass(-1)=mNeutron
+            isospin2Mass(1)=mProton
+
+            thetacm=0.d0
+            x=cos(thetacm)!WARNING: for above threshold, this must be converted to pionphotoprod kinematics
+
+            maxEll=4 ! MaxEll from 0 to 4
+            eps = RESHAPE((/1,0,0,0,1,0,0,0,1/),(/3,3/))
+
 c           Below is not the "real" value of mandalstam sqrtS, this is the value
 c           of the equivalent sqrtS for the kinematics of the poles, this value
 c           picks out which pole to load
             sqrtS=omega+sqrt(omega*omega+Mnucleon*Mnucleon)
             sqrtSReal=omega+sqrt(omega*omega+mNucl*mNucl)
-c           write(*,*) "extQnumlimit=", extQnumlimit   
-            eps = RESHAPE((/1,0,0,0,1,0,0,0,1/),(/3,3/))
+
+            sqrtSThresh=mpi0+mNucl
+            sqrtSReal=mpi0+mNucl
+            sqrtS=mpi0+mNucleon
+
+c           write(*,*) "sqrtSThresh=", sqrtSThresh  
+c           write(*,*) "sqrtS=", sqrtS 
+            if ( abs(sqrtSThresh-mpi0-mNucl).lt.5 )then
+              threshold=.true.
+              write(*,*) "Threshold energy detected, setting maxEll=0, and setting energy to exactly threshold"
+              write(*,*) "sqrtSreal=mpi0+mNucl, sqrtS_lookup=mpi0+mNucleon"
+              sqrtSReal=mpi0+mNucl
+              sqrtS=mpi0+mNucleon
+              maxEll=0
+            end if
+
             do extQnum=1,extQnumlimit
             do rindx=1,maxrho1bindex
                 CALL get1Nqnnum(rindx,twom1N,twomt1N,twoMz,twom1Np,twomt1Np,twoMzp,L1N,ML1N)
@@ -359,25 +453,60 @@ c           write(*,*) "extQnumlimit=", extQnumlimit
                   nuc(2:2)=isospin2Str(twomt1Np)
                   ! nuc(3:3)=piCharges(extQnum)
                   nuc(3:3)="0" !only looking at neutral pion photoproduction
-
-                  maxEll=4 ! MaxEll from 0 to 4
-                  call getRawM(sqrtS,x , nuc, Mmat, Mnucl, sqrtSReal,MaxEll,eps(extQnum,:))
+                  if (threshold) then 
+                    sqrtS=mpi0+isospin2Mass(twomt1N) 
+                  end if 
+                  
 c                 call getRawM(sqrtS-5.593d0,x , nuc, Mmat, Mnucl, sqrtSReal,MaxEll,eps(extQnum,:))!resulting scattering matrix imag to zero
 c                 call getRawM(sqrtS-3.885d0,x , nuc, Mmat, Mnucl, sqrtSReal,MaxEll,eps(extQnum,:))!imag mat elements to zero
+                  call getRawM(sqrtS,x , nuc, Mmat, Mnucl, sqrtSReal,MaxEll,eps(extQnum,:))
 
-                  tmpMat= Anucl*rho1b(rindx)*Mmat(twom1Np,twom1N)*(cmplx(0.d0,-1.d0,KIND=8))!matrix element
+                  tmpMat= rho1b(rindx)*Mmat(twom1Np,twom1N)*(cmplx(0.d0,-1.d0,KIND=8))!matrix element
                   outputMat(extQnum,twoMzp,twoMz)= outputMat(extQnum,twoMzp,twoMz)+tmpMat
 
                 end if !L1N.eq.0
             end do              !rindx   
             end do             !extQnum
             write(*,"(A,I2,A)") "Using", MaxEll+1, " Partial Waves (maximum l value)"
-            call outputroutine(outUnitno,twoSnucl,extQnumlimit,
-     &           outputMat,verbosity)
+            write(*,"(A)") "extQnum=1,2,3 corresponds to x,y,z polarization"
+            write(*,*) 
+
+            K1N= (MNucl/Mnucleon)! factor (m_N + M_pi)/(mnucl+mpi ) taken care of by 8 pi sqrtS
+            outputMat=outputMat*K1N*Anucl
+
+            unitsFactor=(1d-3/mpi)
+            prefactor=8*Pi*sqrtSReal
+            where (abs(SpinVec).gt.1e-15)
+              FormFacts=outputMat/(SpinVec)
+              FormFacts=FormFacts/prefactor
+              FormFacts=FormFacts/unitsFactor
+            elsewhere
+              FormFacts=c0
+            end where
+            if (twoSnucl.eq.1) then
+              FormFacts=FormFacts/2
+            else if (twoSnucl.eq.2) then
+              FormFacts(1,:,:)=FormFacts(1,:,:)/sqrt(2.d0) !get the origninal element
+              FormFacts(2,:,:)=FormFacts(2,:,:)/sqrt(2.d0) !get the original element
+            end if
+c           !a better way to do this might be to make a subroutine that maps sign(a+bi) to sign(a)+sign(b)*i, where sign(0)=0
+c            and divide by that sign(spinVec) instead of doing this mess
+
+
+c           call outputroutinelabeled(outUnitno,twoSnucl,extQnumlimit,
+c    &           SpinVec,verbosity,"SpinVector")
+            write(*,"(A)") "Scattering Matrix is unitless"
+            call outputroutinelabeled(outUnitno,twoSnucl,extQnumlimit,
+     &           outputMat,verbosity,"Matrix")
+            write(*,*) 
+            write(*,*) 
+            write(*,"(A)") "Form factors in 10^-3/mpi units" 
+            call outputroutinelabeled(outUnitno,twoSnucl,extQnumlimit,
+     &           FormFacts,verbosity,"FormFacts")
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     be a good boy and deallocate arrays. Compilers do that automatically for simple programs. Better safe than sorry.
-            deallocate(outputMat)
+            deallocate(outputMat,SpinVec,FormFacts)
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     hgrie Aug/Sep 2020: delete the local .dat file if one was generated from .gz
             if (rmDensityFileLater.gt.0) then
@@ -402,8 +531,8 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
      
       write (*,*) '*** Wrote output to file: ',TRIM(outfile)
       
-      write(*,*) "Remember to change the value of the energy to match the density "
-      stop
+c     write(*,*) "Remember to change the value of the energy to match the density "
+c     stop
       
 c20   format(' ',A,I6,A,8I8,A,E24.15,SP,E25.15," I")
 c30   format(' ',A,5I4,A,F20.13,SP,F21.13," I")
@@ -439,3 +568,111 @@ c40   format(A,2F18.13)
 
       write(*,*) !newline
       end subroutine DividePrint
+
+
+      subroutine commutator(C, A, B, twoSnucl)
+c     Calculates the commutator [A,B] = A.B - B.A
+      implicit none
+      integer, intent(in) :: twoSnucl
+      complex*16, intent(in) :: A(-twoSnucl:twoSnucl,
+     &                             -twoSnucl:twoSnucl)
+      complex*16, intent(in) :: B(-twoSnucl:twoSnucl,
+     &                             -twoSnucl:twoSnucl)
+      complex*16, intent(out) :: C(-twoSnucl:twoSnucl,
+     &                              -twoSnucl:twoSnucl)
+
+      C = matmul(A,B) - matmul(B,A)
+
+      end subroutine commutator
+
+
+      subroutine checkCommutes(SpinVec, twoSnucl)
+c     Checks that the spin matrices in SpinVec satisfy the
+c     SU(2) commutation relations:
+c       [Sx,Sy] - i*Sz = 0
+c       [Sy,Sz] - i*Sx = 0
+c       [Sz,Sx] - i*Sy = 0
+      implicit none
+      include '../common-densities/constants.def'
+      integer, intent(in) :: twoSnucl
+      complex*16, intent(in) :: SpinVec(3,-twoSnucl:twoSnucl,
+     &                                    -twoSnucl:twoSnucl)
+
+      complex*16 :: Spinx(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
+      complex*16 :: Spiny(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
+      complex*16 :: Spinz(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
+      complex*16 :: t1(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
+      complex*16 :: t2(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
+      complex*16 :: t3(-twoSnucl:twoSnucl,-twoSnucl:twoSnucl)
+      logical passes
+      passes=.True.
+      Spinx = SpinVec(1,:,:)
+      Spiny = SpinVec(2,:,:)
+      Spinz = SpinVec(3,:,:)
+
+      call commutator(t1, Spinx, Spiny, twoSnucl)
+      t1 = t1 - ci*Spinz
+
+      call commutator(t2, Spiny, Spinz, twoSnucl)
+      t2 = t2 - ci*Spinx
+
+      call commutator(t3, Spinz, Spinx, twoSnucl)
+      t3 = t3 - ci*Spiny
+
+      if (maxval(abs(t1)) .gt. 1D-10) then
+        write(*,*) "ERROR: [Sx,Sy] - i*Sz != 0"
+        write(*,*) "Max deviation: ", maxval(abs(t1))
+        passes=.False.
+      end if
+      if (maxval(abs(t2)) .gt. 1D-10) then
+        write(*,*) "ERROR: [Sy,Sz] - i*Sx != 0"
+        write(*,*) "Max deviation: ", maxval(abs(t2))
+        passes=.False.
+      end if
+      if (maxval(abs(t3)) .gt. 1D-10) then
+        write(*,*) "ERROR: [Sz,Sx] - i*Sy != 0"
+        write(*,*) "Max deviation: ", maxval(abs(t3))
+        passes=.False.
+      end if
+      if(.not.passes) then
+        stop
+      end if
+
+
+      end subroutine checkCommutes
+
+c     ==================================================
+      subroutine testSigmaMapping(epsVec, expectedSigma, label)
+c     Tests that complexVecDotSigma + map produces the expected sigma matrix
+c     ==================================================
+      implicit none
+      include '../common-densities/constants.def'
+
+      complex*16, intent(in) :: epsVec(3)
+      complex*16, intent(in) :: expectedSigma(-1:1,-1:1)
+      character(*), intent(in) :: label
+
+      complex*16 :: result(2,2)
+      complex*16 :: mapped(-1:1,-1:1)
+      complex*16 :: diff(-1:1,-1:1)
+      real*8 :: maxDiff
+
+      call complexVecDotSigma(epsVec, result)
+      call map(result, mapped)
+
+      diff = mapped - expectedSigma
+      maxDiff = maxval(abs(diff))
+
+      if (maxDiff .gt. 1.d-10) then
+        write(*,*) "ERROR: complexVecDotSigma for sigma_"//label//
+     &             " doesn't match main"
+        write(*,*) "Max difference:", maxDiff
+        write(*,*) "Expected:"
+        write(*,*) expectedSigma
+        write(*,*) "Got:"
+        write(*,*) mapped
+        stop
+      end if
+
+      end subroutine testSigmaMapping
+

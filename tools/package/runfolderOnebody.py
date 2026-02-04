@@ -38,6 +38,8 @@ def main(folder, outfolder):
     writepyInput()
     print("folder=", folder)
     onlyfiles = [f for f in listdir(folder) if isfile(join(folder, f))]
+    if len(onlyfiles) == 0:
+        raise ValueError(f"Given folder{folder} is empty")
 
     runcommand = []
 
@@ -47,11 +49,14 @@ def main(folder, outfolder):
         os.mkdir(outfolder)
     # removeSmallOut()
 
-    # outfolder = outfolder.replace(r"//", r"/")
+    outfolder = outfolder.replace(r"//", r"/")
     for i, f in enumerate(onlyfiles):
         path = folder + f  # path to density
         output = outfolder + getOutname(f, OdeltaStr)
         # if not isfile(output):
+        print("output=", output)
+        if isfile(output):
+            os.remove(output)
         runfile = basefile[:-4] + "-" + str(i) + ".dat"  # input file for fortran
 
         command = r"./run.onebodyvia1Ndensity " + runfile + ";"

@@ -38,6 +38,7 @@ OBJS_COMMON = \
 OBJS_THIS = \
   $(THIS_DIR)/main.onebodyvia1Ndensity.o \
   $(THIS_DIR)/readinput-onebody.o \
+	$(THIS_DIR)/outputKernel.o
 
 OBJS = $(OBJS_ONEBODY) $(OBJS_COMMON) $(OBJS_THIS)
 

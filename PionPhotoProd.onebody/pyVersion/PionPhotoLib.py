@@ -7,7 +7,8 @@ TODO: implement beyond l=1 in sum using experimental data
 Note for extrapolation: E_l, M_l behave like |vec{q}|^l in the threshold region
 """
 
-import sys
+# import sys
+import os
 from pdb import set_trace
 import numpy as np
 from scipy.integrate import quad
@@ -68,66 +69,36 @@ def main():
     # print(calcCrossSectionFromRaw(sqrtS**2, x, nucs, poleData))
 
 
-# def calcCrossSectionFromRaw(S, x, nucs, data):
-#     """
-#     Calculate the cross section for a given reaction.
-#
-#     Parameters
-#     -----------
-#     S: float
-#         mandalstam S
-#     x: float
-#         cos(theta) where theta is the scattering angle
-#     nucs: str
-#         options are: "pp0" "nn0" "pn+" "np-"
-#         specifies the reaction,
-#         string order is nucleus before, nucleus after, and outgoing pion charge
-#         from getKinematics
-#         ```
-#         if nucs == "pp0":
-#             mNucl = mProton
-#             mPion = mpi
-#         elif nucs == "nn0":
-#             mNucl = mNeutron
-#             mPion = mpi
-#         elif nucs == "pn+":
-#             mNucl = mProton
-#             mPion = mpiPlus
-#         elif nucs == "np-":
-#             mNucl = mNeutron
-#             mPion = mpiPlus
-#         ```
-#     data: SaidPoles
-#         Object containing pole data for the calculation
-#
-#     Returns
-#     -------
-#     float
-#         The cross section in microbarns
-#     """
-#     sqrtS = np.sqrt(S)
-#     S, kVec, qVec = getKinematics(sqrtS, x, nucs)
-#     rawM = getRawM(sqrtS, x, nucs, data)
-#     # theta = np.acos(x) * 180 / np.pi
-#     # print("x=", x)
-#     MSquare = np.dot(rawM, np.conjugate(rawM).T)
-#     # printMat(rawM, "rawM")
-#     # printMat(MSquare, "MSquare")
-#
-#     # printMat(MSquare, "MSquare")
-#     Mtrace = np.trace(MSquare)
-#     # print("Mtrace=", Mtrace)
-#     crossSec = (vecAbs(qVec) / vecAbs(kVec)) * Mtrace.real
-#     crossSec = 0.25 * crossSec * (1 / (64 * S * np.pi**2))
-#     # crossSec = crossSec * S * np.pi
-#     crossSec = crossSec * MeVtofm**2
-#
-#     crossSec = crossSec / 100  # Convert to barns
-#     crossSec = crossSec / (10**-6)  # Convert to microbarns
-#     return crossSec
+def calcCCFromRaw(S, x, nucs, data, roundThresh=False):
+    """
+    calculates the crossSection from `getRawM`
+
+    Parameters
+    ----------
+    roundThresh: bool, optional
+        If True, round Epi to threshold when within 2.5 MeV (matching Fortran behavior).
+        Default is False.
+    """
+    epsVecs = np.array([[1, 0, 0], [0, 1, 0]])
+    sqrtS = np.sqrt(S)
+    S, kVec, qVec = getKinematics(sqrtS, x, nucs, roundThresh=roundThresh)
+    # prefactor = 8 * np.pi * sqrtS
+    MSquare = 0
+    for epsVec in epsVecs:
+        MMat = getRawM(sqrtS, x, nucs, data, epsVec=epsVec, roundThresh=roundThresh)
+        M_Dot_MDag = MMat @ MMat.conjugate().T
+        MSquare += np.trace(M_Dot_MDag).real
+
+    crossSec = (vecAbs(qVec) / vecAbs(kVec)) * MSquare
+    crossSec = 0.25 * crossSec * (1 / (64 * S * np.pi**2))
+    # crossSec = crossSec * S * np.pi
+    crossSec = crossSec * MeVtofm**2
+    crossSec = crossSec / 100  # Convert to barns
+    crossSec = crossSec / (10**-6)  # Convert to microbarns
+    return crossSec
 
 
-def calcCrossSection(S, x, nucs, data):
+def calcCrossSection(S, x, nucs, data, roundThresh=False):
     """
     Calculate the cross section for a given reaction.
     Result is in microbarns
@@ -159,6 +130,9 @@ def calcCrossSection(S, x, nucs, data):
         ```
     data: SaidPoles
         Object containing pole data for the calculation
+    roundThresh: bool, optional
+        If True, round Epi to threshold when within 2.5 MeV (matching Fortran behavior).
+        Default is False.
 
     Returns
     -------
@@ -166,11 +140,8 @@ def calcCrossSection(S, x, nucs, data):
         The cross section in microbarns
     """
     sqrtS = np.sqrt(S)
-    S, kVec, qVec = getKinematics(sqrtS, x, nucs)
-    MSquare = getMSquare(sqrtS, x, nucs, data)
-    # for i in range(2):
-    #     for j in range(2):
-    #         print(f"MSquare[{i},{j}]=", MSquare[i, j])
+    S, kVec, qVec = getKinematics(sqrtS, x, nucs, roundThresh=roundThresh)
+    MSquare = getMSquare(sqrtS, x, nucs, data, roundThresh=roundThresh)
     crossSec = (vecAbs(qVec) / vecAbs(kVec)) * MSquare
     crossSec = 0.25 * crossSec * (1 / (64 * S * np.pi**2))
     # crossSec = crossSec * S * np.pi
@@ -180,7 +151,67 @@ def calcCrossSection(S, x, nucs, data):
     return crossSec
 
 
-def getMSquare(sqrtS, x, nucs, data):
+def getRawM(sqrtS, x, nucs, data, epsVec=None, roundThresh=False):
+    """
+    Calculate the matrix (not matrix squared), unitless
+
+    Parameters
+    ----------
+    sqrtS: float
+        The square root of the Mandelstam variable S
+    x: float
+        cos(theta) where theta is the scattering angle
+    nucs: str
+        Specifies the reaction ("pp0", "nn0", "pn+", "np-")
+    data: SaidPoles
+        Object containing pole data for the calculation
+    epsVec: ndarray, optional, length 3
+        The polarization vector of the incoming photon
+        if None, assigns epsVec=[1,0,0]
+    roundThresh: bool, optional
+        If True, round Epi to threshold when within 2.5 MeV (matching Fortran behavior).
+        Default is False.
+
+    Returns
+    -------
+    Mat: ndarray 2x2 complex
+        The matrix element
+    """
+
+    _, kVec, qVec = getKinematics(sqrtS, x, nucs, roundThresh=roundThresh)
+    targets = ["p12", "n12", "32q"]
+
+    if nucs == "pp0":
+        coefs = np.array([1, 0, 2 / 3])
+    elif nucs == "nn0":
+        coefs = np.array([0, -1, 2 / 3])
+    elif nucs == "pn+":
+        coefs = np.array([1, 0, -1 / 3]) * np.sqrt(2)
+    elif nucs == "np-":
+        coefs = np.array([0, 1, 1 / 3]) * np.sqrt(2)
+    else:
+        raise ValueError(f"nucs value '{nucs}' not supported")
+
+    # Initialize the total squared amplitude
+    # Prefactor for the amplitude
+    if type(epsVec) is type(None):
+        epsVec = np.array([1, 0, 0])  # WLOG set to x polarization if not set
+
+    assert len(epsVec) == 3
+    assert np.dot(epsVec, epsVec) == 1
+
+    # Remember to square then sum not sum then square
+    prefactor = 8 * np.pi * sqrtS
+    # MSquare = np.zeros((2, 2), dtype=complex)
+    Mmat = np.zeros((2, 2), dtype=complex)
+    for i, target in enumerate(targets):
+        Mmat += coefs[i] * F(x, sqrtS, qVec, kVec, epsVec, data, target)
+    Mmat *= prefactor
+
+    return Mmat
+
+
+def getMSquare(sqrtS, x, nucs, data, roundThresh=False):
     """
     Calculate the squared matrix element.
 
@@ -194,6 +225,9 @@ def getMSquare(sqrtS, x, nucs, data):
         Specifies the reaction ("pp0", "nn0", "pn+", "np-")
     data: SaidPoles
         Object containing pole data for the calculation
+    roundThresh: bool, optional
+        If True, round Epi to threshold when within 2.5 MeV (matching Fortran behavior).
+        Default is False.
 
     Returns
     -------
@@ -201,7 +235,7 @@ def getMSquare(sqrtS, x, nucs, data):
         The squared matrix element
     """
 
-    _, kVec, qVec = getKinematics(sqrtS, x, nucs)
+    _, kVec, qVec = getKinematics(sqrtS, x, nucs, roundThresh=roundThresh)
 
     # Use 3 linear polarizations (x, y, z) to match Fortran implementation
     epsVecs = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=complex)
@@ -256,7 +290,7 @@ def printMat(mat, val=None):
     print("")
 
 
-def getKinematics(sqrtS, x, nucs):
+def getKinematics(sqrtS, x, nucs, roundThresh=False):
     """
     Calculate kinematic variables for a given reaction.
 
@@ -268,6 +302,9 @@ def getKinematics(sqrtS, x, nucs):
         cos(theta) where theta is the scattering angle
     nucs: str
         Specifies the reaction ("pp0", "nn0", "pn+", "np-")
+    roundThresh: bool, optional
+        If True, round Epi to threshold when within 2.5 MeV (matching Fortran behavior).
+        Default is False.
 
     Returns
     -------
@@ -286,13 +323,20 @@ def getKinematics(sqrtS, x, nucs):
         mNucl = mNeutron
         mPion = mpiPlus
     else:
-        raise ValueError(f"nucs value '{nucs}' not supported")
+        print()
+        errStr = "Given value of `nucs` has length " + str(len(nucs))
+        errStr += f"\n nucs value '{nucs}' not supported"
+        raise ValueError(errStr)
     S = sqrtS**2
     omega = (S - mNucl**2) / (2 * sqrtS)  # cm frame
     kVec = np.array([0, 0, omega])
 
     # stu = 2 * mN**2 + mpi**2
     Epi = (S + mPion**2 - mNucl**2) / (2 * sqrtS)
+
+    # Match Fortran behavior: set Epi to threshold if within 2.5 MeV
+    if roundThresh and abs(Epi - mPion) <= 2.5:
+        Epi = mPion
 
     # Enucl = (S - mpi**2 + mN**2) / (2 * sqrtS)
     # print("Epi=", Epi)
@@ -409,20 +453,28 @@ def F(x, sqrtS, qVec, kVec, epsVec, data, target):
     F1 = getF(x, sqrtS, data, 1, target=target)
     F1Term = matDotVec(sigVec, epsVec) * F1 * 1j
 
-    F2 = getF(x, sqrtS, data, 2, target=target)
-    F2Term = (
-        matDotVec(sigVec, qVec) @ matDotVec(sigVec, np.cross(kVec, epsVec)) * F2
-    )  # operator @ is dot product
-    F2Term = F2Term / (vecAbs(qVec) * vecAbs(kVec))
+    qAbs = vecAbs(qVec)
+    kAbs = vecAbs(kVec)
 
-    F3 = getF(x, sqrtS, data, 3, target=target)
-    F3Term = 1j * matDotVec(sigVec, kVec) * np.dot(qVec, epsVec) * F3
-    F3Term = F3Term / (vecAbs(qVec) * vecAbs(kVec))
+    # Match Fortran: only compute F2-F4 terms if qAbs != 0
+    if qAbs != 0.0:
+        F2 = getF(x, sqrtS, data, 2, target=target)
+        F2Term = (
+            matDotVec(sigVec, qVec) @ matDotVec(sigVec, np.cross(kVec, epsVec)) * F2
+        )  # operator @ is dot product
+        F2Term = F2Term / (qAbs * kAbs)
 
-    F4 = getF(x, sqrtS, data, 4, target=target)
-    F4Term = 1j * matDotVec(sigVec, qVec) * np.dot(qVec, epsVec) * F4
-    F4Term = F4Term / (vecAbs(qVec) * vecAbs(qVec))
-    out = F1Term + F2Term + F3Term + F4Term
+        F3 = getF(x, sqrtS, data, 3, target=target)
+        F3Term = 1j * matDotVec(sigVec, kVec) * np.dot(qVec, epsVec) * F3
+        F3Term = F3Term / (qAbs * kAbs)
+
+        F4 = getF(x, sqrtS, data, 4, target=target)
+        F4Term = 1j * matDotVec(sigVec, qVec) * np.dot(qVec, epsVec) * F4
+        F4Term = F4Term / (qAbs * qAbs)
+
+        out = F1Term + F2Term + F3Term + F4Term
+    else:
+        out = F1Term
     # print("in python F function")
     # print("x", x)
     # print("sqrtS", sqrtS)
@@ -519,7 +571,6 @@ def getPoles(data, target, ell, sqrtS):
     tuple
         (Eplus, Mplus, Eminus, Mminus) - Tuple of complex amplitude values
     """
-    # Debug print
     # print(f"Looking for {target}, ell={ell}, sqrtS={sqrtS}")
     Eplus = data.Epole["plus"][target]
     Mplus = data.Mpole["plus"][target]
@@ -537,19 +588,247 @@ def getPoles(data, target, ell, sqrtS):
             # print(f"  {names[i]}: No data found for ell={ell}")
             tmp[i] = 0.0j
         else:
-            sqrtSs = arr[0]
+            sqrtSs = np.real(arr[0])  # Energy values
+            amps = arr[1]  # Amplitude values
             if len(sqrtSs) == 0:
                 # print(f"  {names[i]}: Empty array for ell={ell}")
                 tmp[i] = 0.0j
+            elif len(sqrtSs) == 1:
+                # Only one point, use it directly
+                tmp[i] = amps[0]
             else:
-                ind = np.argmin(abs(sqrtSs - sqrtS))
-                closest_energy = sqrtSs[ind]
-                # print(f"  {names[i]}: Found closest energy at {closest_energy:.2f} MeV")
-                tmp[i] = pole[ell][1][ind]
-                # print(f"  {names[i]} = ({tmp[i].real:.6f}, {tmp[i].imag:.6f})")
+                # Linear interpolation matching Fortran behavior
+                if sqrtS <= sqrtSs[0]:
+                    # Below minimum: extrapolate using first two points
+                    idx1, idx2 = 0, 1
+                elif sqrtS >= sqrtSs[-1]:
+                    # Above maximum: use last point (no extrapolation)
+                    tmp[i] = amps[-1]
+                    continue
+                else:
+                    # Find bracketing points
+                    idx2 = np.searchsorted(sqrtSs, sqrtS)
+                    idx1 = idx2 - 1
+
+                # Linear interpolation
+                sqrtS1, sqrtS2 = sqrtSs[idx1], sqrtSs[idx2]
+                amp1, amp2 = amps[idx1], amps[idx2]
+
+                if abs(sqrtS2 - sqrtS1) < 1e-10:
+                    tmp[i] = amp1
+                else:
+                    t = (amp1 - amp2) / (sqrtS1 - sqrtS2)
+                    tmp[i] = amp1 + t * (sqrtS - sqrtS1)
     Eplus, Mplus, Eminus, Mminus = tmp
 
     return Eplus, Mplus, Eminus, Mminus
+
+
+def sqrtS_to_labE(sqrtS):
+    """
+    Convert center-of-mass energy to lab-frame photon energy.
+
+    Parameters
+    ----------
+    sqrtS : float
+        Center-of-mass energy in MeV
+
+    Returns
+    -------
+    float
+        Lab-frame photon energy E_lab in MeV
+    """
+    return (sqrtS**2 - mN**2) / (2.0 * mN)
+
+
+def viewData(data, target, ell, sqrtS):
+    """
+    Print diagnostic information about amplitude data for given parameters.
+
+    Shows the sqrtS, target, EG (lab energy), spin values, and relevant
+    lines from the said-SM22.txt file.
+
+    Parameters
+    ----------
+    data : SaidPoles
+        Object containing the amplitude data
+    target : str
+        One of 'p12', 'n12', '32q'
+    ell : int
+        Angular momentum (0 for S-wave, 1 for P-wave, etc.)
+    sqrtS : float
+        Center-of-mass energy in MeV
+    """
+
+    # Convert sqrtS to lab energy
+    EG = sqrtS_to_labE(sqrtS)
+
+    print("=" * 60)
+    print(f"viewData: Amplitude lookup information")
+    print("=" * 60)
+    print(f"  sqrtS  = {sqrtS:.4f} MeV")
+    print(f"  EG     = {EG:.4f} MeV (lab frame)")
+    print(f"  target = {target}")
+    print(f"  ell    = {ell}")
+    print()
+
+    # Determine isospin from target
+    if target == "32q":
+        I = 1.5
+    else:
+        I = 0.5
+
+    # Build spin strings for all 4 amplitude types
+    amp_info = []
+    for plusMinus in ["plus", "minus"]:
+        for ampType in ["E", "M"]:
+            # For target p12/n12, use p/n prefix; for 32q, use p prefix
+            if target == "p12":
+                subChan = "p" + ampType
+            elif target == "n12":
+                subChan = "n" + ampType
+            else:  # 32q
+                subChan = "p" + ampType  # Use 'p' for I=3/2
+
+            spinStr = buildspinstring(plusMinus, ell, I, subChan)
+            if spinStr is not None:
+                spinStr = spinStr.upper()
+                # Format as "[D13 nM]" style
+                # Extract wave label and subchan
+                wave_label = spinStr[:-2].upper()
+                sub = spinStr[-2:].lower()
+                display = f"[{wave_label} {sub}]"
+            else:
+                display = "[N/A]"
+
+            amp_info.append((plusMinus, ampType, display, spinStr))
+
+    # Print amplitude types being looked up
+    print("Amplitude types:")
+    for plusMinus, ampType, display, spinStr in amp_info:
+        # Get the data array
+        if ampType == "E":
+            arr = data.Epole[plusMinus][target].get(ell, None)
+        else:
+            arr = data.Mpole[plusMinus][target].get(ell, None)
+
+        if arr is None or arr.shape[1] == 0:
+            status = "NO DATA"
+            range_str = ""
+        else:
+            sqrtSs = np.real(arr[0])
+            EGs = [sqrtS_to_labE(s) for s in sqrtSs]
+            min_EG, max_EG = min(EGs), max(EGs)
+            if sqrtS < sqrtSs[0]:
+                status = "BELOW RANGE"
+            elif sqrtS > sqrtSs[-1]:
+                status = "ABOVE RANGE"
+            else:
+                status = "IN RANGE"
+            range_str = f"  (EG: {min_EG:.1f} - {max_EG:.1f})"
+
+        name = f"{ampType}{plusMinus}"
+        print(f"  {name:12s} {display:12s} {status}{range_str}")
+
+    print()
+
+    # Read the said-SM22.txt file and find relevant lines
+    said_file = data.filename
+    if not os.path.isfile(said_file):
+        # Try in parent directory
+        parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        said_file = os.path.join(parent_dir, data.filename)
+
+    if os.path.isfile(said_file):
+        print(f"Source file: {said_file}")
+        print()
+
+        with open(said_file, "r") as f:
+            lines = f.readlines()
+
+        # Find sections matching our parameters
+        for plusMinus, ampType, display, spinStr in amp_info:
+            if spinStr is None:
+                continue
+
+            # Search for the header line
+            # Format in file: "PI0P S11  pE" or "PI0N S11  nE"
+            wave_label = spinStr[:-2].upper()
+            sub = spinStr[-2:].lower()  # Lowercase for comparison
+
+            found_section = False
+            section_start = None
+            header_line = None
+
+            for i, line in enumerate(lines):
+                stripped = line.strip()
+                if stripped.startswith("PI0P") or stripped.startswith("PI0N"):
+                    parts = stripped.split()
+                    if len(parts) >= 3:
+                        file_wave = parts[1].upper()
+                        file_sub = parts[2].lower()  # Lowercase for comparison
+                        if file_wave == wave_label and file_sub == sub:
+                            found_section = True
+                            section_start = i
+                            header_line = i + 1  # Next line is header
+                            break
+
+            if found_section:
+                print(f"{display} found at line {section_start + 1}:")
+
+                # Find the data lines closest to our EG
+                data_lines = []
+                for j in range(header_line + 1, min(header_line + 60, len(lines))):
+                    dline = lines[j].strip()
+                    if not dline:
+                        break
+                    if dline.startswith("GWU") or dline.startswith("PI0"):
+                        break
+                    parts = dline.split()
+                    if len(parts) >= 3:
+                        try:
+                            file_EG = float(parts[0])
+                            data_lines.append((j + 1, file_EG, lines[j].rstrip()))
+                        except ValueError:
+                            break
+
+                if data_lines:
+                    # Find closest lines to our EG
+                    closest_idx = min(
+                        range(len(data_lines)), key=lambda i: abs(data_lines[i][1] - EG)
+                    )
+
+                    # Print header
+                    if header_line < len(lines):
+                        print(f"  {lines[header_line].rstrip()}")
+
+                    # Print a few lines around the closest match
+                    start_idx = max(0, closest_idx - 1)
+                    end_idx = min(len(data_lines), closest_idx + 2)
+
+                    for idx in range(start_idx, end_idx):
+                        line_num, file_EG, content = data_lines[idx]
+                        marker = " <--" if idx == closest_idx else ""
+                        print(f"  (line {line_num}) {content}{marker}")
+                else:
+                    print("  No data lines found in section")
+                print()
+            else:
+                print(f"{display}: Section not found in file")
+                print()
+
+    # Also print the interpolated values
+    print("Interpolated amplitude values:")
+    Eplus, Mplus, Eminus, Mminus = getPoles(data, target, ell, sqrtS)
+    Eplus = Eplus / data.unitsFactor
+    Mplus = Mplus / data.unitsFactor
+    Eminus = Eminus / data.unitsFactor
+    Mminus = Mminus / data.unitsFactor
+    print(f"  Eplus  = {Eplus}")
+    print(f"  Mplus  = {Mplus}")
+    print(f"  Eminus = {Eminus}")
+    print(f"  Mminus = {Mminus}")
+    print("\n\n")
 
 
 def parseSpinString(spinString):
@@ -704,7 +983,7 @@ def lab_E_sqrtS(E_lab):
 
 class Poles:
     """
-    A class for loading E and M polarization data.
+    A class for loading E and M polarization data from Rijneveen
 
     Attributes
     ----------

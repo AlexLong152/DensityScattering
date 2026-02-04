@@ -1,6 +1,8 @@
 CrossSection.py
+defs.py
 pyproject.toml
 readDensity.py
+runfolderOnebody.py
 runfolderTwobody.py
 setup.cfg
 myphysics_local.egg-info/PKG-INFO

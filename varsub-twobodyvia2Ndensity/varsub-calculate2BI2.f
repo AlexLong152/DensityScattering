@@ -235,24 +235,59 @@ c     end do !extQnum
 
       subroutine interpolate(tmpRho,rho,P12_MeV, ppAbs, pAbs, Nlength)
 c     Units of all momenta in MeV
+c     Uses inlined binary search O(log N) to find bracketing indices
+c     Assumes P12_MeV is sorted in ascending order
       implicit none
       real*8 tmpRho,ppAbs,pAbs,P12_MeV(Nlength)
       integer Nlength
       real*8 rho(Nlength,Nlength)
       real*8 fQ11, fQ12,fQ21,fQ22
-      integer locp, loc2p, locpp, loc2pp
-      real*8 x1,x2,y1,y2
-      real*8 diffspp(Nlength), diffsp(Nlength)
-c     integer i
+      integer locp, loc2p, locpp, loc2pp, lo, hi, mid
+      real*8 x1,x2,y1,y2,term1,term2
 
-      diffspp=abs((P12_MeV-ppAbs))
-      locpp = minloc(diffspp,DIM=1) !closest value
-      loc2pp = minloc(diffspp,DIM=1,
-     &              mask=.not.(diffspp.eq.diffspp(locpp)))! second closest value
-c   Now                                       
-      diffsp=abs((P12_MeV-pAbs))
-      locp = minloc(diffsp,DIM=1)
-      loc2p = minloc(diffsp,DIM=1,mask=.not.(diffsp.eq.diffsp(locp)))
+c     Inlined binary search for pAbs bracket
+      if (pAbs .le. P12_MeV(1)) then
+         locp = 1
+         loc2p = 2
+      else if (pAbs .ge. P12_MeV(Nlength)) then
+         locp = Nlength - 1
+         loc2p = Nlength
+      else
+         lo = 1
+         hi = Nlength
+         do while (hi - lo .gt. 1)
+            mid = (lo + hi) / 2
+            if (P12_MeV(mid) .le. pAbs) then
+               lo = mid
+            else
+               hi = mid
+            end if
+         end do
+         locp = lo
+         loc2p = hi
+      end if
+
+c     Inlined binary search for ppAbs bracket
+      if (ppAbs .le. P12_MeV(1)) then
+         locpp = 1
+         loc2pp = 2
+      else if (ppAbs .ge. P12_MeV(Nlength)) then
+         locpp = Nlength - 1
+         loc2pp = Nlength
+      else
+         lo = 1
+         hi = Nlength
+         do while (hi - lo .gt. 1)
+            mid = (lo + hi) / 2
+            if (P12_MeV(mid) .le. ppAbs) then
+               lo = mid
+            else
+               hi = mid
+            end if
+         end do
+         locpp = lo
+         loc2pp = hi
+      end if
 
       x1=P12_MeV(locp)
       x2=P12_MeV(loc2p)
@@ -261,73 +296,22 @@ c   Now
       y2=P12_MeV(loc2pp)
 
 c https://en.wikipedia.org/wiki/Bilinear_interpolation
-c use the names Q to decrease the likelihood of a transcription error
+c fQ11 =f(x1, y1), fQ12 =f(x1, y2), fQ21 =f(x2, y1), fQ22 =f(x2, y2)
 
       fQ11=rho(locp,locpp)
       fQ12=rho(locp,loc2pp)
       fQ21=rho(loc2p,locpp)
       fQ22=rho(loc2p,loc2pp)
 
-      call bilinear_interpolate(tmpRho,fQ11,fQ12,fQ21,fQ22,x1,x2,y1,y2,pAbs,ppAbs)
+c     Inlined bilinear interpolation
+      term1=((y2-ppAbs)/(y2-y1))
+      term1=term1*(((x2-pAbs)/(x2-x1))*fQ11+(((pAbs-x1)/(x2-x1))*fQ21))
 
-c     write(*,*) "In varsub-calculate2BI2: locp,loc2p,locpp,loc2pp=",locp,loc2p,locpp,loc2pp 
-c     write(*,*) "In varsub-calculate2BI2: ppAbs,pAbs=",ppAbs,pAbs 
-c     do i=1,size(P12_MeV)
-c         write(*,'(A, I0, A, F0.6)') "  P12_MeV(",i,")=",P12_MeV(i) 
-c     end do !i
-c     write(*,*) "In varsub-calculate2BI2: P12_MeV(locp),P12_MeV(loc2p)=",P12_MeV(locp),P12_MeV(loc2p) 
-c     write(*,*) "In varsub-calculate2BI2: P12_MeV(locpp),P12_MeV(loc2pp)=",P12_MeV(locpp),P12_MeV(loc2pp) 
-c     write(*,*) "In varsub-calculate2BI2: fQ11,fQ12,fQ21,fQ22=",fQ11,fQ12,fQ21,fQ22 
-c     write(*,*) "In varsub-calculate2BI2: tmpRho=",tmpRho 
-c     stop
-      end subroutine
-
-
-      subroutine bilinear_interpolate(tmpRho,fQ11,fQ12,fQ21,fQ22,x1,x2,y1,y2,x,y)
-c   Implimentation of this: https://en.wikipedia.org/wiki/Bilinear_interpolation
-c   Essentially this is first order multivariable polynomial interpolation 
-c   A higher order multivariable interpolation can be done in mathematica if needed (but I doubt this will be required)
-c   fQ11 =f(x1, y1), fQ12 =f(x1, y2), fQ21 =f(x2, y1), and fQ22 =f(x2, y2).
-c   Order of arguments x1<x2, or y1<y2 etc doesn't matter
-      implicit none
-      real*8 fQ11, fQ12, fQ21, fQ22
-      real*8 x1,x2,y1,y2,x,y
-      real*8 tmpRho 
-      real*8 term1,term2 
-
-c     real*8 tmpRho2
-c     real*8 xVec(2),yVec(2)
-c     real*8 pAbs, ppAbs
-c     real*8 myMat(2,2), output(2,1)
-      term1=((y2-y)/(y2-y1))
-      term1=term1*(((x2-x)/(x2-x1))*fQ11+(((x-x1)/(x2-x1))*fQ21))
-
-      term2=((y-y1)/(y2-y1))
+      term2=((ppAbs-y1)/(y2-y1))
       term2=term2*(
-     &   ((x2-x)/(x2-x1))*fQ12+
-     &   ((x-x1)/(x2-x1))*fQ22)
+     &   ((x2-pAbs)/(x2-x1))*fQ12+
+     &   ((pAbs-x1)/(x2-x1))*fQ22)
       tmpRho=term1+term2
-      
-
-c     Below this is in theory the same implimentation as above, but its implimented twice as a cross check
-
-c     xVec=(/x2-x,x-x1/)
-c     yVec=(/y2-y,y-y1/)
-c     myMat=reshape((/fQ11,fQ12,fQ21,fQ22/),shape(myMat))
-c     tmp(1)=DOT_PRODUCT(myMat(:,1),yVec)!matrix dot product with a vector
-c     tmp(2)=DOT_PRODUCT(myMat(:,2),yVec)
-
-c     tmpRho2=DOT_PRODUCT(xVec, tmp)/((x2-x1)*(y2-y1))
-
-c     if (abs(tmpRho-tmpRho2).ge.1e-8) then
-c         write(*,*) ""
-c         write(*,*) "abs(tmpRho-tmpRho2).ge.1e-8 evaluated true"
-c         write(*,*) "In finalstatesums.twobodyvia2Ndensity.f: tmpRho=",tmpRho 
-c         write(*,*) "In finalstatesums.twobodyvia2Ndensity.f: tmpRho2=",tmpRho2
-c         write(*,*) "fQ11,fQ12,fQ21,fQ22=",fQ11,fQ12,fQ21,fQ22 
-c         write(*,*) "Values dont match, stopping"
-c         stop
-c     end if
 
       end subroutine
 

@@ -1,9 +1,0 @@
-001 001 10                           omegaLow, omegaHigh, omegaStep
-0 180 15                             thetaLow, thetaHigh, thetaStep
-test-onebody-NUCLEUS.XXXMeV-YYYdeg.dens-DENSITY.ORDER.dat
-'https://datapub.fz-juelich.de/anogga/files/comp-dens-3he-3h/AV18/compton-dens-3he-av18-empot-urbanaIXp16n5-om=XXX-th=YYY-nx=20-nphi=40-np12=56+12-np3=48+12-jmax=5-rho1b.dat.gz'
-cm_symmetry_verbos                    frame, symmetry, verbosity of STDOUT
-Odelta3				                                    Calctype -- VaryAXN varies NucelonN's amplitude AX (N=p,n; X=1-6)
-16			             number of points Nx in Feynman parameter integration
-COMMENTS:_v2.0
-# in output & density filenames, code replaces ORDER, XXX and YYY automatically by order, energy and angle.

@@ -1,0 +1,79 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  Ts/call  Ts/call  name    
+ 15.15    705.92   705.92                             calculate2bintegrali2_
+ 12.44   1285.67   579.75                             statickernelcsym_
+ 12.38   1862.38   576.71                             statickerneldsym_
+ 11.06   2377.75   515.37                             calc2bspinisospintrans_
+  6.75   2692.15   314.40                             statickernelbsym_
+  5.51   2948.70   256.55                             statickernelesym_
+  5.44   3202.03   253.33                             singlesigmasym_
+  4.01   3388.85   186.82                             calckernel2bbsymvec_
+  4.00   3575.20   186.35                             statickernelasym_
+  3.89   3756.49   181.29                             calckernel2basym_
+  3.81   3933.89   177.40                             getstaticdiags_
+  3.33   4089.26   155.37                             holdnan_
+  2.40   4201.26   112.00                             doublesigmasym_
+  2.32   4309.35   108.10                             getdiagab_
+  1.40   4374.48    65.12                             singlesigmaasy_
+  1.16   4428.45    53.98                             interpolate_
+  0.78   4464.60    36.14                             calculateqsmass_
+  0.66   4495.51    30.91                             statickernelcasym_
+  0.65   4525.70    30.20                             statickerneldasym_
+  0.64   4555.40    29.69                             doublesigmaasy_
+  0.41   4574.72    19.32                             cross_
+  0.41   4593.83    19.11                             getsphericalharmonics_
+  0.29   4607.51    13.68                             cart2sphere_
+  0.20   4616.75     9.24                             statickerneleasym_
+  0.19   4625.77     9.02                             statickernelbasym_
+  0.13   4632.05     6.28                             calckernel2baasy_
+  0.13   4638.19     6.14                             _init
+  0.10   4643.08     4.89                             vecsquare_
+  0.10   4647.92     4.84                             statickernelaasym_
+  0.09   4652.12     4.20                             sphere2cart_
+  0.07   4655.22     3.10                             calckernel2bbasyvec_
+  0.04   4656.88     1.66                             getharmoniccart_
+  0.02   4657.67     0.79                             __compdens_MOD_readhdf_rhoset
+  0.01   4658.13     0.46                             __mpi_const_MOD_collect_part_spreal
+  0.01   4658.48     0.35                             setquad12_
+  0.01   4658.74     0.26                             twobodyfinalstatesumsvia2ndensity_
+  0.00   4658.93     0.18                             twosigmas_
+  0.00   4658.97     0.04                             __clebsch_MOD_dach
+  0.00   4659.00     0.03                             __clebsch_MOD_cg
+  0.00   4659.03     0.03                             __clebsch_MOD_initclebsch
+  0.00   4659.06     0.03                             ddelta_
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+Copyright (C) 2012-2024 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.

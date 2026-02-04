@@ -20,7 +20,8 @@ OBJS_THIS := \
   varsub-2Bkernel.PionPhotoProdThresh.o \
   varsub-2Bspinsym.PionPhotoProdThresh.o \
   varsub-2Bspinasy.PionPhotoProdThresh.o \
-  varsub-usesymmetries.PionPhotoProdThresh.o
+  varsub-usesymmetries.PionPhotoProdThresh.o\
+	outputKernel.o
 
 # Object files from varsub-twobodyvia2Ndensity
 OBJS_TWOBODY := \
@@ -52,23 +53,18 @@ OBJS := $(OBJS_THIS) $(OBJS_TWOBODY) $(OBJS_COMMON)
 # Compiler and flags
 FC = mpif90
 
-# FFLAGS = -O1 -fopenmp -g -Wall -Wno-tabs -ffixed-line-length-0 \
-#   -ffpe-summary=none -mcmodel=large -fPIC -cpp -fcheck=all -fbacktrace \
-#   -finit-integer=-1000 -finit-real=inf -fallow-argument-mismatch \
-#   -I$(VAR_MODS) -I$(COMMON_DIR) -I/usr/local/hdf5/openmpi/include
-
-# FFLAGS_FAST = -O3 -fopenmp -g -c -Wall -Wno-tabs -ffixed-line-length-0 \
-#   -ffpe-summary=all -mcmodel=large -fPIC -cpp -fcheck=all -fbacktrace \
-#   -finit-integer=-1000 -finit-real=inf -fallow-argument-mismatch \
-#   -I$(VAR_MODS) -I$(COMMON_DIR) -I/usr/local/hdf5/openmpi/include
-#
-FFLAGS = -O0 -fopenmp -g -Wall -Wno-tabs -ffixed-line-length-0 \
+debug_FFLAGS = -O0 -fopenmp -g -Wall -Wno-tabs -ffixed-line-length-0 \
   -ffpe-summary=all -fPIC -cpp -fcheck=all -fbacktrace \
   -finit-integer=-1000 -finit-real=inf -fallow-argument-mismatch \
   -I$(VAR_MODS) -I$(COMMON_DIR) -I/usr/local/hdf5/openmpi/include
 
+profile_FFLAGS = -O3 -pg -fopenmp -Wall -Wno-tabs -ffixed-line-length-0 \
+  -ffpe-summary=none -fPIC -cpp -fbacktrace \
+  -finit-integer=-1000 -finit-real=inf -fallow-argument-mismatch \
+  -I$(VAR_MODS) -I$(COMMON_DIR) -I/usr/local/hdf5/openmpi/include
 
-FAST_FLAGS  = -O3 -fopenmp -Wall -Wno-tabs -ffixed-line-length-0 \
+
+FFLAGS  = -O3 -fopenmp -Wall -Wno-tabs -ffixed-line-length-0 \
   -ffpe-summary=none -fPIC -cpp -fbacktrace \
   -finit-integer=-1000 -finit-real=inf -fallow-argument-mismatch \
   -I$(VAR_MODS) -I$(COMMON_DIR) -I/usr/local/hdf5/openmpi/include
@@ -79,7 +75,7 @@ LDFLAGS = \
   -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 \
   -llapack -lgomp -ldl -lz -lsz
 
-.PHONY: all clean fast
+.PHONY: all clean fast debug profile
 
 all: $(COMMAND)
 	chmod +x $(COMMAND)
@@ -91,9 +87,14 @@ $(COMMAND): $(OBJS)
 	$(FC) $(FFLAGS) -c $< -o $@
 
 # Build an optimized version with FAST_FLAGS (same executable name)
-fast: clean
-	$(MAKE) FFLAGS="$(FAST_FLAGS)" all
+debug: clean
+	$(MAKE) -B FFLAGS="$(debug_FLAGS)" all
 
 clean:
 	find . -name '*.o' -o -name '*.mod' -delete
 	rm -f $(COMMAND)
+
+profile: clean
+	$(MAKE) FFLAGS="$(profile_FFLAGS)" all
+	./$(COMMAND) input.dat
+	gprof $(COMMAND) gmon.out > profile.txt

@@ -37,8 +37,10 @@ c
 c
 c    Identity matrix and Pauli matrices for spin-1/2 operators
 c
-        real*8 M6Li,M4He,M3He,Md,Mproton,Mneutron,Mnucleon,Binding
-	real*8 mpi,mpi0,HC,fpi,ga,kappap,kappan,ep,en,alphaem,echarge
+        real*8 Mproton,Mneutron,Mnucleon,Binding
+        real*8 M6Li,M4He,M3He,M3H,Md
+	      real*8 mpi,mpi0,HC,fpi,ga,kappap,kappan,ep,en
+        real*8 alphaem,echarge
         real*8 muv,mup,mun
         real*8 kappas,kappanu
         
@@ -78,10 +80,14 @@ c        parameter (gafac2=gpinn/(2.d0*Mnucleon**2))
 	parameter (Md=2*Mnucleon-Binding)
 
 c 	better define following via mass of nucleon constituents minus binding energy, or binding energy as difference?  			   
-        parameter (M3He=2808.4d0,M4He=3727.4d0)
+        parameter (M3He=2808.4d0)
+        parameter (M4He=3727.4d0)
 	
 c 6Li from Nuclear Chart at iaea.org, translated from AMU to MeV (1/12 of 12C mass)
-	parameter (M6Li=6.0151228874d0*931.49432d0)
+	      parameter (M6Li=6.0151228874d0*931.49432d0)
+        parameter (M3H=3.01604928d0*931.49432d0)!Tritium
+c       parameter (M3He=3.01604928d0*931.49432d0)
+
 c
 c    Constants from LpiN2
 c

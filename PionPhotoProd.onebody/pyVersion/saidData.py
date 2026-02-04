@@ -211,11 +211,7 @@ def load_pi0p_data(filename):
             c_arr = np.array(center_list, dtype=complex)
             e_arr = np.array(err_list, dtype=complex)
 
-            final_dict[spin][targ] = {
-                "energy": E_arr,
-                "center": c_arr,
-                "err": e_arr,
-            }
+            final_dict[spin][targ] = {"energy": E_arr, "center": c_arr, "err": e_arr}
 
     return final_dict
 

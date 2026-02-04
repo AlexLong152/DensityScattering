@@ -22,7 +22,8 @@ OBJS_THIS := \
   varsub-2Bspinsym.PionPion.o \
   varsub-2Bspinasy.PionPion.o \
   varsub-usesymmetries.PionPion.o \
-  varsub-IsospinMap.PionPion.o
+  varsub-IsospinMap.PionPion.o\
+	outputKernel.o
 
 # Object files from varsub-twobodyvia2Ndensity
 OBJS_TWOBODY := \
