@@ -18,8 +18,12 @@
 *.synctex.gz
 *__pycache__/
 .pyinput-*
+.pCommand.sh
+.pyinput.dat
+input-*.dat
 testGetCS
 tesetGetMat
+test-*.dat
 #Exclude the executables
 common-densities/2Ndensity-module/testcompdens
 onebodyvia1Ndensity/onebodyvia1Ndensity
@@ -35,6 +39,7 @@ densities-*/*/1Ndensities/*/*/*/*/*.dat
 #too temporary to keep in repo
 onebodyvia1Ndensity/*.dat
 twobodyvia2Ndensity/*.dat
+lit/*
 
 #Exclude contents of input/ & output/ folders in
 #onebodyvia1Ndensity/, twobodyvia2Ndensity/: too temporary to keep in repo
