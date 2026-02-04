@@ -360,7 +360,7 @@ c           write(*,*) "extQnumlimit=", extQnumlimit
                   ! nuc(3:3)=piCharges(extQnum)
                   nuc(3:3)="0" !only looking at neutral pion photoproduction
 
-                  maxEll=0 ! MaxEll from 0 to 4
+                  maxEll=4 ! MaxEll from 0 to 4
                   call getRawM(sqrtS,x , nuc, Mmat, Mnucl, sqrtSReal,MaxEll,eps(extQnum,:))
 c                 call getRawM(sqrtS-5.593d0,x , nuc, Mmat, Mnucl, sqrtSReal,MaxEll,eps(extQnum,:))!resulting scattering matrix imag to zero
 c                 call getRawM(sqrtS-3.885d0,x , nuc, Mmat, Mnucl, sqrtSReal,MaxEll,eps(extQnum,:))!imag mat elements to zero
@@ -368,15 +368,6 @@ c                 call getRawM(sqrtS-3.885d0,x , nuc, Mmat, Mnucl, sqrtSReal,Max
                   tmpMat= Anucl*rho1b(rindx)*Mmat(twom1Np,twom1N)*(cmplx(0.d0,-1.d0,KIND=8))!matrix element
                   outputMat(extQnum,twoMzp,twoMz)= outputMat(extQnum,twoMzp,twoMz)+tmpMat
 
-                  if (rindx.eq.1) then
-                    write(*,*) ""
-                    write(*,*) ""
-                  end if
-                  if (tmpMat.ne.0.d0) then
-                  write(*,"(A,' ',F11.8,1X,SP,F11.8,'i',SS,1X,A,I4,A,I2)",advance='no')
-     &                    "mat=", tmpMat, ", rindx=", rindx, ",  extQnum=", extQnum
-                  write(*,"(A,F10.8)") "   abs(rho1b(rindx)*mat)=  ",  abs(rho1b(rindx)*tmpMat)
-                  end if!tmpMat
                 end if !L1N.eq.0
             end do              !rindx   
             end do             !extQnum
