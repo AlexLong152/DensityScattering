@@ -7,6 +7,7 @@ c     Physical constants (explicit values to ensure they're not zero)
       double precision, parameter :: mN = 938.919d0
       double precision, parameter :: MeVtofm = 197.327d0 !197.3 fm= MeV^-1
       double precision, parameter :: MYPI = 3.141592653589794d0
+      double precision, parameter :: alpha_em = 1.d0/137.036d0
       
 c     Pauli matrices (as 2x2 complex arrays)
       double complex, parameter :: sigx(2,2) = reshape((/
@@ -49,12 +50,13 @@ c     Isospin projection matrices for I=3
 c     ================================================================
 c     ================================================================
       subroutine getCS(sqrtS, x, isospin, piCharge, CrossSec,
-     &                        mNucl)
+     &                        mNucl, coulomb)
 c     Calculate cross section from scattering matrix
 c     ================================================================
       implicit none
       double precision sqrtS, x, CrossSec,mNucl
       integer isospin, piCharge
+      logical coulomb
 
       double complex mat(-1:1,-1:1), matDag(-1:1,-1:1)
       double precision fudgeFactor, normFactor
@@ -63,7 +65,8 @@ c     ================================================================
 
       fudgeFactor = 2.0d0
 
-      call getMat(sqrtS, x, isospin, piCharge, mat, sqrtS,mNucl)
+      call getMat(sqrtS, x, isospin, piCharge, mat, sqrtS,mNucl,
+     &            coulomb)
 
 c     Divide out the 8*pi*sqrtSReal factor that getMat includes
       normFactor = 8.0d0 * MYPI * sqrtS
@@ -92,15 +95,17 @@ c     Calculate trace of mat * matDag
       end subroutine getCS
 
 c     ================================================================
-      subroutine getMat(sqrtS, x, isospin, piCharge, resultmat,sqrtSReal,mNucl)
+      subroutine getMat(sqrtS, x, isospin, piCharge, resultmat,
+     &                  sqrtSReal,mNucl,coulomb)
 c     Calculate scattering matrix
 c     ================================================================
       implicit none
       double precision sqrtS, x,sqrtSReal
       integer isospin, piCharge
+      logical coulomb
       double complex mat(2,2)
       double complex resultmat(-1:1,-1:1)
-      
+
       double complex g, h
       double precision m1, m2
       double precision S, qVec(3), qpVec(3)
@@ -110,12 +115,13 @@ c     ================================================================
       double precision piMassArr(-1:1), mNucl
 
       integer i, j, k
-      
+
       sigVec(1,:,:)=sigx
       sigVec(2,:,:)=sigy
       sigVec(3,:,:)=sigz
-      
-      call getGH(sqrtS, x, isospin, piCharge, g, h,sqrtSReal,mNucl) 
+
+      call getGH(sqrtS, x, isospin, piCharge, g, h,sqrtSReal,mNucl,
+     &           coulomb)
 c     Get pion and nucleon masses
       piMassArr(-1)=mpi
       piMassArr(0)=mpi0
@@ -156,17 +162,20 @@ c     Calculate final matrix: mat = iden * g + matFactor * h
       end subroutine getMat
 
 c     ================================================================
-      subroutine getcsGH(sqrtS, x, isospin, piCharge, DSG, mNucl,sqrtSReal)
+      subroutine getcsGH(sqrtS, x, isospin, piCharge, DSG, mNucl,
+     &                   sqrtSReal, coulomb)
 c     Calculate cross section using g,h amplitudes
 c     ================================================================
       implicit none
       double precision sqrtS, x, DSG, mNucl, sqrtSReal
       integer isospin, piCharge
+      logical coulomb
 
       double complex g, h
       double precision sintheta
 
-      call getGH(sqrtS, x, isospin, piCharge, g, h, sqrtSReal, mNucl)
+      call getGH(sqrtS, x, isospin, piCharge, g, h, sqrtSReal, mNucl,
+     &           coulomb)
       sintheta = dsqrt(1.0d0 - x*x)
       
       DSG = cdabs(g)**2 + cdabs(h * sintheta)**2
@@ -176,14 +185,18 @@ c     ================================================================
       end subroutine getcsGH
 
 c     ================================================================
-      subroutine getGH(sqrtS, x, isospin, piCharge, g, h,sqrtSReal,mNucl)
-c     Calculate g and h scattering amplitudes in fm
+      subroutine getGH(sqrtS, x, isospin, piCharge, g, h,sqrtSReal,
+     &                 mNucl,coulomb)
+c     Calculate g and h scattering amplitudes
+c     When coulomb=.true., each partial wave is multiplied by
+c     exp(2i*sigma_l) and the Rutherford amplitude f_C is added to g.
 c     ================================================================
       implicit none
       double precision sqrtS, x, sqrtSReal, mNucl
       integer isospin, piCharge
+      logical coulomb
       double complex g, h
-      
+
       integer twoIs(2), ells(5)
       integer twoI, ell, chargeIdx
       double precision m1, m2, S, qVec(3), qpVec(3)
@@ -193,10 +206,14 @@ c     ================================================================
       double complex projII(2,2)
       double precision isoVec(2)
       integer i, j
-      
-      data twoIs /1, 3/! `data` keyword sets these values at compile time
+
+c     Coulomb variables
+      double precision theta, sigmas(0:4)
+      double complex f_C, coul_factor
+
+      data twoIs /1, 3/
       data ells /0, 1, 2, 3, 4/
-      
+
 c     Set isospin vector
       if (isospin .eq. 1) then
          isoVec(1) = 1.0d0
@@ -205,7 +222,7 @@ c     Set isospin vector
          isoVec(1) = 0.0d0
          isoVec(2) = 1.0d0
       endif
-      
+
 c     Get masses
       if (piCharge .eq. -1) then
          m1 = mpiPlus
@@ -215,24 +232,26 @@ c     Get masses
          m1 = mpiPlus
       endif
 
-c     if (isospin .eq. -1) then
-c        m2 = Mneutron
-c     else if (isospin .eq. 1) then
-c        m2 = Mproton
-c     endif
       m2=mNucl
       call getKinematics(sqrtSReal, x, m1, m2, m1, m2, S, qVec, qpVec)
 
+c     Coulomb: phase shifts and Rutherford amplitude
+      theta = dacos(x)
+      if (coulomb) then
+         call get_coulomb(piCharge, isospin, sqrtSReal, theta,
+     &                    ells(5), sigmas, f_C)
+      endif
+
       gTerm = (0.0d0, 0.0d0)
       hTerm = (0.0d0, 0.0d0)
-      
+
 c     Loop over isospin values I=1/2, 3/2
       do i = 1, 2
          twoI = twoIs(i)
          gTermTmp = (0.0d0, 0.0d0)
          hTermTmp = (0.0d0, 0.0d0)
-         
-c        Get charge index (0→π⁺, 1→π⁻, 2→π⁰)
+
+c        Get charge index (0 for pi+, 1 for pi-, 2 for pi0)
          if (piCharge .eq. 1) then
             chargeIdx = 0
          else if (piCharge .eq. -1) then
@@ -240,39 +259,51 @@ c        Get charge index (0→π⁺, 1→π⁻, 2→π⁰)
          else if (piCharge .eq. 0) then
             chargeIdx = 2
          endif
-         
+
 c        Get isospin projection matrix
          call getIsospinProjection(twoI, chargeIdx, projII)
-         
-c        Calculate weight = isoVec · projII · isoVec
+
+c        Calculate weight = isoVec . projII . isoVec
          weight = 0.0d0
          do j = 1, 2
             weight = weight + isoVec(j) * dreal(projII(j,1)) * isoVec(1)
             weight = weight + isoVec(j) * dreal(projII(j,2)) * isoVec(2)
          enddo
-         
-c        Loop over partial waves ℓ = 0…4
+
+c        Loop over partial waves l = 0...4
          do j = 1, 5
             ell = ells(j)
-            
+
             call getF(qVec, twoI, ell, 1, sqrtS, fPlus)
             call getF(qVec, twoI, ell, -1, sqrtS, fMinus)
-            
+
+c           Coulomb: multiply each partial wave by exp(2i*sigma_l)
+            if (coulomb) then
+               coul_factor = cdexp(dcmplx(0.0d0, 2.0d0*sigmas(ell)))
+               fPlus = fPlus * coul_factor
+               fMinus = fMinus * coul_factor
+            endif
+
             call legendre_poly(x, ell, 0, poly0)
             call legendre_poly(x, ell, 1, poly1)
-            
-            gTermTmp = gTermTmp + ((ell + 1) * fPlus + ell * fMinus) 
+
+            gTermTmp = gTermTmp + ((ell + 1) * fPlus + ell * fMinus)
      &               * poly0
             hTermTmp = hTermTmp + (fPlus - fMinus) * poly1
          enddo
-         
+
          gTerm = gTerm + gTermTmp * weight
          hTerm = hTerm + hTermTmp * weight
       enddo
-      
+
+c     Add Rutherford amplitude to g (spin-nonflip only)
+      if (coulomb) then
+         gTerm = gTerm + f_C
+      endif
+
       g = gTerm
       h = hTerm
-      
+
       return
       end subroutine getGH
 
@@ -601,5 +632,119 @@ c       Calculate first derivative dP_n(x)/dx
       
       return
       end subroutine legendre_poly
+
+c     ================================================================
+      subroutine get_coulomb(piCharge, isospin, sqrtS, theta, lmax,
+     &                       sigmas, f_C)
+c     Compute Coulomb phase shifts and Rutherford amplitude.
+c     Mirrors Python get_coulomb() in PionScatLib.py.
+c     ================================================================
+      implicit none
+      integer piCharge, isospin, lmax
+      double precision sqrtS, theta
+      double precision sigmas(0:lmax)
+      double complex f_C
+
+      integer Z_pi, Z_N, l
+      double precision m1, m2, S, E1, E2, q, eta
+      double precision sin2, phase, sigma0
+
+c     Charges
+      Z_pi = piCharge
+      if (isospin .eq. 1) then
+         Z_N = 1
+      else
+         Z_N = 0
+      endif
+
+c     Masses
+      if (piCharge .eq. 0) then
+         m1 = mpi0
+      else
+         m1 = mpiPlus
+      endif
+      if (isospin .eq. 1) then
+         m2 = Mproton
+      else
+         m2 = Mneutron
+      endif
+
+      S = sqrtS * sqrtS
+      E1 = (S + m1*m1 - m2*m2) / (2.0d0 * sqrtS)
+      q = dsqrt(E1*E1 - m1*m1)
+
+c     No Coulomb for neutral particles
+      if (Z_pi .eq. 0 .or. Z_N .eq. 0) then
+         do l = 0, lmax
+            sigmas(l) = 0.0d0
+         end do
+         f_C = (0.0d0, 0.0d0)
+         return
+      endif
+
+      E2 = (S - m1*m1 + m2*m2) / (2.0d0 * sqrtS)
+      eta = dble(Z_pi * Z_N) * alpha_em * E1 * E2 / (q * sqrtS)
+
+c     Coulomb phase shifts: sigma_0 = Im[ln Gamma(1 + i*eta)]
+      sigma0 = dimag(clnGamma(dcmplx(1.0d0, eta)))
+      sigmas(0) = sigma0
+      do l = 1, lmax
+         sigmas(l) = sigmas(l-1) + datan2(eta, dble(l))
+      end do
+
+c     Rutherford amplitude
+      if (dabs(theta) .lt. 1.0d-10 .or.
+     &    dabs(theta - MYPI) .lt. 1.0d-10) then
+         f_C = (0.0d0, 0.0d0)
+      else
+         sin2 = dsin(theta / 2.0d0) ** 2
+         phase = -eta * dlog(sin2) + 2.0d0 * sigma0
+         f_C = dcmplx(-eta / (2.0d0 * q * sin2), 0.0d0)
+     &       * cdexp(dcmplx(0.0d0, phase))
+      endif
+
+      return
+      end subroutine get_coulomb
+
+c     ================================================================
+      function clnGamma(z)
+c     Complex log-gamma via Lanczos approximation (g=7, n=9).
+c     Valid for Re(z) > 0.5. Used to compute sigma_0 = Im[lnGamma(1+i*eta)].
+c     ================================================================
+      implicit none
+      double complex clnGamma, z
+      double complex w, t, ser
+      double precision g, c(9)
+      integer k
+
+c     Lanczos coefficients
+      c(1) = 0.99999999999980993d0
+      c(2) = 676.5203681218851d0
+      c(3) = -1259.1392167224028d0
+      c(4) = 771.32342877765313d0
+      c(5) = -176.61502916214059d0
+      c(6) = 12.507343278686905d0
+      c(7) = -0.13857109526572012d0
+      c(8) = 9.9843695780195716d-6
+      c(9) = 1.5056327351493116d-7
+      g = 7.0d0
+
+c     w = z - 1
+      w = z - (1.0d0, 0.0d0)
+      t = w + dcmplx(g + 0.5d0, 0.0d0)
+
+c     Lanczos series sum
+      ser = dcmplx(c(1), 0.0d0)
+      do k = 2, 9
+         ser = ser + dcmplx(c(k),0.0d0)/(w + dcmplx(dble(k-1),0.0d0))
+      end do
+
+c     ln(Gamma(z)) = 0.5*ln(2*pi) + (w+0.5)*ln(t) - t + ln(ser)
+      clnGamma = 0.5d0 * dlog(2.0d0 * MYPI)
+     &         + (w + (0.5d0, 0.0d0)) * cdlog(t)
+     &         - t + cdlog(ser)
+
+      return
+      end function clnGamma
 
       end module pionScatLib

@@ -192,12 +192,15 @@ c     0: do not delete; 1: delete un-gz'd file; 2: delete downloaded and un-gz'd
       character isospin2Str(-1:1)
       integer lab, cm
       integer piCharge
+      logical coulomb
       real*8 sqrtTerm, A,B, expr, pSqr
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     end OF VARIABLE DECLARATIONS, BEGINNING OF CODING
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+      coulomb = .True.
 
 c     Reading the input file from command line
 c**********************************************************************
@@ -359,7 +362,8 @@ c           sqrtS=omega+sqrt(mNucleon*mNucleon+pAbs*pAbs)
                 CALL get1Nqnnum(rindx,twom1N,twomt1N,twoMz,twom1Np,twomt1Np,twoMzp,L1N,ML1N)
                 if (L1N.eq.0) then !ML1N is automatically zero if L1N is
 c                 write(*,*) "About to call getMat with sqrtS=", sqrtS, ", x=", x, ", twomt1N=", twomt1N, ", piCharge=", piCharge
-                  call getMat(sqrtS, x, twomt1N, piCharge, Mmat,sqrtSReal,mNucl)
+                  call getMat(sqrtS, x, twomt1N, piCharge, Mmat,
+     &                        sqrtSReal,mNucl,coulomb)
                     outputMat(extQnum,twoMzp,twoMz)= outputMat(extQnum,twoMzp,twoMz)+
      &                            Anucl*rho1b(rindx)*Mmat(twom1Np,twom1N)
 
@@ -372,7 +376,6 @@ c           outputMat is unitless now
             call outputroutine(outUnitno,twoSnucl,extQnumlimit,
      &           outputMat,verbosity)
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     be a good boy and deallocate arrays. Compilers do that automatically for simple programs. Better safe than sorry.
             deallocate(outputMat)
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     hgrie Aug/Sep 2020: delete the local .dat file if one was generated from .gz

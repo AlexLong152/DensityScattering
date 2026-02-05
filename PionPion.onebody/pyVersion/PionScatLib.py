@@ -13,6 +13,7 @@ and p, p' is the nucleon momentum before and after
 """
 
 import numpy as np
+from scipy.special import loggamma
 from parseFile import getFileData
 from copy import copy
 
@@ -24,8 +25,64 @@ mNeutron = 939.56563
 mN = (mProton + mNeutron) / 2
 mpiDict = {-1: mpiPlus, 0: mpi, 1: mpiPlus}
 mNuc = {-1: mNeutron, 1: mProton}
+alpha_em = 1.0 / 137.036
 
 dataDict = getFileData()
+
+
+def get_coulomb(piCharge, isospin, sqrtS, theta, lmax):
+    """
+    Compute all Coulomb quantities: phase shifts and Rutherford amplitude.
+
+    Parameters
+    ----------
+    piCharge : int
+        Pion charge (-1, 0, +1)
+    isospin : int
+        Nucleon isospin (1=proton, -1=neutron)
+    sqrtS : float
+        CM energy (MeV)
+    theta : float
+        Scattering angle (radians)
+    lmax : int
+        Maximum orbital angular momentum
+
+    Returns
+    -------
+    sigmas : list of float
+        Coulomb phase shifts sigma_l for l = 0, ..., lmax
+    f_C : complex or float
+        Rutherford scattering amplitude
+    """
+    Z_pi = piCharge
+    Z_N = {1: 1, -1: 0}[isospin]  # proton=1, neutron=0
+    m1 = mpiDict[piCharge]
+    m2 = mNuc[isospin]
+    S = sqrtS**2
+    E1 = (S + m1**2 - m2**2) / (2 * sqrtS)
+    q = np.sqrt(E1**2 - m1**2)
+
+    if Z_pi == 0 or Z_N == 0:
+        return [0.0] * (lmax + 1), 0.0
+
+    E2 = (S - m1**2 + m2**2) / (2 * sqrtS)
+    eta = Z_pi * Z_N * alpha_em * E1 * E2 / (q * sqrtS)
+
+    # Coulomb phase shifts: sigma_l = arg Gamma(l+1+i*eta)
+    sigma_0 = np.imag(loggamma(1 + 1j * eta))
+    sigmas = [sigma_0]
+    for l in range(1, lmax + 1):
+        sigmas.append(sigmas[-1] + np.arctan2(eta, l))
+
+    # Rutherford amplitude
+    if abs(theta) < 1e-10 or abs(theta - np.pi) < 1e-10:
+        f_C = 0.0
+    else:
+        sin2 = np.sin(theta / 2) ** 2
+        phase = -eta * np.log(sin2) + 2 * sigma_0
+        f_C = -eta / (2 * q * sin2) * np.exp(1j * phase)
+
+    return sigmas, f_C
 
 
 def main():
@@ -43,24 +100,21 @@ def main():
             print(f"{theta:7.2f} |{CS:9.6f}  |{CS:9.6f}")
 
 
-def getCS(sqrtS, x, isospin=1, piCharge=0):
+def getCS(sqrtS, x, isospin=1, piCharge=0, coulomb=True):
     """
-    Returns cross section in milibarns
+    Returns differential cross section dsigma/dOmega in millibarns.
+
+    When coulomb=True, g already includes the Rutherford amplitude,
+    so dsig/dOmega = |g|^2 + |h|^2 in both cases.
     """
-    g, h = getGH(sqrtS, x, isospin, piCharge)
+    g, h = getGH(sqrtS, x, isospin, piCharge, coulomb=coulomb)
     sintheta = np.sqrt(1 - x**2)
-    # theta = np.arccos(x)
-    # print("x=", x)
-    # print("theta=", theta, "=", theta * 180 / np.pi)
-    # print("sqrt(1-x**2)=", np.sqrt(1 - x**2))
-    # print("np.sin(theta)=", np.sin(theta))
-    # assert abs(np.sin(theta) - sintheta) < 1e-10
     DSG = abs(g) ** 2 + abs(h * sintheta) ** 2
     DSG = DSG * 10 * MeVtofm**2
     return DSG
 
 
-def getMmat(sqrtS, x, isospin=1, piCharge=0):
+def getMmat(sqrtS, x, isospin=1, piCharge=0, coulomb=True):
     m1 = 139.5675
     if piCharge == 0:
         m1 = 134.97
@@ -75,22 +129,26 @@ def getMmat(sqrtS, x, isospin=1, piCharge=0):
     cross = -1j * np.cross(qpHat, qHat)
     matFactorH = matDotVec(sigVec, cross)
 
-    g, h = getGH(sqrtS, x, isospin, piCharge)  # MeV^-1 units
+    g, h = getGH(sqrtS, x, isospin, piCharge, coulomb=coulomb)  # MeV^-1 units
     result = iden * g + h * matFactorH
     result = result * 8 * np.pi * sqrtS  # unitless
     return result / np.sqrt(2)
 
 
-def getGH(sqrtS, x, isospin=1, piCharge=0):
+def getGH(sqrtS, x, isospin=1, piCharge=0, coulomb=True):
     """
-    Build the 2×2 “bare” partial‐wave amplitude F_code(s,θ) in fm, directly
-    using Höhler’s eq. (A 8.23):
+    Build the 2×2 "bare" partial‐wave amplitude F_code(s,θ) in fm, directly
+    using Höhler's eq. (A 8.23):
 
       F_code(s,θ) = Σ_{I=1,3} [  ( (ℓ+1) f_{ℓ+}^{(I)} + ℓ f_{ℓ−}^{(I)} )·P_ℓ(cosθ)·𝐈
                               − i (f_{ℓ+}^{(I)} − f_{ℓ−}^{(I)})·P_ℓ'(cosθ)·(σ·n̂)  ] × ℘_I
 
     where ℘_I is the 2×2 isospin‐projection factor for total isospin I, and
     n̂ = (q̂′×q̂)/|q̂′×q̂| is the unit vector normal to the scattering plane.
+
+    When coulomb=True, each partial wave is multiplied by e^{2iσ_ℓ} and
+    the Rutherford amplitude f_C is added to g, so that
+    dsig/dOmega = |g|^2 + |h|^2 directly gives the Coulomb+nuclear result.
 
     Parameters
     ----------
@@ -102,6 +160,8 @@ def getGH(sqrtS, x, isospin=1, piCharge=0):
       Nucleon isospin (1=proton, −1=neutron)
     piCharge: int
       Pion charge (−1, 0, +1)
+    coulomb : bool
+      Include Coulomb corrections (default True)
 
     Returns
     -------
@@ -121,6 +181,12 @@ def getGH(sqrtS, x, isospin=1, piCharge=0):
 
     # 2) build unit‐vectors q̂ and q̂′ for the spin‐flip term:
     _, qVec, _ = getKinematics(sqrtS, x, m1, m2, m1, m2)
+
+    # Coulomb: phase shifts and Rutherford amplitude
+    theta = np.arccos(x)
+    if coulomb:
+        sigmas, f_C = get_coulomb(piCharge, isospin, sqrtS, theta, max(ells))
+
     # 4) assemble the sum over I=1,3 and ℓ=0…4 (per A 8.23)
     gTerm = 0
     hTerm = 0
@@ -133,12 +199,17 @@ def getGH(sqrtS, x, isospin=1, piCharge=0):
         projII = projI[twoI][chargeIdx]  # 2×2 isospin matrix
 
         weight = float(np.dot(isoVec, np.dot(projII, isoVec)))
-        # print("For twoI, isospin, piCharge=", twoI, isospin, piCharge, "weight=",weight)
 
         # 4c) loop partial waves ℓ = 0…7
         for ell in ells:
             fPlus = getF(qVec, twoI, ell, 1, sqrtS)  # f_{ℓ+}^{(I)} in fm
             fMinus = getF(qVec, twoI, ell, -1, sqrtS)  # f_{ℓ−}^{(I)} in fm
+
+            # Coulomb: multiply each partial wave by e^{2iσ_ℓ}
+            if coulomb:
+                coul_factor = np.exp(2j * sigmas[ell])
+                fPlus = fPlus * coul_factor
+                fMinus = fMinus * coul_factor
 
             # 4d) Legendre P_ℓ(cosθ) and its derivative P_ℓ'(cosθ):
             P_l = legP(x, ell, deriv=0)
@@ -153,6 +224,10 @@ def getGH(sqrtS, x, isospin=1, piCharge=0):
 
         gTerm += gTermTmp * weight
         hTerm += hTermTmp * weight
+
+    # Add Rutherford amplitude to g (spin-nonflip only)
+    if coulomb:
+        gTerm += f_C
 
     return gTerm, hTerm
 

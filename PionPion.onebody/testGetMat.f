@@ -5,15 +5,17 @@ c     ================================================================
       use pionScatLib
       implicit none
       double precision sqrtS, sqrtSReal, x, theta, mNucl
-      integer isospin, piCharge
+      integer isospin, piCharge, coulombInt
+      logical coulomb
       double complex resultmat(-1:1,-1:1)
 
 c     Initialize the SAID data file
       call initializeFileData('said-pi.txt', 0)
 
-c     Read input parameters from command line arguments would be complex
-c     in Fortran, so we'll read from stdin
-      read(*,*) sqrtS, theta, isospin, piCharge
+c     Read input parameters from stdin
+c     coulombInt: 1=Coulomb on, 0=Coulomb off
+      read(*,*) sqrtS, theta, isospin, piCharge, coulombInt
+      coulomb = (coulombInt .eq. 1)
 
 c     Convert theta to cos(theta)
       x = cos(theta * 3.14159265358979323846d0 / 180.0d0)
@@ -30,7 +32,7 @@ c     Set nucleon mass based on isospin
 
 c     Call getMat (returns matrix with 8*pi*sqrtSReal factor included)
       call getMat(sqrtS, x, isospin, piCharge, resultmat, sqrtSReal,
-     &            mNucl)
+     &            mNucl, coulomb)
 
 c     Output results in a format easy to parse from Python
 c     Format: real(mat[-1,-1]) imag(mat[-1,-1]) real(mat[-1,1]) ...

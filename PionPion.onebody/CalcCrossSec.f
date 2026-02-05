@@ -30,8 +30,9 @@ c     For pion-nucleon scattering, sqrtSReal = sqrtS
       do theta = 0, 180, 30
          x = dcos(theta * 3.141592653589793d0 / 180.0d0)
          call getcsGH(sqrtS, x, isospin, piCharge, DSG, mNucl,
-     &                sqrtSReal)
-         call getCS(sqrtS, x, isospin, piCharge, MatDSG, mNucl)
+     &                sqrtSReal, .True.)
+         call getCS(sqrtS, x, isospin, piCharge, MatDSG, mNucl,
+     &              .True.)
          ratio = DSG / MatDSG
          write(*,'(F7.2,2F11.6,F11.6)') dble(theta), DSG, MatDSG, ratio
       enddo

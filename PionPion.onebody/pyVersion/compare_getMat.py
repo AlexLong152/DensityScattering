@@ -41,7 +41,7 @@ def ensure_fortran_executables():
     )
 
 
-def call_fortran_getMat(sqrtS, theta_deg, isospin, piCharge, sqrtSReal=None):
+def call_fortran_getMat(sqrtS, theta_deg, isospin, piCharge, sqrtSReal=None, coulomb=True):
     """
     Call the Fortran testGetMat executable to get the matrix result.
 
@@ -57,6 +57,8 @@ def call_fortran_getMat(sqrtS, theta_deg, isospin, piCharge, sqrtSReal=None):
         Pion charge (-1, 0, +1)
     sqrtSReal : float, optional
         Real sqrt(S) value (defaults to sqrtS if not provided)
+    coulomb : bool
+        Include Coulomb corrections (default True)
 
     Returns
     -------
@@ -69,8 +71,9 @@ def call_fortran_getMat(sqrtS, theta_deg, isospin, piCharge, sqrtSReal=None):
     # Path to the Fortran executable
     fortran_exe = os.path.join(os.path.dirname(__file__), "..", "testGetMat")
 
-    # Prepare input string
-    input_str = f"{sqrtS} {theta_deg} {isospin} {piCharge}\n"
+    # Prepare input string (coulomb: 1=on, 0=off)
+    coulomb_int = 1 if coulomb else 0
+    input_str = f"{sqrtS} {theta_deg} {isospin} {piCharge} {coulomb_int}\n"
 
     # Call the Fortran program
     try:
@@ -113,7 +116,7 @@ def call_fortran_getMat(sqrtS, theta_deg, isospin, piCharge, sqrtSReal=None):
     return mat
 
 
-def call_fortran_getCS(sqrtS, theta_deg, isospin, piCharge):
+def call_fortran_getCS(sqrtS, theta_deg, isospin, piCharge, coulomb=True):
     """
     Call the Fortran testGetCS executable to get the cross section.
 
@@ -127,6 +130,8 @@ def call_fortran_getCS(sqrtS, theta_deg, isospin, piCharge):
         Nucleon isospin (1=proton, -1=neutron)
     piCharge : int
         Pion charge (-1, 0, +1)
+    coulomb : bool
+        Include Coulomb corrections (default True)
 
     Returns
     -------
@@ -136,8 +141,9 @@ def call_fortran_getCS(sqrtS, theta_deg, isospin, piCharge):
     # Path to the Fortran executable
     fortran_exe = os.path.join(os.path.dirname(__file__), "..", "testGetCS")
 
-    # Prepare input string
-    input_str = f"{sqrtS} {theta_deg} {isospin} {piCharge}\n"
+    # Prepare input string (coulomb: 1=on, 0=off)
+    coulomb_int = 1 if coulomb else 0
+    input_str = f"{sqrtS} {theta_deg} {isospin} {piCharge} {coulomb_int}\n"
 
     # Call the Fortran program
     try:
@@ -325,7 +331,7 @@ def compare_matrices(mat1, mat2, sqrtS, label1="Mat1", label2="Mat2", tol=1e-3):
         return False
 
 
-def test_matrix_single_case(sqrtS, theta_deg, isospin, piCharge):
+def test_matrix_single_case(sqrtS, theta_deg, isospin, piCharge, coulomb=True):
     """
     Test matrix elements for a single case.
 
@@ -339,6 +345,8 @@ def test_matrix_single_case(sqrtS, theta_deg, isospin, piCharge):
         Nucleon isospin (1=proton, -1=neutron)
     piCharge : int
         Pion charge (-1, 0, +1)
+    coulomb : bool
+        Include Coulomb corrections (default True)
 
     Returns
     -------
@@ -354,8 +362,8 @@ def test_matrix_single_case(sqrtS, theta_deg, isospin, piCharge):
     )
     print("=" * 70)
 
-    py_mat = getMmat(sqrtS, x, isospin, piCharge)
-    fort_mat = call_fortran_getMat(sqrtS, theta_deg, isospin, piCharge, sqrtS)
+    py_mat = getMmat(sqrtS, x, isospin, piCharge, coulomb=coulomb)
+    fort_mat = call_fortran_getMat(sqrtS, theta_deg, isospin, piCharge, sqrtS, coulomb=coulomb)
     mat_match = compare_matrices(
         py_mat, fort_mat, sqrtS, label1="Python getMmat", label2="Fortran getMat"
     )
@@ -363,7 +371,7 @@ def test_matrix_single_case(sqrtS, theta_deg, isospin, piCharge):
     return py_mat, fort_mat, mat_match
 
 
-def test_cs_single_case(sqrtS, theta_deg, isospin, piCharge):
+def test_cs_single_case(sqrtS, theta_deg, isospin, piCharge, coulomb=True):
     """
     Test cross sections for a single case.
 
@@ -377,6 +385,8 @@ def test_cs_single_case(sqrtS, theta_deg, isospin, piCharge):
         Nucleon isospin (1=proton, -1=neutron)
     piCharge : int
         Pion charge (-1, 0, +1)
+    coulomb : bool
+        Include Coulomb corrections (default True)
 
     Returns
     -------
@@ -392,8 +402,8 @@ def test_cs_single_case(sqrtS, theta_deg, isospin, piCharge):
     )
     print("=" * 70)
 
-    py_cs = getCS_pl(sqrtS, x, isospin, piCharge)
-    fort_cs = call_fortran_getCS(sqrtS, theta_deg, isospin, piCharge)
+    py_cs = getCS_pl(sqrtS, x, isospin, piCharge, coulomb=coulomb)
+    fort_cs = call_fortran_getCS(sqrtS, theta_deg, isospin, piCharge, coulomb=coulomb)
     cs_match = compare_cross_sections(
         py_cs, fort_cs, label1="Python getCS", label2="Fortran getCS", tol=0.01
     )
@@ -446,6 +456,73 @@ def main():
         cs_results.append(cs_match)
         print("\n")
 
+    # Phase 3: Test Python vs Fortran with Coulomb OFF
+    print("\n" + "=" * 70)
+    print("PHASE 3: COULOMB=OFF CROSS SECTION COMPARISONS (Python vs Fortran)")
+    print("=" * 70 + "\n")
+
+    cs_off_results = []
+    for sqrtS, theta, iso, charge in test_cases:
+        cs_match = test_cs_single_case(sqrtS, theta, iso, charge, coulomb=False)
+        cs_off_results.append(cs_match)
+        print("\n")
+
+    # Phase 4: Coulomb ON vs OFF for charged channels (should differ)
+    print("\n" + "=" * 70)
+    print("PHASE 4: COULOMB ON vs OFF (charged pion + proton should differ)")
+    print("=" * 70 + "\n")
+
+    charged_cases = [
+        (1162, 30, 1, 1),   # pi+ proton
+        (1162, 90, 1, -1),  # pi- proton
+        (1200, 60, 1, 1),   # pi+ proton
+    ]
+    coul_diff_results = []
+    for sqrtS, theta, iso, charge in charged_cases:
+        x = np.cos(theta * np.pi / 180)
+        cs_on = getCS_pl(sqrtS, x, iso, charge, coulomb=True)
+        cs_off = getCS_pl(sqrtS, x, iso, charge, coulomb=False)
+        diff = abs(cs_on - cs_off)
+        print(f"sqrtS={sqrtS}, theta={theta}, iso={iso}, piQ={charge:+d}:")
+        print(f"  Coulomb ON:  {cs_on:.10e} mb")
+        print(f"  Coulomb OFF: {cs_off:.10e} mb")
+        print(f"  Difference:  {diff:.10e} mb")
+        if diff > 1e-6:
+            print("  ✓ Results differ (as expected for charged channel)")
+            coul_diff_results.append(True)
+        else:
+            print("  ✗ Results are identical (unexpected for charged channel)")
+            coul_diff_results.append(False)
+        print()
+
+    # Phase 5: Coulomb ON vs OFF for neutral channels (should be identical)
+    print("\n" + "=" * 70)
+    print("PHASE 5: COULOMB ON vs OFF (neutral channels should be identical)")
+    print("=" * 70 + "\n")
+
+    neutral_cases = [
+        (1298, 45, 1, 0),     # pi0 proton
+        (1200, 60, -1, 1),    # pi+ neutron (Z_N=0)
+        (1200, 175, -1, -1),  # pi- neutron (Z_N=0)
+    ]
+    neutral_results = []
+    for sqrtS, theta, iso, charge in neutral_cases:
+        x = np.cos(theta * np.pi / 180)
+        cs_on = getCS_pl(sqrtS, x, iso, charge, coulomb=True)
+        cs_off = getCS_pl(sqrtS, x, iso, charge, coulomb=False)
+        diff = abs(cs_on - cs_off)
+        print(f"sqrtS={sqrtS}, theta={theta}, iso={iso}, piQ={charge:+d}:")
+        print(f"  Coulomb ON:  {cs_on:.10e} mb")
+        print(f"  Coulomb OFF: {cs_off:.10e} mb")
+        print(f"  Difference:  {diff:.10e} mb")
+        if diff < 1e-12:
+            print("  ✓ Results are identical (as expected for neutral channel)")
+            neutral_results.append(True)
+        else:
+            print("  ✗ Results differ (unexpected for neutral channel)")
+            neutral_results.append(False)
+        print()
+
     # Summary
     print("=" * 70)
     print("SUMMARY")
@@ -453,16 +530,29 @@ def main():
 
     n_mat_pass = sum(1 for r in mat_results if r)
     n_cs_pass = sum(1 for r in cs_results if r)
+    n_cs_off_pass = sum(1 for r in cs_off_results if r)
+    n_coul_diff_pass = sum(1 for r in coul_diff_results if r)
+    n_neutral_pass = sum(1 for r in neutral_results if r)
     n_total = len(test_cases)
 
-    print(f"Matrix element tests passed: {n_mat_pass}/{n_total}")
-    print(f"Cross section tests passed:  {n_cs_pass}/{n_total}")
+    print(f"Phase 1 - Matrix (Coulomb ON, Py vs Fort):    {n_mat_pass}/{n_total}")
+    print(f"Phase 2 - CS (Coulomb ON, Py vs Fort):        {n_cs_pass}/{n_total}")
+    print(f"Phase 3 - CS (Coulomb OFF, Py vs Fort):       {n_cs_off_pass}/{n_total}")
+    print(f"Phase 4 - Charged: ON != OFF:                 {n_coul_diff_pass}/{len(charged_cases)}")
+    print(f"Phase 5 - Neutral: ON == OFF:                 {n_neutral_pass}/{len(neutral_cases)}")
 
-    if n_mat_pass == n_total and n_cs_pass == n_total:
+    all_pass = (
+        n_mat_pass == n_total
+        and n_cs_pass == n_total
+        and n_cs_off_pass == n_total
+        and n_coul_diff_pass == len(charged_cases)
+        and n_neutral_pass == len(neutral_cases)
+    )
+
+    if all_pass:
         print("\n✓ All tests PASSED!")
     else:
-        n_failed = (n_total - n_mat_pass) + (n_total - n_cs_pass)
-        print(f"\n✗ {n_failed} test(s) FAILED")
+        print("\n✗ Some test(s) FAILED")
 
     modPath = r"../pionscatlib.mod"
     if os.path.exists(modPath):

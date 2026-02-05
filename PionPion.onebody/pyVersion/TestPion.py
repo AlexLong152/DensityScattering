@@ -11,6 +11,8 @@ from matplotlib import rcParams
 
 rcParams["text.usetex"] = True
 rcParams["font.family"] = "serif"
+showPlot = True
+coulomb = True
 
 
 def main():
@@ -40,7 +42,7 @@ def main():
             data = getData(piCharge, sqrtS)
             for idx, theta in enumerate(thetas):
                 x = np.cos(theta * np.pi / 180)
-                CS = pl.getCS(sqrtS, x, isospin, piCharge)
+                CS = pl.getCS(sqrtS, x, isospin, piCharge, coulomb=coulomb)
                 ys.append(CS)
 
                 assert data[idx][0] == theta
@@ -70,7 +72,11 @@ def main():
 
     # tidy up layout and show once
     fig.tight_layout()
-    plt.show()
+    if showPlot:
+        plt.show()
+    else:
+        plt.close(fig)
+
     sqrtS = 1162
     theta = 30
     isospin = 1
