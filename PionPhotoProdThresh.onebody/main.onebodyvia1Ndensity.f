@@ -507,20 +507,26 @@ c               Result(ieps,:,:) = Result(ieps,:,:) / SpinVec(ieps,:,:)
                 ! Result(ieps,:,:)=0.d0
             end where
             end do!ieps
-
+            
 
             if (twoSnucl.eq.1) then
               write(*,*) real(Result(1,1,-1)),aimag(Result(2,-1,1))
               aveE0=(real(Result(1,1,-1))+aimag(Result(2,-1,1)))/2.d0
               aveL0=real(Result(3,1,1))
             else if (twoSnucl.eq.2) then
+
+              Result(1,:,:)=Result(1,:,:)/sqrt(2.d0)
+              Result(2,:,:)=Result(2,:,:)/sqrt(2.d0)
+              Result(3,:,:)=Result(2,:,:)/2.d0
+
               aveE0=(real(Result(1,2,0))+aimag(Result(2,0,2)))/2.d0
               aveL0=real(Result(3,2,2))
+
             else if  (twoSnucl.eq.0) then
               aveE0=real(Result(1,0,0))-aimag(Result(2,0,0))
               aveL0=real(Result(3,0,0))
             end if
-
+            
             write(*,'(A)') "############################################"
             write(*,'(A)') "Result is in units of 10^-3/M_pi^+"
             write(*,'(A,F10.6,A)') "E_0+^1N=",aveE0, " (averaged)"
@@ -542,7 +548,7 @@ c               Result(ieps,:,:) = Result(ieps,:,:) / SpinVec(ieps,:,:)
             write(*,'(A)') "E_{0+} in extQnum=1,2"
             write(*,'(A)') "L_{0+} in extQnum=3"
             call outputKernel(outUnitno,twoSnucl,extQnumlimit,
-     &           Result ,verbosity,"ScatMat")
+     &           Result ,verbosity,"EL_0+^1N")
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     be a good boy and deallocate arrays. Compilers do that automatically for simple programs. Better safe than sorry.
