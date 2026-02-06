@@ -30,7 +30,7 @@ c       Add trace of this polarization's contribution
 
 
       subroutine getRawM(sqrtS, x, nucs, Mout, mNucl,sqrtSReal,
-     &                   MaxEll,epsVec)
+     &                   MaxEll,epsVec,threshold)
 c     Get the raw matrix element.
 c
 c     Parameters
@@ -65,10 +65,11 @@ c     Input parameters
       double precision sqrtS, x, mNucl,sqrtSReal
       character*3 nucs
       integer MaxEll
-      
+      logical threshold
+
 c     Output parameter
       complex*16, intent(out) :: Mout(-1:1,-1:1)
-      
+
 c     Local variables
 
       double complex Mmat(2,2)
@@ -86,27 +87,17 @@ c     double complex eps(3)
 
       double complex polContribution(2,2)
       double complex fResult(2,2)
-      double complex scaled(2,2)
+c     double complex scaled(2,2)
+      double complex E0pSum
+      double precision ampThresh
+      double precision E_prot, E_neut, L_prot, L_neut
+
       integer  j, k
       double precision sqrtTwo
       
 c     Get kinematics
       
 
-c     Define polarization vectors (normalized by sqrt(2))
-c     sqrtTwo = sqrt(2.0d0)
-c     There are two epsilon vectors, left and right circularly polarized
-c     eps=(-1,-i,0), eps=(1,-i,0)
-
-c     epsVecs(1,1) = dcmplx(-1.0d0, 0.0d0) / sqrtTwo
-c     epsVecs(1,2) = dcmplx(0.0d0, -1.0d0) / sqrtTwo
-c     epsVecs(1,3) = dcmplx(0.0d0, 0.0d0) / sqrtTwo
-c     
-c     epsVecs(2,1) = dcmplx(1.0d0, 0.0d0) / sqrtTwo
-c     epsVecs(2,2) = dcmplx(0.0d0, -1.0d0) / sqrtTwo
-c     epsVecs(2,3) = dcmplx(0.0d0, 0.0d0) / sqrtTwo
-c     write(*,*) "poles.f:134 epsVec=", epsVec 
-c     Define target types
       targets(1) = 'p12'
       targets(2) = 'n12'
       targets(3) = '32q'
@@ -139,13 +130,6 @@ c     Kinematics defined in terms of sqrtSReal, but the poles defined in
 c     Terms of the nucleON - photon system
 
       call getKinematics(sqrtSReal, x, nucs, S, kVec, qVec, mNucl)
-      ! write(*,*) "In poles.f"
-      ! write(*,*) "sqrtS=", sqrtS 
-      ! write(*,*) "x=", x 
-      ! write(*,*) "nucs=", nucs 
-      ! write(*,*) "kVec=", kVec 
-      ! write(*,*) "qVec=", qVec 
-
 
 c     use sqrtS here bc thats what is built into the single nucleon multipoles
 c     the single nucleon multipoles don't "know" about the true nucleus mass
@@ -153,50 +137,71 @@ c     UNITS: prefactor has units [MeV], which converts fResult [MeV^-1] to dimen
       prefactor = 8.0d0 * Pi * sqrtS
 c     Initialize Mmat
       Mmat = dcmplx(0.0d0, 0.0d0)
-      
-c     Loop over polarizations
-c     do i = 1, 2
-c         Initialize this polarization's contribution
+
+c     Initialize this polarization's contribution
       polContribution = dcmplx(0.0d0, 0.0d0)
       
-c     Loop over targets
-      do j = 1, 3
-c             Calculate F for this target/polarization
-          targ=targets(j)
-c         eps=epsVecs(i,:)
-          call f(x, sqrtS, qVec, kVec, epsVec, targ, fResult, MaxEll)
-c             write(*,*) "poles.f:156 fResult=", fResult 
-c             write(*,*) "in getRawM"
-c             write(*,*) "x,sqrtS=",x, sqrtS 
-c             write(*,*) "targ=", targ 
-c             write(*,*) "qVec=", qVec 
-c             write(*,*) "kVec=", kVec 
-c             write(*, '(A,3("(", F8.6, ",", F8.6, ")"))')
-c    &        "epsVecs", epsVecs(i,:)
-c             write(*,*) "target=", targets(j)
-c             do ii = 1, 2
-c             do jj = 1, 2
-c               write(*,'(A,I1,A,I1,A,F15.10,sp,F15.10,"j")')
-c    &          "Mat(",ii,",",jj,")=",  
-c    &          real(fResult(ii,jj)), aimag(fResult(ii,jj))
-c             end do
-c             end do
-c             write(*,*) "End getRawM prints"
-c             stop
+c     At threshold, use hardcoded ChPT amplitudes (Lenkewitz Eqs. 5.23, 5.26)
+c     instead of SAID. Above threshold, use SAID as usual.
+      if (threshold) then
+        if (.not.(Maxell.eq.0)) then!This only works for S-wave scattering
+           write(*,*) "Assertion failed: (maxEll.eq.0) evaluated False stopping"
+           stop
+        end if
+c       Hardcoded values in MeV^{-1} (Lenkewitz Eqs. 5.23, 5.26)
+c       Original: value × 10^{-3}/M_{pi+}, converted to MeV^{-1}
+        E_prot = -1.16d-3 / mpi
+        E_neut = 2.13d-3 / mpi
+        L_prot = -1.35d-3 / mpi
+        L_neut = -2.41d-3 / mpi
+c       Select amplitude based on channel and polarization direction
+c       Photon travels along z: eps with z-component = longitudinal (L_{0+})
+c       eps perpendicular to z = transverse (E_{0+})
+        if (nucs .eq. 'pp0') then
 
-          
-c             Scale by coefficient
-          do k = 1, 2
-              scaled(k,:) = fResult(k,:) * coefs(j)
-          enddo
-          
-c             Add to this polarization's contribution
-          polContribution = polContribution + scaled
-      enddo
-      
-c         Apply prefactor to this polarization's contribution
-c         Add to total matrix
-      Mmat = Mmat + polContribution * prefactor
+          if (abs(epsVec(3)) .eq. 1.d0) then
+            ampThresh = L_prot
+          else
+            ampThresh = E_prot
+          end if
+
+        else if (nucs .eq. 'nn0') then
+
+          if (epsVec(3) .eq. 1.d0) then
+            ampThresh = L_neut
+          else
+            ampThresh = E_neut
+          end if
+
+        else
+          write(*,*) "Error: nucs value not supported for threshold amplitudes: ", nucs
+          stop
+          ampThresh = 0.0d0
+        end if
+c       CGLN at threshold: F = i*(eps.sigma)*A_{0+}
+c       Scattering matrix: M = 8*pi*sqrtS * F
+c       ampThresh is in MeV^{-1}, prefactor in MeV, so Mmat is dimensionless
+
+        call complexVecDotSigma(epsVec, fResult)
+        Mmat = fResult * ci * ampThresh * prefactor
+      else
+        if (epsVec(3).ne.0.d0) then
+          write(*,*) "z component of polarization vector component detected above threshold. Check epsVec input."
+          write(*,*) "CGLN amplitudes must be extended to F1-F6 with L_+- for longitudinal component, and SAID multipoles only include E_0+, M_1-, etc. for transverse components. Stopping to avoid incorrect results."
+          stop
+        end if
+c       Above threshold: use SAID multipoles via isospin decomposition
+        polContribution = dcmplx(0.0d0, 0.0d0)
+        do j = 1, 3
+
+          targ = targets(j)
+          call f(x, sqrtS, qVec, kVec, epsVec, targ, fResult, MaxEll,
+     &           threshold)
+          polContribution = polContribution + fResult*coefs(j)
+
+        enddo
+        Mmat = Mmat + polContribution * prefactor
+      end if
 c     enddo
       
 c     Cast the "regular" matricies generated from f to the spin indicies 
@@ -210,7 +215,8 @@ c     we assigned in main
 
 
 c     ==================================================
-      subroutine f(x, sqrtS, qVec, kVec, epsVec, target, result, MaxEll)
+      subroutine f(x, sqrtS, qVec, kVec, epsVec, target, result, MaxEll,
+     &             threshold)
 c     Calculate F term for given inputs
 c     Valid targets are: "p12", "n12", "32q"
 c
@@ -244,6 +250,7 @@ c     Input parameters
       double complex epsVec(3), qVecComplex(3)
       character*10 target
       integer MaxEll
+      logical threshold
       double complex result(2, 2)
       
 c     Local variables
@@ -257,7 +264,7 @@ c     Local variables
       double complex matRes2(2, 2)
       double complex epsDotP
       double precision qAbs, kAbs
-      double complex imag
+c     double complex imag
 
 c     External functions
       double precision vecAbs
@@ -282,14 +289,15 @@ c     Calculate absolute values of vectors
       f2=cmplx(0.d0,KIND=8)
       f3=cmplx(0.d0,KIND=8)
       f4=cmplx(0.d0,KIND=8)
-      call getF(x, sqrtS, 1, target, f1, MaxEll)
-      call getF(x, sqrtS, 2, target, f2, MaxEll)
-      call getF(x, sqrtS, 3, target, f3, MaxEll)
-      call getF(x, sqrtS, 4, target, f4, MaxEll)
+      call getF(x, sqrtS, 1, target, f1, MaxEll, threshold)
+      call getF(x, sqrtS, 2, target, f2, MaxEll, threshold)
+      call getF(x, sqrtS, 3, target, f3, MaxEll, threshold)
+      call getF(x, sqrtS, 4, target, f4, MaxEll, threshold)
 c     f1=cmplx(real(f1),0.d0)
 c     f2=cmplx(real(f2),0.d0)
 c     f3=cmplx(real(f3),0.d0)
 c     f4=cmplx(real(f4),0.d0)
+
 
 
 c     Calculate cross product of kVec and epsVec
@@ -331,33 +339,11 @@ c       Poles already converted to MeV^-1 by UNITS_FACTOR in said_subs.f
 c       Poles already converted to MeV^-1 by UNITS_FACTOR in said_subs.f
       end if      
       
-      
-c     write(*,*) "In fortran f subroutine"
-c     write(*,*) "target=", target 
-c     write(*,*) "x=", x 
-c     write(*,*) "sqrtS=", sqrtS 
-c     write(*, '(A,3(F10.4))') "qVec=",qVec
-c     write(*, '(A,3(F10.4))') "kVec=",kVec
-c     write(*, '(A,3("(", F8.6, ",", F8.6, ")"))')
-c    &        "epsVecs", epsVec
-c     f1-f4 match python
-c     write(*,*) "f1=", f1 
-c     write(*,*) "f2=", f2 
-c     write(*,*) "f3=", f3 
-c     write(*,*) "f4=", f4 
-c     write(*,*) "f1Term=", f1Term 
-c     write(*,*) "f2Term=", f2Term 
-c     write(*,*) "f3Term=", f3Term 
-c     write(*,*) "f4Term=", f4Term 
-c
-c     write(*,*) "end fortran f subroutine writes"
-c     stop
-
       return
       end
 
 c     ==================================================
-      subroutine getF(x, sqrtS, fi, target, result, MaxEll)
+      subroutine getF(x, sqrtS, fi, target, result, MaxEll, threshold)
 c     Calculate F value for given index by summing over partial waves
 c
 c     Parameters (with units)
@@ -379,6 +365,7 @@ c     Input parameters
       double precision x, sqrtS
       integer fi, MaxEll
       character*10 target
+      logical threshold
       double complex result
       
 c     Local variables
@@ -396,17 +383,15 @@ c     Initialize result
 
 c     Calculate sum over ell
       do ell = 0, MaxEll
-        call getPoles(target, ell, sqrtS, 
+        call getPoles(target, ell, sqrtS,
      &               ePlus, mPlus, eMinus, mMinus)
-        
-c       ePlus = ePlus      
-c       mPlus = mPlus
-c       eMinus = eMinus
-c       mMinus = mMinus
-c       eplus = dcmplx(real(eplus), 0.d0)
-c       mplus = dcmplx(real(mplus), 0.d0)
-c       eminus = dcmplx(real(eminus), 0.d0)
-c       mminus = dcmplx(real(mminus), 0.d0)
+
+        if (threshold) then
+          ePlus  = dcmplx(real(ePlus),  0.d0)
+          mPlus  = dcmplx(real(mPlus),  0.d0)
+          eMinus = dcmplx(real(eMinus), 0.d0)
+          mMinus = dcmplx(real(mMinus), 0.d0)
+        end if
         if (fi .eq. 1) then
 c         Case 1: (ell * mPlus + ePlus) * legP(x, ell + 1, deriv=1) +
 c                 ((ell + 1) * mMinus + eMinus) * legP(x, ell - 1, deriv=1)
@@ -541,7 +526,7 @@ c     Local variables
       double complex sigmaYmapped(-1:1, -1:1)
       double complex sigmaZmapped(-1:1, -1:1)
       double complex sigVec(3, -1:1, -1:1)
-      integer i
+c     integer i
       external map
 
       include '../common-densities/constants.def'

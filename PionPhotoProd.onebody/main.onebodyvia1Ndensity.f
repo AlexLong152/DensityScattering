@@ -179,7 +179,7 @@ c     0: do not delete; 1: delete un-gz'd file; 2: delete downloaded and un-gz'd
 
 
       complex*16 :: Mmat(-1:1,-1:1)
-      complex*16, allocatable :: outputMat(:,:,:), SpinVec(:,:,:), FormFacts(:,:,:)
+      complex*16, allocatable :: outputMat(:,:,:), SpinVec(:,:,:), FormFacts(:,:,:), divMat(:,:,:)
       real*8 sqrtS,x,sqrtSReal, sqrtSThresh
       complex*16 tmpMat
       character*3 nuc
@@ -208,6 +208,14 @@ c     complex*16 :: testA(-1:1,-1:1)
       logical threshold ! set to .True. if we want to run the code at threshold
 c     Test variable for verifying complexVecDotSigma mapping
       complex*16 :: testVec(3)
+
+c     Interface for complexSign elemental function
+      interface
+        elemental function complexSign(z) result(s)
+          complex*16, intent(in) :: z
+          complex*16 :: s
+        end function complexSign
+      end interface
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     end OF VARIABLE DECLARATIONS, BEGINNING OF CODING
@@ -397,8 +405,10 @@ c     hgrie May 2018: outsourced into subroutine common-densities/makedensityfil
 
             allocate(outputMat(1:extQnumlimit,-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
             allocate(FormFacts(1:extQnumlimit,-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
+            allocate(divMat(1:extQnumlimit,-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
             outputMat=c0
             FormFacts=c0
+            divMat=c0
 
             call makedensityfilename(densityFileName,Egamma,thetacm,rmDensityFileLater,verbosity)
 c**********************************************************************
@@ -423,9 +433,10 @@ c           I should definitely not be doing this with strings... too bad!
             maxEll=4 ! MaxEll from 0 to 4
             eps = RESHAPE((/1,0,0,0,1,0,0,0,1/),(/3,3/))
 
-c           Below is not the "real" value of mandalstam sqrtS, this is the value
+c           sqrtS is not the "real" value of mandalstam sqrtS, this is the value
 c           of the equivalent sqrtS for the kinematics of the poles, this value
 c           picks out which pole to load
+
             sqrtS=omega+sqrt(omega*omega+Mnucleon*Mnucleon)
             sqrtSReal=omega+sqrt(omega*omega+mNucl*mNucl)
 
@@ -433,11 +444,13 @@ c           picks out which pole to load
             sqrtSReal=mpi0+mNucl
             sqrtS=mpi0+mNucleon
 
-c           write(*,*) "sqrtSThresh=", sqrtSThresh  
-c           write(*,*) "sqrtS=", sqrtS 
+c           write(*,*) "mpi0+mNucl=sqrtSReal=", sqrtSReal 
+c           stop
+c           threshold=.false.
             if ( abs(sqrtSThresh-mpi0-mNucl).lt.5 )then
               threshold=.true.
               write(*,*) "Threshold energy detected, setting maxEll=0, and setting energy to exactly threshold"
+              write(*,*) "Zeroing out imaginary part of poles"
               write(*,*) "sqrtSreal=mpi0+mNucl, sqrtS_lookup=mpi0+mNucleon"
               sqrtSReal=mpi0+mNucl
               sqrtS=mpi0+mNucleon
@@ -459,9 +472,9 @@ c           write(*,*) "sqrtS=", sqrtS
                   
 c                 call getRawM(sqrtS-5.593d0,x , nuc, Mmat, Mnucl, sqrtSReal,MaxEll,eps(extQnum,:))!resulting scattering matrix imag to zero
 c                 call getRawM(sqrtS-3.885d0,x , nuc, Mmat, Mnucl, sqrtSReal,MaxEll,eps(extQnum,:))!imag mat elements to zero
-                  call getRawM(sqrtS,x , nuc, Mmat, Mnucl, sqrtSReal,MaxEll,eps(extQnum,:))
+                  call getRawM(sqrtS,x , nuc, Mmat, Mnucl, sqrtSReal,MaxEll,eps(extQnum,:),threshold)
 
-                  tmpMat= rho1b(rindx)*Mmat(twom1Np,twom1N)*(cmplx(0.d0,-1.d0,KIND=8))!matrix element
+                  tmpMat= rho1b(rindx)*Mmat(twom1Np,twom1N)!matrix element
                   outputMat(extQnum,twoMzp,twoMz)= outputMat(extQnum,twoMzp,twoMz)+tmpMat
 
                 end if !L1N.eq.0
@@ -472,25 +485,19 @@ c                 call getRawM(sqrtS-3.885d0,x , nuc, Mmat, Mnucl, sqrtSReal,Max
             write(*,*) 
 
             K1N= (MNucl/Mnucleon)! factor (m_N + M_pi)/(mnucl+mpi ) taken care of by 8 pi sqrtS
-            outputMat=outputMat*K1N*Anucl
+            outputMat=outputMat*K1N*Anucl*(cmplx(0.d0,-1.d0,KIND=8))
 
             unitsFactor=(1d-3/mpi)
             prefactor=8*Pi*sqrtSReal
-            where (abs(SpinVec).gt.1e-15)
-              FormFacts=outputMat/(SpinVec)
+            divMat=complexSign(SpinVec)
+            where (abs(divMat).gt.1e-15)
+c             FormFacts=outputMat/divMat
+              FormFacts=outputMat/(2*spinVec)
               FormFacts=FormFacts/prefactor
               FormFacts=FormFacts/unitsFactor
             elsewhere
               FormFacts=c0
             end where
-            if (twoSnucl.eq.1) then
-              FormFacts=FormFacts/2
-            else if (twoSnucl.eq.2) then
-              FormFacts(1,:,:)=FormFacts(1,:,:)/sqrt(2.d0) !get the origninal element
-              FormFacts(2,:,:)=FormFacts(2,:,:)/sqrt(2.d0) !get the original element
-            end if
-c           !a better way to do this might be to make a subroutine that maps sign(a+bi) to sign(a)+sign(b)*i, where sign(0)=0
-c            and divide by that sign(spinVec) instead of doing this mess
 
 
 c           call outputroutinelabeled(outUnitno,twoSnucl,extQnumlimit,
@@ -504,9 +511,6 @@ c    &           SpinVec,verbosity,"SpinVector")
             call outputroutinelabeled(outUnitno,twoSnucl,extQnumlimit,
      &           FormFacts,verbosity,"FormFacts")
 
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c     be a good boy and deallocate arrays. Compilers do that automatically for simple programs. Better safe than sorry.
-            deallocate(outputMat,SpinVec,FormFacts)
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     hgrie Aug/Sep 2020: delete the local .dat file if one was generated from .gz
             if (rmDensityFileLater.gt.0) then
@@ -526,6 +530,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
          end do                 !Nangles
       end do                    !Nenergy
+      deallocate(outputMat,FormFacts,divMat,SpinVec)
       close(outUnitno,iostat=test)
       if (test .ne. 0) stop "*** ERROR: Could not close output file!!!"
      
@@ -675,4 +680,38 @@ c     ==================================================
       end if
 
       end subroutine testSigmaMapping
+
+c     ==================================================
+      elemental function complexSign(z) result(s)
+c     Maps sign(a+bi) to sign(a)+sign(b)*i, where sign(0)=0
+c     Values with abs < tol are treated as zero
+c     ==================================================
+      implicit none
+      complex*16, intent(in) :: z
+      complex*16 :: s
+      real*8 :: re, im, sre, sim
+      real*8, parameter :: tol = 1.d-6
+
+      re = real(z)
+      im = aimag(z)
+
+      if (re .gt. tol) then
+        sre = 1.d0
+      else if (re .lt. -tol) then
+        sre = -1.d0
+      else
+        sre = 0.d0
+      end if
+
+      if (im .gt. tol) then
+        sim = 1.d0
+      else if (im .lt. -tol) then
+        sim = -1.d0
+      else
+        sim = 0.d0
+      end if
+
+      s = dcmplx(sre, sim)
+
+      end function complexSign
 
