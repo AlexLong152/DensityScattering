@@ -27,12 +27,16 @@ def main():
     for nuc in nuclei:
         if nuc == "6Li":
             authors = [("TDA Method", "TDA"), ("Braun", "braun")]
+            authors_2b = [("TDA Method", "TDA"), (r"Braun$\times\sqrt{2}$", "braun")]
+            author_scales_2b = {"braun": math.sqrt(2)}
         else:
             authors = [
                 ("TDA Method", "TDA"),
                 ("Lenkewitz", "lenke"),
                 ("Braun", "braun"),
             ]
+            authors_2b = authors
+            author_scales_2b = None
         nuc_label = _nuc_labels[nuc]
 
         print(
@@ -51,8 +55,9 @@ def main():
                 nuc,
                 rf"Two-body results for {nuc_label}. $F_{{T/L}}^{{(a)}}-F_{{T/L}}^{{(b)}}$ in units of $[\mathrm{{fm}}^{{-1}}]$. $E_{{0+}}^{{2N}}$ and $L_{{0+}}^{{2N}}$ in units of $[10^{{-3}}/m_{{\pi^+}}]$. $\mathcal{{O}}(q^4)$ results omit recoil contributions.",
                 twobody_quantities,
-                authors,
+                authors_2b,
                 row_groups=twobody_row_groups,
+                author_scales=author_scales_2b,
             )
         )
         print()
@@ -117,7 +122,7 @@ _nuc_labels = {
 }
 
 
-def _latex_table(d, nuc, caption, quantities, authors, row_groups=None):
+def _latex_table(d, nuc, caption, quantities, authors, row_groups=None, author_scales=None):
     r"""Return a LaTeX table string for one nucleus (transposed layout).
 
     Columns are quantities (form factors), rows are sources (authors).
@@ -180,8 +185,12 @@ def _latex_table(d, nuc, caption, quantities, authors, row_groups=None):
                 for q in quantities:
                     data_key = q + suffix
                     prec = 2 if author_key == "TDA" else None
+                    val = d[author_key][nuc][data_key]
+                    if author_scales and author_key in author_scales:
+                        if not isinstance(val, NoResult):
+                            val = val * author_scales[author_key]
                     cells.append(
-                        _format_parens_latex(d[author_key][nuc][data_key], precision=prec)
+                        _format_parens_latex(val, precision=prec)
                     )
                 lines.append(" & ".join(cells) + r" \\")
                 if j < len(active) - 1:
@@ -196,8 +205,12 @@ def _latex_table(d, nuc, caption, quantities, authors, row_groups=None):
             cells = [author_label]
             for q in quantities:
                 prec = 2 if author_key == "TDA" else None
+                val = d[author_key][nuc][q]
+                if author_scales and author_key in author_scales:
+                    if not isinstance(val, NoResult):
+                        val = val * author_scales[author_key]
                 cells.append(
-                    _format_parens_latex(d[author_key][nuc][q], precision=prec)
+                    _format_parens_latex(val, precision=prec)
                 )
             lines.append(" & ".join(cells) + r" \\")
             lines.append(r"\hline")
@@ -206,7 +219,7 @@ def _latex_table(d, nuc, caption, quantities, authors, row_groups=None):
     lines.append(rf"\caption{{{caption}}}")
     lines.append(r"\end{table}")
 
-    return "\n".join(lines)
+    return "\n".join(lines).replace("$-16(2)$", "$-16.0(20)$")
 
 
 def printLatex(d=None, showLenke=True):
@@ -239,6 +252,15 @@ def printLatex(d=None, showLenke=True):
 
     for nuc in nuclei:
         authors = authors_full if showLenke else authors_no_lenke
+        if nuc == "6Li":
+            authors_2b = [
+                (r"Braun$\times\sqrt{2}$", key) if key == "braun" else (label, key)
+                for label, key in authors
+            ]
+            author_scales_2b = {"braun": math.sqrt(2)}
+        else:
+            authors_2b = authors
+            author_scales_2b = None
         nuc_label = _nuc_labels.get(nuc, nuc)
 
         print(
@@ -257,8 +279,9 @@ def printLatex(d=None, showLenke=True):
                 nuc,
                 rf"Two-body results for {nuc_label}. $F_{{T/L}}^{{(a)}}-F_{{T/L}}^{{(b)}}$ in units of $[\mathrm{{fm}}^{{-1}}]$. $E_{{0+}}^{{2N}}$ and $L_{{0+}}^{{2N}}$ in units of $[10^{{-3}}/m_{{\pi^+}}]$. $\mathcal{{O}}(q^4)$ results omit recoil contributions.",
                 twobody_quantities,
-                authors,
+                authors_2b,
                 row_groups=twobody_row_groups,
+                author_scales=author_scales_2b,
             )
         )
         print()
