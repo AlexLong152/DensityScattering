@@ -517,7 +517,6 @@ c               Result(ieps,:,:) = Result(ieps,:,:) / SpinVec(ieps,:,:)
 
               Result(1,:,:)=Result(1,:,:)/sqrt(2.d0)
               Result(2,:,:)=Result(2,:,:)/sqrt(2.d0)
-              Result(3,:,:)=Result(2,:,:)/2.d0
 
               aveE0=(real(Result(1,2,0))+aimag(Result(2,0,2)))/2.d0
               aveL0=real(Result(3,2,2))
