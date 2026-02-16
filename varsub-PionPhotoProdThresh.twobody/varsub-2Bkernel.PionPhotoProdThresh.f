@@ -58,6 +58,7 @@ c     show what is outputted, and its units
       write(*,*) "Output: F_{L/T} ε.S^Mprime_M = < Mprime | kernel | M > Lenkewitz Eur. Phys. J. A (2013) 49:20 eq (10)"
       write(*,*) "        with ε: incoming-photon polarisation, S: nucleus spin; [F_{L/T}]=[fm]¯¹"
       write(*,*) "        Mapping of extQnum: 1 = ε_x, 2 = ε_y (both transversal); 3 = ε_z (longitudinal)"
+      write(*,*) "Results shows form factors F_T^a-F_T^b, and F_L^a-F_L^b without the spin matrix divided out"
 c     characterise symmetry/-ies, if any used.
       If (symmetry.eq.0) then
          write(*,*) "        No symmetries used."
@@ -194,7 +195,7 @@ c     call getDiagABfinite(KernelA,pVec,uVec,ppVecs(diagNumber,:),kVec,kpVec,ppV
       !StaticDiags O(q^4) uses some variable substitution as diagAB
       !would need to reassign ppVecs(diagNumber,:), and diagNumber if this wasn't the case
       call getStaticDiags(KernelStatic,pVec,uVec,kVec,kpVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,verbosity)
-      Kernel2B(diagNumber,:,:,:,:,:)=Kernel2B(diagNumber,:,:,:,:,:)+KernelStatic*(-1/(4.d0*Mnucleon*mpi))
+      Kernel2B(diagNumber,:,:,:,:,:)=Kernel2B(diagNumber,:,:,:,:,:)+KernelStatic*(-1/(4.d0*Mnucleon*mpi0))
 
       if (calctype.eq.Odelta4) return 
       write(*,*) "Something went wrong with calctype Odelta, check input file"
@@ -253,12 +254,12 @@ c       uVec=pVec-ppVec+kVec/2!-> ppVec= pVec-uVec+kVec/2 -> jacobian on the int
 
       factorAsym=factor*(1-2.d0*ga*ga)*(1.d0+2.d0*(dot_product(qVec,ppVec)/vecsquare(qVec)))
       factorBsym=2.d0*factor* (1/vecsquare(qVec))
-      factorCsym=2.d0*factor*(1/(vecsquare(qVec)+mpi*mpi))
+      factorCsym=2.d0*factor*(1/(vecsquare(qVec)+mpi0*mpi0))
 
-      factorDsym = factor * (2.d0*ga*ga) * (1.d0 / (vecsquare(qVec) + mpi*mpi))
+      factorDsym = factor * (2.d0*ga*ga) * (1.d0 / (vecsquare(qVec) + mpi0*mpi0))
 
       factorEsym=factor*(-1.d0+2*ga*ga)*(1.d0+2.d0*(dot_product(qVec,ppVec)/vecsquare(qVec)))
-     & *(1/(vecsquare(qpVec)+mpi**2))
+     & *(1/(vecsquare(qpVec)+mpi0**2))
 
       factorAasy=factorAsym
       factorBasy=factorBsym
@@ -421,8 +422,14 @@ c     Sign difference comes from convention. In Lenkewitz paper the result is
 c     F^a-F^b (Table 2 in Lenkewitz 2011) whereas we define the result to be 
 c     the addition of quantities, so for us its F^a+F^b
 
-c     For imlicit cancelation
+c     To match the literature, strictly speaking you want to multiply by -1
+c     here, but this can be treated as a convention, and fixed in the scripting part.
+c     becuase as of Febuary 2026 I have already calculated many different densities 
+c     Using this convention and I don't want to redo it.
+
+c     For implicit cancelation
       factorAsym=-1*(-1)**(t12)*(1.d0/(DOT_PRODUCT(qVec,qVec)))*(2*Pi)**3/HC
+
 c     factorBsym=+2*(-1)**(t12)*(1.d0/(
 c    &        DOT_PRODUCT(qVec,qVec)))*
 c    &        (1.d0/(DOT_PRODUCT(qpVec,qpVec)+mpi2))

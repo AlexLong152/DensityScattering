@@ -22,12 +22,7 @@ c     E_{0+}^{2N}= K2N(F_T^a - F_T^b)
       K2N=(numer*HC/denom)*reducedMass/units  !K2N has 10^-3/mpi units, K2N=mpie g_A 
       resultMat=K2N*Result
 
-      write(*,'(A)') ""
-      write(*,'(A)') ""
-      write(*,'(A)') "Now printing 2 Body values of E_{0+} and L_{0+}"
-      write(*,'(A)') "Differs from matrix elements by 2i, in the Lenkewitz convention if you set:"
-      write(*,'(A)') "\mathcal{M} = 2i E_{0+} (\vec{ε}_T· S) + 2i L_{0+} (\vec{ε}_L· S)"
-      write(*,'(A)') "See Lenkewitz 2011 equation 2, arXiv:1103.3400 [nucl-th]"
+      write(*,'(A)') "\mathcal{M} = 2i E_{0+} (\vec{ε}_T· \vec{S}) + 2i L_{0+} (\vec{ε}_L· \vec{S})"
       write(*,*) ""
       write(*,'(A)') "Using units 10^-3/mπ"
       write(*,'(A)') "E_{0+} in extQnum=1,2"
