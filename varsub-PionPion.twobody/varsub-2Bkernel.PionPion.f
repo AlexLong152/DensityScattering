@@ -29,7 +29,10 @@ c     hgrie Nov 2023: show kernel process and version
 c     included here since will change when kernel changes
       subroutine KernelGreeting(Egamma,EProbe,Mnucl,verbosity)
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
       implicit none
+
+      include '../common-densities/constants.def'
       real*8, intent(in) :: Egamma, Mnucl
       real*8, intent(out) :: Eprobe
       integer,intent(in) :: verbosity         ! verbosity index for stdout
@@ -42,7 +45,8 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       write(*,*) "   Kernel Code Version 1.0"
       write(*,*) "      Alexander Long starting September 2025   "
       write(*,*)
-      mPion=134.976d0
+      mPion=mpi0
+      mPion=mpi0
 c     write(*,*) "DEBUG KernelGreeting: Egamma=", Egamma
 c     write(*,*) "DEBUG KernelGreeting: Mnucl=", Mnucl
 c     write(*,*) "DEBUG KernelGreeting: mPion=", mPion
@@ -66,7 +70,7 @@ c     write(*,*) "DEBUG KernelGreeting: kSquare=", kSquare
 c     write(*,*) "DEBUG KernelGreeting: Eprobe=", Eprobe
       if (verbosity.eq.1000) continue
       end
-c     
+
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     hgrie Nov 2023: show kernel process and version
@@ -94,11 +98,6 @@ c         write(*,*) "        Symmetry imposed: ME(extQnum=1) =  ME(extQnum=1) u
 c     
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-
-c     subroutine Calc2Bspinisospintrans(Kernel2B,ppVecs,Mnucl,
-c    &     extQnumlimit,ml12,ml12p,
-c    &     t12,mt12,t12p,mt12p,l12,s12,
-c    &     l12p,s12p,thetacm,Eprobe,pVec,uVec,numDiagrams,verbosity)
 
       subroutine Calc2Bspinisospintrans(Kernel2B,ppVecs,Mnucl,
      &      extQnumlimit,ml12,ml12p,
@@ -172,14 +171,16 @@ c!     LOCAL VARIABLES:
 c!     real*8 qVec(3)!, qpVec(3)
       real*8 ppVec(3)
 c!     real*8 qVec(3)
+
+      integer extQnum
       real*8 dl12by2
       complex*16 factorAsym!,factorBsym,factorB2,factorA2
       complex*16 factorAasy!,factorBasy
-      real*8 kVec(3),kpVec(3),k
+      real*8 kVec(3),kpVec(3),k, massesArr(3)
       real*8 mPion, Mnucl
       real*8 r,theta,phi
       complex*16 Yl12(-5:5)
-      complex*16 KernelA(1:extQnumlimit,0:1,-1:1,0:1,-1:1) !contribution just from diagram A
+      complex*16 KernelA(0:1,-1:1,0:1,-1:1) !contribution just from diagram A
       real*8 m1,m2,m3,m4
       real*8 sqrtS,prefactor
       real*8 ppVecA(3)
@@ -202,65 +203,79 @@ c      !subroutine calculateqsmass is available for kpVec calculation
       m4=mPion
 
       call calculateqs2Mass(pVec,ppVec,kVec,kpVec,m1,m2,m3,m4,thetacm,verbosity)
+c     write(*,*) "kVec=", kVec 
+c     write(*,*) "kpVec=,", kpVec
+c     write(*,*) "k=", k 
+c     stop
+      kVec=0.d0
+      kpVec=0.d0
+      k=0.d0
+
       sqrtS=sqrt(mNucl*mNucl+k*k)+sqrt(mPion*mPion+k*k)
 c     assign prefactor=8*Pi*sqrtS to convert from scattering length to matrix element
 c     setting prefactor=1.d0=HC returns scattering length in fm
       prefactor=(1/(1+mPion/mNucl))*(1/(4*Pi))!matrix elements are unitless
       prefactor=prefactor*1000*mpi0
+
       diagNumber=1
-      ppVecA=0.d0
-      call getDiagABC(KernelA,pVec,uVec,ppVecA,kVec,kpVec,t12,t12p,
-     &      mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,mNucl,verbosity)
+      massesArr=(/mPi,mPi0,mPi/)
+
+      do extQnum=1,extQnumlimit
+        mPion=massesArr(extQnum)
+        ppVecA=0.d0
+        call getDiagABC(KernelA,pVec,uVec,ppVecA,kVec,kpVec,t12,t12p,
+     &        mt12,mt12p,l12p,ml12p,s12p,s12,extQnum,mNucl,mPion,verbosity)
+
+        Kernel2B(diagNumber,extQnum,:,:,:,:)=KernelA
+      end do
+
       ppVecs(diagNumber,:)=ppVecA
+      Kernel2B=Kernel2B*prefactor
+
 c     KernelA computed in getDiagABC has units [MeV^-4]
 c     Multiply by 1000*mpi0 -> units MeV^-3 -> units of `Result` "unitless" but actually are in (1000*mpi0)^-1 units
-c     prefactor = prefactor*8*pi*sqrtS*HC !uncomment this line to change `Result` to the scattering matrix
-      Kernel2B(diagNumber,:,:,:,:,:)=prefactor*KernelA
-
+c     prefactor = prefactor*8*pi*sqrtS!uncomment this line to change `Result` to the scattering matrix
       end
 
 
 
 
-      subroutine getDiagABC(Kerneltmp,pVec,uVec,ppVecA,kVec,kpVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnumlimit,mNucl,verbosity)
+      subroutine getDiagABC(Kerneltmp,pVec,uVec,ppVecA,kVec,kpVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnum,mNucl,mPion,verbosity)
       implicit none
 c     diagrams B and C combine to one diagram https://arxiv.org/abs/1003.3826v1
       include '../common-densities/constants.def'
 c     Parameters-------------------------------------
-      complex*16,intent(out) :: Kerneltmp(1:extQnumlimit,0:1,-1:1,0:1,-1:1)
+c     complex*16,intent(out) :: Kerneltmp(1:extQnumlimit,0:1,-1:1,0:1,-1:1)
+      complex*16,intent(out) :: Kerneltmp(0:1,-1:1,0:1,-1:1)
 c     integer, intent(out) :: diagNumber
       real*8, intent(out) :: ppVecA(3)
-      integer,intent(in) :: extQnumlimit
-      real*8, intent(in) :: pVec(3), kVec(3), uVec(3),kpVec(3), mNucl
+      integer,intent(in) :: extQnum
+      real*8, intent(in) :: pVec(3), kVec(3), uVec(3),kpVec(3), mNucl, mPion
       integer, intent(in) :: t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12, verbosity
 
 c     Internal variables
       real*8 qVec(3), ppVec(3),ell(3), qpVec(3)!, r, theta, phi,
-      complex*16 factorAsym, factorAasy
-      complex*16 factorBCsym, factorBCasy
+      complex*16 factorAsym, factorAasy, factorDasy
+      complex*16 factorBCsym, factorBCasy, factorDsym
 
       logical useTransform
-      real*8 Jacobian, prefactor
+      real*8 prefactor
       real*8 vecsquare
-c     write(*,*) "shape(Kerneltmp)=", shape(Kerneltmp)
-c     write(*,*) "getDiagAB: extQnumlimit=", extQnumlimit, "s12p=", s12p, "s12=", s12
-      ! write(*,*) "varsub-2Bkernel.PionPion.f:216 shape(Kerneltmp)=", shape(Kerneltmp) 
+
       if (.not.(all(ppVecA.eq.0))) then
           write(*,*) "ppVec assigned elsewhere, stopping"
           write(*,*) "In 2Bkernel.PionPhotoProdThresh.f: ppVecA=",ppVecA 
           stop
       end if
 
+      kerneltmp=0.d0
       useTransform=.true.
       if (useTransform) then
-c       uVec=qVec=pVec-ppVec+kVec/2+kpVec/2
+c       uVec=qVec=pVec-ppVec+kVec/2+kpVec/2 !this defines the transform
         ppVec=pVec-uVec+(kVec+kpVec)/2
-        Jacobian=-1.d0
       else
           ppVec=uVec
-          Jacobian=1.d0
       end if
-
       qVec=pVec-ppVec+kVec/2+kpVec/2 !=uVec
       qpVec=qVec-kVec
 
@@ -269,7 +284,7 @@ c     from https://arxiv.org/abs/1003.3826v1 the factor (1/4pi) (1/(1+mpi/mNucl)
 c     
 c
 c     DIMENSIONAL ANALYSIS: prefactor = mpi0^2/(4*fpi^4) = [MeV^2]/[MeV^4] = [MeV^-2]
-      prefactor = mpi0*mpi0/(4*(fpi**4.d0))
+      prefactor = mPion*mPion/(4*(fpi**4.d0))
 
       if (DOT_PRODUCT(qVec,qVec).lt.1.d-10) then
          write(*,*) "DOT_PRODUCT(qVec,qVec)=", DOT_PRODUCT(qVec,qVec)
@@ -277,69 +292,61 @@ c     DIMENSIONAL ANALYSIS: prefactor = mpi0^2/(4*fpi^4) = [MeV^2]/[MeV^4] = [Me
       end if
 
       factorAsym=prefactor*(1/(DOT_PRODUCT(qVec,qVec)))! units MeV^-4
-c     factorBCsym=-1*gA*gA*prefactor*(1.d0/((DOT_PRODUCT(qVec,qVec)+mpi0**2)**2))
-c      Fact
-      factorBCsym=-1*gA*gA*prefactor*(1.d0/((DOT_PRODUCT(qVec,qVec)+mpi0**2)**2))!units MeV^-6, but CalcKernel2BBsym/asy adds factor MeV^2, gives result MeV^-4
+      factorAsym=0.d0
+
+      factorBCsym=-1*gA*gA*prefactor*(1.d0/((DOT_PRODUCT(qVec,qVec)+mPion**2)**2))!units MeV^-6, but CalcKernel2BBsym/asy adds factor MeV^2, gives result MeV^-4
+      factorBCsym=0.d0
+      
+      factorDsym= -0.25*(mPion/(2*fpi*fpi))**3.d0
+      factorDsym = factorDsym* (DOT_PRODUCT(qVec,qVec))**(-0.5d0) 
+c     factorDsym=0.d0
 
       factorAasy=factorAsym
       factorBCasy=factorBCsym
-      if (factorAsym.ne.factorAsym) then
-        write(*,*) "factorAsym=", factorAsym 
-        stop
-      end if
+      factorDasy= factorDsym
 
-      if (factorBCsym.ne.factorBCsym) then
-        write(*,*) "factorBCsym=", factorBCsym 
-        stop
-      end if
-c     if ((t12 .eq. t12p) .and. (mt12 .eq. mt12p)) then
-         if (s12p .eq. s12) then ! spin symmetric part only; s12-s12p=0 => l12-l12p is even
+      call checkNaNScalar(factorAsym, "factorAsym")
+      call checkNaNScalar(factorBCsym, "factorBCsym")
+      call checkNaNScalar(factorDsym, "factorDsym")
+
+      if (s12p .eq. s12) then ! spin symmetric part only; s12-s12p=0 => l12-l12p is even
             call CalcKernel2BAsym(Kerneltmp,
      &           factorAsym,
-     &           s12p,s12,t12,mt12,t12p,mt12p,extQnumlimit,verbosity)
+     &           s12p,s12,t12,mt12,t12p,mt12p,extQnum,verbosity)
+            call checkNaNKernel(Kerneltmp, "sym A")
 
-            if (any(Kerneltmp.ne.Kerneltmp)) then
-              write(*,*) "Kernel was NaN after sym A stopping"
-              error stop
-            end if
             call CalcKernel2BBCsym(Kerneltmp,qVec,
      &           factorBCsym,
-     &           s12p,s12,t12,mt12, t12p, mt12p, extQnumlimit,verbosity)
+     &           s12p,s12,t12,mt12, t12p, mt12p, extQnum,verbosity)
+            call checkNaNKernel(Kerneltmp, "sym BC")
 
-            if (any(Kerneltmp.ne.Kerneltmp)) then
-              write(*,*) "Kernel was NaN after sym B stopping"
-              error stop
-            end if
+            call CalcKernel2BDsym(Kerneltmp,
+     &           factorDsym,
+     &           s12p,s12,t12,mt12, t12p, mt12p, extQnum,verbosity)
+            call checkNaNKernel(Kerneltmp, "sym D")
+
          else                   !  spin anti-symmetric part only; s12 question: s12-s12p=±1 => l12-l12p is odd
 
 
             call CalcKernel2BAasy(Kerneltmp,
      &           factorAasy,
-     &           s12p,s12,t12,mt12,t12p,mt12p,extQnumlimit,verbosity)
+     &           s12p,s12,t12,mt12,t12p,mt12p,extQnum,verbosity)
+            call checkNaNKernel(Kerneltmp, "asym A")
 
-            if (any(Kerneltmp.ne.Kerneltmp)) then
-              write(*,*) "Kernel was NaN after asym A stopping"
-              error stop
-            end if
             call CalcKernel2BBCasy(Kerneltmp,qVec,
      &           factorBCasy,
-     &           s12p,s12,t12,mt12, t12p, mt12p, extQnumlimit,verbosity)
+     &           s12p,s12,t12,mt12, t12p, mt12p, extQnum,verbosity)
+            call checkNaNKernel(Kerneltmp, "asym BC")
 
-            if (any(Kerneltmp.ne.Kerneltmp)) then
-              write(*,*) "Kernel was NaN after asym B stopping"
-              error stop
-            end if
+            call CalcKernel2BDasy(Kerneltmp,
+     &           factorDasy,
+     &           s12p,s12,t12,mt12, t12p, mt12p, extQnum,verbosity)
+
+            call checkNaNKernel(Kerneltmp, "asym D")
          end if                 ! s12 question
-c     else                      ! t12!=t12p
-c       continue
-c     end if                    !t12 question
 
       ppVecA=ppVec
-      Kerneltmp=Kerneltmp*Jacobian
-      if (any(Kerneltmp.ne.Kerneltmp)) then
-        write(*,*) "Kernel was Nan, stopping"
-        error stop
-      end if
+      call checkNaNKernel(Kerneltmp, "final")
       end subroutine getDiagABC
 
 
@@ -351,3 +358,26 @@ c     end if                    !t12 question
 
           vecsquare=DOT_PRODUCT(vec,vec)
       end function vecsquare
+
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     NaN-checking subroutines
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+      subroutine checkNaNKernel(arr, label)
+      implicit none
+      complex*16, intent(in) :: arr(0:1,-1:1,0:1,-1:1)
+      character*(*), intent(in) :: label
+      if (any(arr.ne.arr)) then
+        write(*,*) "Kernel was NaN after ", label, ", stopping"
+        error stop
+      end if
+      end subroutine checkNaNKernel
+
+      subroutine checkNaNScalar(val, label)
+      implicit none
+      complex*16, intent(in) :: val
+      character*(*), intent(in) :: label
+      if (val.ne.val) then
+        write(*,*) label, "=", val, ", stopping"
+        error stop
+      end if
+      end subroutine checkNaNScalar
