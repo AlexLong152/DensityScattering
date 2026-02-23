@@ -200,9 +200,14 @@ c        Raising operator: (1/√2)(τ¹ + iτ²)
 
 c     ----------------------------------------------------------------
 c     SUBROUTINE: combinePhysical
-c     Helper function that combines physical operators
-c     Given extQnum (1, 2, or 3), returns τ_1^phys ⊗ τ_2^phys as 4x4
-c     where the physical operator depends on charge = extQnum - 2
+c     Returns the properly projected τ_1^a τ_2^a operator for the
+c     physical pion specified by extQnum.
+c
+c     For pi0 (extQnum=2): this is just τ_1^3 ⊗ τ_2^3.
+c     For pi+/- (extQnum=1,3): the physical state is a complex
+c     superposition of Cartesian components. The elastic projection
+c     sum_{a,b} c_a c_b* τ_1^a τ_2^b requires conjugating the
+c     second operator, giving (1/2)(τ_1^1 τ_2^1 + τ_1^2 τ_2^2).
 c
 c     Inputs:
 c        extQnum - external quantum number (1, 2, or 3)
@@ -213,13 +218,29 @@ c     ----------------------------------------------------------------
       implicit none
       integer extQnum
       complex*16 result(4,4)
-      complex*16 physOper(2,2)
+      complex*16 tau_a(2,2), tau_b(2,2)
+      complex*16 tmp(4,4)
+      integer charge
 
-c     Get the physical operator for this charge
-      call getPhysicalOper(extQnum, physOper)
+      charge = extQnum - 2
 
-c     Combine the operator with itself: τ_1^phys ⊗ τ_2^phys
-      call combineOpers(physOper, physOper, result)
+      if (charge .eq. 0) then
+c        pi0: τ_1^3 ⊗ τ_2^3
+         call getPauliMatrix(3, tau_a)
+         call combineOpers(tau_a, tau_a, result)
+      else
+c        pi+/-: (1/2)(τ_1^1 τ_2^1 + τ_1^2 τ_2^2)
+         result = (0.d0, 0.d0)
+         call getPauliMatrix(1, tau_a)
+         call getPauliMatrix(1, tau_b)
+         call combineOpers(tau_a, tau_b, tmp)
+         result = result + tmp
+         call getPauliMatrix(2, tau_a)
+         call getPauliMatrix(2, tau_b)
+         call combineOpers(tau_a, tau_b, tmp)
+         result = result + tmp
+         result = 0.5d0 * result
+      endif
 
       return
       end
@@ -274,7 +295,7 @@ c     ----------------------------------------------------------------
 c     SUBROUTINE: PionPionA
 c     Matrix element in coupled basis of:
 c        Σ_{i=1}^3 2*(τ_1^i τ_2^i) - 2 (τ_1^a τ_2^a)
-c     where a = extQnum
+c     where a = extQnum since we don't allow for charge exchange
 c
 c     Note: This differs from PionPionBC by the factor of 2 in the sum
 c
