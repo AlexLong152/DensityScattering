@@ -122,6 +122,9 @@ c     ================================================================
 
       call getGH(sqrtS, x, isospin, piCharge, g, h,sqrtSReal,mNucl,
      &           coulomb)
+c     DEBUG: print g,h values
+c      write(*,*) "DEBUG getMat: g=",g," h=",h,
+c    &            " iso=",isospin," piQ=",piCharge
 c     Get pion and nucleon masses
       piMassArr(-1)=mpi
       piMassArr(0)=mpi0
@@ -242,6 +245,10 @@ c     Coulomb: phase shifts and Rutherford amplitude
      &                    ells(5), sigmas, f_C)
       endif
 
+c     DEBUG: print kinematics used in getGH
+c      write(*,*) "DEBUG getGH: sqrtS=",sqrtS," sqrtSReal=",sqrtSReal
+c      write(*,*) "DEBUG getGH: |q|=",vecAbs(qVec)," m1=",m1," m2=",m2
+
       gTerm = (0.0d0, 0.0d0)
       hTerm = (0.0d0, 0.0d0)
 
@@ -276,6 +283,12 @@ c        Loop over partial waves l = 0...4
 
             call getF(qVec, twoI, ell, 1, sqrtS, fPlus)
             call getF(qVec, twoI, ell, -1, sqrtS, fMinus)
+
+c           DEBUG: print partial wave values (first call only)
+c            if (twoI.eq.1 .and. ell.le.1) then
+c              write(*,*) "DEBUG getGH: twoI=",twoI," ell=",ell,
+c     &          " fPlus=",fPlus," fMinus=",fMinus
+c            end if
 
 c           Coulomb: multiply each partial wave by exp(2i*sigma_l)
             if (coulomb) then
@@ -363,9 +376,73 @@ c     where slope = (y2 - y1) / (x2 - x1) = (y2 - y1) / 2
       end subroutine getF
 
 c     ================================================================
+      subroutine getThresholdScatLength(twoI, ell, aScatMeV, isThresh)
+c     Return the piN scattering length at threshold for S-waves.
+c     For higher partial waves (ell > 0), f -> 0 at threshold.
+c
+c     Base values from Liebig et al., EPJ A (2010), Eq. (37),
+c     extracted from pionic hydrogen/deuterium data:
+c       a_tilde^(+) = (1 +/- 1) x 10^-3 / m_pi   (isoscalar)
+c       a^(-)       = (86.5 +/- 1.2) x 10^-3 / m_pi (isovector)
+c
+c     Isospin violation (IV) corrections from the same paper, Eq. (37).
+c     These account for effects of quark mass difference (m_u != m_d)
+c     and electromagnetic interactions beyond standard Coulomb,
+c     computed within chiral perturbation theory:
+c       Delta_a_tilde^(+) = (-3.35 +/- 0.28) x 10^-3 / m_pi
+c       Delta_a^(-)       = (+1.39 +/- 1.33) x 10^-3 / m_pi
+c
+c     IV-corrected values used here:
+c       a^(+) = a_tilde^(+) + Delta = 1 + (-3.35) = -2.35 x 10^-3 / m_pi
+c       a^(-) = 86.5 + 1.39 = 87.89 x 10^-3 / m_pi
+c
+c     Converting to isospin channels (a_{1/2} = a^+ + 2a^-, a_{3/2} = a^+ - a^-):
+c       a_{1/2} = -2.35 + 2*87.89 = 173.43 x 10^-3 / m_pi
+c       a_{3/2} = -2.35 - 87.89   = -90.24 x 10^-3 / m_pi
+c
+c     Alternative: Baru et al., PRC 67 (2003), Eq. (12) (older extraction):
+c       a^(+) = (-2.2 +/- 4.3) x 10^-3 / m_pi
+c       a^(-) = (90.5 +/- 4.2) x 10^-3 / m_pi
+c       a_{1/2} = 178.8 x 10^-3 / m_pi = 0.001281 MeV^-1
+c       a_{3/2} = -92.7 x 10^-3 / m_pi = -0.000664 MeV^-1
+c     ================================================================
+      implicit none
+      integer twoI, ell
+      double precision aScatMeV
+      logical isThresh
+
+c     Liebig IV-corrected values in MeV^-1 (divide by m_pi = 139.57 MeV)
+c     a_{1/2} = 173.43e-3 / 139.57 = 0.001243 MeV^-1
+c     a_{3/2} = -90.24e-3 / 139.57 = -0.000647 MeV^-1
+      double precision, parameter :: aScatS11 = 0.001243d0
+      double precision, parameter :: aScatS31 = -0.000647d0
+c     Liebig without IV corrections :
+c     double precision, parameter :: aScatS11 = 0.001247d0
+c     double precision, parameter :: aScatS31 = -0.000613d0
+c     Baru values :
+c     double precision, parameter :: aScatS11 = 0.001281d0
+c     double precision, parameter :: aScatS31 = -0.000664d0
+
+      isThresh = .false.
+      aScatMeV = 0.0d0
+
+c     Only S-waves have nonzero scattering length at threshold
+      if (ell .ne. 0) return
+
+      isThresh = .true.
+      if (twoI .eq. 1) then
+         aScatMeV = aScatS11
+      else if (twoI .eq. 3) then
+         aScatMeV = aScatS31
+      endif
+
+      return
+      end subroutine getThresholdScatLength
+
+c     ================================================================
       subroutine getFAtValue(qVec, twoI, ell, sign, target2L, letter,
      &                       sqrtS, fOut)
-c     Calculate partial wave amplitude at a specific sqrtS value, returns fOut in outs of MeV^-1
+c     Calculate partial wave amplitude at a specific sqrtS value, returns fOut in units of MeV^-1
 c     ================================================================
       implicit none
       double precision qVec(3), sqrtS
@@ -374,11 +451,29 @@ c     ================================================================
       double complex fOut
 
       double precision del_result, sr_result, eta, qAbs
-      logical found
+      double precision Epi_cm, wcm_actual
+      double precision aScatMeV
+      double precision, parameter :: piNthreshold = 1077.84d0
+      logical found, isThresh
+
+c     At or below the free piN threshold, use known scattering lengths
+c     instead of SAID phase shifts. The lowest SAID point (WCM=1078)
+c     gives delta/q values ~20% larger than the true scattering length
+c     due to effective range corrections at finite q ~ 5 MeV.
+      if (sqrtS .le. piNthreshold + 2.0d0) then
+         call getThresholdScatLength(twoI, ell, aScatMeV, isThresh)
+         if (isThresh) then
+            fOut = dcmplx(aScatMeV, 0.0d0)
+            return
+         endif
+c        Higher partial waves: f -> 0 at threshold
+         fOut = (0.0d0, 0.0d0)
+         return
+      endif
 
 c     Get scattering data at the specified sqrtS
       call getScatteringData(getLetterIndex(letter), twoI, target2L,
-     &     sqrtS, del_result, sr_result, found)
+     &     sqrtS, del_result, sr_result, found, wcm_actual)
 
       if (.not. found) then
          del_result = 0.0d0
@@ -386,12 +481,25 @@ c     Get scattering data at the specified sqrtS
       endif
 
       eta = dsqrt(1.0d0 - sr_result)
-      qAbs = vecAbs(qVec)
+c
+c     Compute |q| from free piN kinematics at the actual SAID energy
+c     (wcm_actual), NOT from the nuclear qVec.
+c
+c     The partial wave amplitude is f = (eta*exp(2i*delta) - 1)/(2i|q|).
+c     We use Mproton (from constants.def) since SAID data corresponds
+c     to pi-proton scattering (threshold ~ 1077.84 MeV).
+      Epi_cm = (wcm_actual**2 + mpiPlus**2 - Mproton**2)
+     &       / (2.0d0 * wcm_actual)
+      if (Epi_cm .gt. mpiPlus) then
+        qAbs = dsqrt(Epi_cm**2 - mpiPlus**2)
+      else
+        qAbs = 0.0d0
+      end if
+      if (qAbs .lt. 1.0d0) qAbs = 1.0d0
 
-c     Calculate fOut = (eta * exp(2i*deltaRe) - 1) / (2i*qAbs) * MeVtofm
+c     Calculate fOut = (eta * exp(2i*deltaRe) - 1) / (2i*qAbs)
       fOut = eta * cdexp((0.0d0, 2.0d0) * del_result) - (1.0d0, 0.0d0)
       fOut = fOut / ((0.0d0, 2.0d0) * qAbs)
-c     fOut = fOut * MeVtofm
 
       return
       end subroutine getFAtValue

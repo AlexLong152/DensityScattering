@@ -150,45 +150,55 @@ c        Try to parse data line
       
       end subroutine parseHeader
       
-      subroutine getScatteringData(targetLetterIndex, target2I, 
-     &     target2L, wcm_target, del_result, sr_result, found)
+      subroutine getScatteringData(targetLetterIndex, target2I,
+     &     target2L, wcm_target, del_result, sr_result, found,
+     &     wcm_actual)
       implicit none
       integer targetLetterIndex, target2I, target2L
       real*8 wcm_target, del_result, sr_result
+      real*8 wcm_actual
       logical found
-      
+
       integer :: i, best_match
       real*8 :: wcm_diff, min_diff
-      
+
       found = .false.
       del_result = 0.0d0
       sr_result = 0.0d0
+      wcm_actual = wcm_target
       best_match = 0
       min_diff = 1.0d30
-      
+
       if (.not. dataInitialized) return
-      
+
       do i = 1, totalEntries
          if (letterIndex(i) .eq. targetLetterIndex .and.
      &       twoI(i) .eq. target2I .and.
      &       twoL(i) .eq. target2L) then
-            
+
             wcm_diff = abs(wcmValues(i) - wcm_target)
             if (wcm_diff .lt. min_diff) then
                min_diff = wcm_diff
                best_match = i
             endif
-            
+
             if (wcm_diff .lt. 1.0d-6) exit
          endif
       enddo
-      
-      if (best_match .gt. 0 .and. min_diff .lt. 50.0d0) then
+
+c     Tolerance for nearest-neighbor match in MeV. When the requested
+c     energy falls below the free piN threshold (~1078 MeV), this
+c     tolerance allows matching to the lowest SAID data point.
+c     wcm_actual returns the energy of the matched data point so that
+c     getFAtValue can compute |q| at the correct energy (see comment
+c     in getFAtValue for why this matters).
+      if (best_match .gt. 0 .and. min_diff .lt. 20.0d0) then
          del_result = delValues(best_match)
          sr_result = srValues(best_match)
+         wcm_actual = wcmValues(best_match)
          found = .true.
       endif
-      
+
       end subroutine getScatteringData
       
       subroutine getScatteringDataByLetter(letter, target2I, target2L, 
@@ -197,18 +207,19 @@ c        Try to parse data line
       character*1 letter
       integer target2I, target2L
       real*8 wcm_target, del_result, sr_result
+      real*8 wcm_dummy
       logical found
       character*32 :: arg1, arg2, arg3, arg4
       character*200 :: cmd
       character*50 :: outname
-      
+
 c     Initialize variables
       found = .false.
       del_result = 0.0d0
       sr_result = 0.0d0
-      
-      call getScatteringData(letterToIndex(letter), target2I, target2L, 
-     &     wcm_target, del_result, sr_result, found)
+
+      call getScatteringData(letterToIndex(letter), target2I, target2L,
+     &     wcm_target, del_result, sr_result, found, wcm_dummy)
 
       write(arg1,'(I0)') letterToIndex(letter)
       write(arg2,'(I0)') target2I

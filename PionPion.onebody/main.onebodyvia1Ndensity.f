@@ -89,6 +89,7 @@ c     outfile-name of output file
       integer inUnitno,outUnitno,extQnumlimit, extQnum
       real*8 Egamma,thetaL,thetacm,Elow,Ehigh,Einterval
       real*8 pAbs, mpi1
+      real*8 PiMinus,PiZero,PiPlus
       
       real*8 thetaLow,thetaHigh,thetaInterval
       integer calctype,frame,Nangles,Nenergy,ienergy,j ! number of energies/angles; index for energies/angles
@@ -200,7 +201,6 @@ c     end OF VARIABLE DECLARATIONS, BEGINNING OF CODING
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
-      coulomb = .True.
 
 c     Reading the input file from command line
 c**********************************************************************
@@ -319,6 +319,8 @@ c**********************************************************************
 c     hgrie May 2018: read 1N density
             call read1Ndensity(densityFileName,Anucl,twoSnucl,omega,thetacm,verbosity)
             
+            coulomb = .False.
+
             outputMat=c0
             x=cos(thetacm)
             mpiArr=(/mpi,mpi0,mpi/)
@@ -329,7 +331,13 @@ c           mpi1=mpiArr(extQnum)
 
             piCharge=extQnum-2
 c           piCharge=-1
-            write(*,*) "piCharge=", piCharge 
+            write(*,*) "piCharge=", piCharge
+c           DEBUG: print intermediate kinematic values
+c            if (extQnum.eq.1) then
+c              write(*,*) "DEBUG omega=", omega, " Mnucl=", Mnucl
+c              write(*,*) "DEBUG mpi1=", mpi1, " mpi0=", mpi0
+c              write(*,*) "DEBUG mNucleon=", mNucleon
+c            end if
             ! Compute the sqrt term
 c           omega=131.8754348d0
             sqrtTerm = sqrt(Mnucl**2 + omega**2)
@@ -350,14 +358,20 @@ c           omega=131.8754348d0
             else if((Psqr.gt.-5).and.(Psqr.lt.0.d0))then
               Psqr=0.d0
             end if
-            pAbs=sqrt(Psqr) 
 
-c           write(*,*) "pAbs=", pAbs 
+            pAbs=sqrt(Psqr)
+
+c           write(*,*) "pAbs=", pAbs
 c           pAbs=sqrt(omega*omega-mpi1*mpi1)
 
             sqrtSReal=sqrt(pSqr+mpi0*mpi0)+sqrt(Mnucl*Mnucl+pSqr)
             sqrtS=sqrt(pSqr+mpi0*mpi0)+sqrt(mNucleon*mNucleon+pAbs*pAbs)
 c           sqrtS=omega+sqrt(mNucleon*mNucleon+pAbs*pAbs)
+c           DEBUG: print kinematics
+c            if (extQnum.eq.1) then
+c              write(*,*) "DEBUG Psqr=",Psqr," pAbs=",pAbs
+c              write(*,*) "DEBUG sqrtS=",sqrtS," sqrtSReal=",sqrtSReal
+c            end if
             do rindx=1,maxrho1bindex
                 CALL get1Nqnnum(rindx,twom1N,twomt1N,twoMz,twom1Np,twomt1Np,twoMzp,L1N,ML1N)
                 if (L1N.eq.0) then !ML1N is automatically zero if L1N is
@@ -370,9 +384,20 @@ c                 write(*,*) "About to call getMat with sqrtS=", sqrtS, ", x=", 
                 end if 
             end do              !rindx   
             end do             !extQnum
-c           outputMat is unitless now
-            outputMat=outputMat*(1/(mpi0*1000))!10^-3 mpi^-1 units
-            outputMat=outputMat*HC*HC
+c           outputMat is unitless now (= Anucl * sum(rho * M), where M=8*pi*sqrtSReal*F)
+c           Convert to scattering length in 10^-3/mpi units.
+c           Reduced mass prefactor: mu_{piA}/mu_{piN} = (1+mpi/mN)/(1+mpi/Mnucl)
+c           cf. Liebig et al., Eur. Phys. J. A 47, 69 (2011), Eq. (1)
+            unitsFactor=(1d-3/mpi)
+c           write(*,*) "prefactor=", (1.d0+mpi/Mnucleon)/(1.d0+mpi/Mnucl)
+            outputMat=outputMat*(1.d0+mpi/Mnucleon)/(1.d0+mpi/Mnucl)
+            outputMat=outputMat/(8*Pi*sqrtSReal)
+            outputMat=outputMat/unitsFactor
+            PiMinus = real(outputMat(1, twoSnucl,twoSnucl))
+            PiZero = real(outputMat(2, twoSnucl,twoSnucl))
+            PiPlus = real(outputMat(3, twoSnucl,twoSnucl))
+            write(*,'(A)') "Consistency check P_I(π⁺) + P_I(π⁻) = 2·P_I(π⁰) for I=1/2 and I=3/2"
+            write(*,'(A,ES12.4)') "(pi+)+(pi-)-2(pi0) = ",PiMinus-2*PiZero+PiPlus
             call outputroutine(outUnitno,twoSnucl,extQnumlimit,
      &           outputMat,verbosity)
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
