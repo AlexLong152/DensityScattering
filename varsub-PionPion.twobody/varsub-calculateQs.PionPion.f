@@ -233,6 +233,13 @@ c     real*8 val
       E4=E1+E2-E3
       E4check=(1/(2*sqrt(mandalS)))*(mandalS+m4*m4-m3*m3)
       kpSquare=E4*E4-m4*m4
+      if (abs(kpSquare).lt.20)then
+          kpSquare=0.d0
+      else if (kpSquare.lt.0) then
+          write(*,*) "kp^2<0 -> given masses/energy are incompatable"
+          write(*,*) "This error should have been caught already.... something went wrong"
+          error stop
+      end if
       kpAbs=sqrt(kpSquare)
       
 c     write(*,*) "E1?=E1check",E1,E1check

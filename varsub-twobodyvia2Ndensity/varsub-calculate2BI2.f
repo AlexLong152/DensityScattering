@@ -103,15 +103,22 @@ c
          goto 100
       endif 
       Int2B=c0
+      Int=c0
       Kernel2B=c0
       
       alpha2N = get2Nchannum(l12,s12,j12,mt12,m12,twoMz)
       alpha2Np = get2Nchannum(l12p,s12p,j12p,mt12p,m12p,twoMzp)
-      rindx=rhoindx(alpha2N,alpha2Np)
+      if (alpha2N.le.0 .or. alpha2Np.le.0) then
+          rindx = 0
+      else
+          rindx=rhoindx(alpha2N,alpha2Np)
+      end if
 
       call initclebsch                ! Initializing the factorial array
 c     Loop  to sum over the spin projections of the (12) system: ms12 and ms12p (called ms and msp here). 
 c     The value of ms and msp together with m12 & m12p determine ml12 and ml12p. 
+
+      if (.not.(rindx.lt.1 .or. rindx.gt.size(rhoDensity,3))) then!skip this whole thing if out of bounds
       P12_MeV=P12P_density*HC
       do msp=-s12p,s12p,1
          ml12p=m12p-msp
@@ -190,9 +197,7 @@ c                             radVec=(/uVecR,th12(jth),phi12(jphi)/)
                               Yl12pstar=Real(Yl12p(ml12p))-ci*Imag(Yl12p(ml12p))
 
                               ppAbs = sqrt(DOT_PRODUCT(ppVecs(diagNum,:),ppVecs(diagNum,:)))!in MeV
-c                             write(*,*) "In varsub-calculate2BI2: ppAbs=",ppAbs 
-c                             write(*,*) "In varsub-calculate2BI2: ppVecs(diagNum,:)=",ppVecs(diagNum,:) 
-c                             stop
+                              !rindx in bounds check is done above, so no need to check here
                               call interpolate(tmpRho, real(rhoDensity(:,:,rindx),8), P12_MeV, ppAbs, pAbs, size(P12_MeV))
 
                               do extQnum=1,extQnumlimit
@@ -201,6 +206,10 @@ c                             stop
      &                                  tmpRho
 c                                   Would need ppAbs**2 here if it wasn't in varsub-finalstatesums.f already
                                 end do!extQnum   
+                              if (any(Int.ne.Int)) then
+                                write(*,*) "Int array is nan somewhere, stopping"
+                                error stop
+                              end if
                            end do!diagNum
                         end do  ! jphi
                      end do     ! jth
@@ -218,7 +227,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
             end do
          end do                 !ms12
       end do                    !ms12p
-
+      end if                    !rindx out of bounds
         
 c     do extQnum=1,extQnumlimit
 c     do diagNum=1,numDiagrams
@@ -332,7 +341,7 @@ c     Outputs----------------------------------------
 
 c     Internal --------------------------------------
       real*8 r,theta,phi
-
+      real*8 vec(3)
 c   If there isn't a substitution then ppVecs(diagNum,:)==uVec so can check we get uVecR, th12(jth), phi12(jphi) in the
 c   back transform which is what radVec and passFlag are for
 
@@ -344,8 +353,11 @@ c     logical cond
 c     logical passFlag
 c     real*8 tmp(3)
 c     integer ell
-
-      call cart2Sphere(ppVec(1),ppVec(2),ppVec(3),
+      vec=ppVec
+      if(all(vec .eq. 0.d0)) then
+        vec(3)=0.001
+      end if
+      call cart2Sphere(vec(1),vec(2),vec(3),
      &       r,theta,phi,verbosity)
       call getsphericalharmonics(Yl,l12,theta,phi)
     

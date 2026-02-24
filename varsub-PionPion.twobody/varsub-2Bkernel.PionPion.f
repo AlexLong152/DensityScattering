@@ -295,11 +295,11 @@ c     DIMENSIONAL ANALYSIS: prefactor = mpi0^2/(4*fpi^4) = [MeV^2]/[MeV^4] = [Me
       factorAsym=0.d0
 
       factorBCsym=-1*gA*gA*prefactor*(1.d0/((DOT_PRODUCT(qVec,qVec)+mPion**2)**2))!units MeV^-6, but CalcKernel2BBsym/asy adds factor MeV^2, gives result MeV^-4
-      factorBCsym=0.d0
+c     factorBCsym=0.d0
       
       factorDsym= -0.25*(mPion/(2*fpi*fpi))**3.d0
       factorDsym = factorDsym* (DOT_PRODUCT(qVec,qVec))**(-0.5d0) 
-c     factorDsym=0.d0
+      factorDsym=0.d0
 
       factorAasy=factorAsym
       factorBCasy=factorBCsym

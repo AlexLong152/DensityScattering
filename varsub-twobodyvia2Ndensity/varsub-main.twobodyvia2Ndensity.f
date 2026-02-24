@@ -394,7 +394,7 @@ c     hgrie Aug/Sep 2020: delete the local .h5 file if one was generated from .g
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c**********************************************************************
             write(*,*) "*********Now convoluting 2N helicity amplitudes with 2N density matrix.*********"  
-            do mt12=0,0                ! only charged pion exchange at OQ4 => (12) subsystem is (pn) 
+            do mt12=-1,1                ! only charged pion exchange at OQ4 => (12) subsystem is (pn) 
                do j12=0,j12max                      ! total ang mom (12); usually Jmax=1 for 1% convergence
                   do s12=0,1                        ! spin (12)
                      do l12=abs(j12-s12),j12+s12    ! angular mom. (12)

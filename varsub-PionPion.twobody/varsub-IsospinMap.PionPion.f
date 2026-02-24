@@ -439,3 +439,23 @@ c     val = 2 * (-1)^(t+1) * δ(t,tp) * δ(mt,mtp) * δ(mtp,0)
 
       return
       end
+
+      subroutine PionPionD(t, mt, tp, mtp, extQnum, val)
+      implicit none
+      integer t, mt, tp, mtp, extQnum
+      complex*16 val
+      integer i, irow, icol
+      complex*16 tau1(2,2), tau2(2,2)
+      complex*16  total(4,4)
+
+      total = 0.d0
+      call combinePhysical(extQnum, total)
+      total= 2.d0 * total
+c     Get matrix indices from quantum numbers
+      call mapping(t, mt, tp, mtp, irow, icol)
+
+c     Return matrix element
+      val = total(irow, icol)
+
+      return
+      end

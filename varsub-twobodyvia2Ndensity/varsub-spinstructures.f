@@ -69,7 +69,7 @@ c     hold(Sp,Msp,S,Ms)
 !       hold(i)
 !       end subroutine singsigmaCross
 
-      subroutine twosigmas(hold,A,Sp,S,verbosity)
+      subroutine twosigmassym(hold,A,Sp,S,verbosity)
 c     Calculates part of spin structure <Sp,mp|σ1.A σ2.A|S,m>
       implicit none
       include '../common-densities/constants.def'
@@ -77,7 +77,7 @@ c
 c********************************************************************
 c     OUTPUT VARIABLES:
 c     
-      real*8,intent(out) :: hold(0:1,-1:1,0:1,-1:1)
+      complex*16,intent(out) :: hold(0:1,-1:1,0:1,-1:1)
 c     
 c********************************************************************
 c     INPUT VARIABLES:
@@ -98,7 +98,7 @@ c
       Bz=A(3)
 
       call doublesigmasym(holdtmp,A(1),A(2),A(3),Bx,By,Bz,Sp,S,verbosity)
-      hold=0.5*real(holdtmp)
+      hold=0.5*holdtmp ! σ₁·A σ₂·B + σ₁·B σ₂·A when A=B -> 2 σ₁·A σ₂·A, so divide by 2 to get σ₁·A σ₂·A
       end subroutine
 
 
