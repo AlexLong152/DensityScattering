@@ -1,3 +1,15 @@
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     Module to toggle individual diagram contributions on/off.
+c     Set flags to .false. to zero out a diagram.
+c     KernelFarewell prints which diagrams are active in the output.
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+      module diagFlags
+      implicit none
+      logical :: diagA  = .true.
+      logical :: diagBC = .false.
+      logical :: diagD  = .false.
+      end module diagFlags
+
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     Part of KERNEL code for Twobody Contributions to Few-Nucleon Processes Calculated Via 2N-Density Matrix
 c     NEW Nov 2023: v1.0 Alexander Long/hgrie 
@@ -77,12 +89,18 @@ c     hgrie Nov 2023: show kernel process and version
 c     included here since will change when kernel changes
       subroutine KernelFarewell(extQnumlimit,symmetry,verbosity)
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+      use diagFlags
       implicit none
       integer,intent(in) :: extQnumlimit,symmetry
       integer,intent(in) :: verbosity         ! verbosity index for stdout
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     show what is outputted, and its units
-      write(*,*) "Based on BKM review equation 5.30"
+c     diagA, diagBC, diagD are the flags for the diagrams, set in diagFlags module at the top of this file
+      write(*,*) "Based on https://arxiv.org/abs/1003.3826v1, 10.1140/epja/i2011-11069-4, Towards a high-precision calculation for the pion-nucleus scattering lengths"
+      write(*,*) "Active diagrams:"
+      write(*,*) "  Diagram A:  ", diagA
+      write(*,*) "  Diagram BC: ", diagBC
+      write(*,*) "  Diagram D:  ", diagD
 c     characterise symmetry/-ies, if any used.
       If (symmetry.eq.0) then
          write(*,*) "        No symmetries used."
@@ -241,6 +259,7 @@ c     prefactor = prefactor*8*pi*sqrtS!uncomment this line to change `Result` to
 
 
       subroutine getDiagABC(Kerneltmp,pVec,uVec,ppVecA,kVec,kpVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnum,mNucl,mPion,verbosity)
+      use diagFlags
       implicit none
 c     diagrams B and C combine to one diagram https://arxiv.org/abs/1003.3826v1
       include '../common-densities/constants.def'
@@ -292,18 +311,29 @@ c     DIMENSIONAL ANALYSIS: prefactor = mpi0^2/(4*fpi^4) = [MeV^2]/[MeV^4] = [Me
       end if
 
       factorAsym=prefactor*(1/(DOT_PRODUCT(qVec,qVec)))! units MeV^-4
-      factorAsym=0.d0
 
       factorBCsym=-1*gA*gA*prefactor*(1.d0/((DOT_PRODUCT(qVec,qVec)+mPion**2)**2))!units MeV^-6, but CalcKernel2BBsym/asy adds factor MeV^2, gives result MeV^-4
-c     factorBCsym=0.d0
-      
+
       factorDsym= -0.25*(mPion/(2*fpi*fpi))**3.d0
-      factorDsym = factorDsym* (DOT_PRODUCT(qVec,qVec))**(-0.5d0) 
-      factorDsym=0.d0
+      factorDsym = factorDsym* (DOT_PRODUCT(qVec,qVec))**(-0.5d0)
 
       factorAasy=factorAsym
       factorBCasy=factorBCsym
       factorDasy= factorDsym
+
+c     Zero out factors for disabled diagrams (controlled by diagFlags module)
+      if (.not. diagA) then
+        factorAsym=0.d0
+        factorAasy=0.d0
+      end if
+      if (.not. diagBC) then
+        factorBCsym=0.d0
+        factorBCasy=0.d0
+      end if
+      if (.not. diagD) then
+        factorDsym=0.d0
+        factorDasy=0.d0
+      end if
 
       call checkNaNScalar(factorAsym, "factorAsym")
       call checkNaNScalar(factorBCsym, "factorBCsym")

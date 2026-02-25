@@ -108,6 +108,7 @@ c
       
       alpha2N = get2Nchannum(l12,s12,j12,mt12,m12,twoMz)
       alpha2Np = get2Nchannum(l12p,s12p,j12p,mt12p,m12p,twoMzp)
+      !Its possible we can remove this explicit check, leaving it for now.
       if (alpha2N.le.0 .or. alpha2Np.le.0) then
           rindx = 0
       else
