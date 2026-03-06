@@ -36,8 +36,8 @@ def main():
     df = densdf.pddf
     # df = df.reset_index()
 
-    thetas = np.array([60])
-    energies = np.array([133])
+    thetas = np.array([0])
+    energies = np.array([136.7])
 
     eps = 2
     omega_masks = [(df["omega"] - e).abs() < eps for e in energies]

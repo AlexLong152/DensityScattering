@@ -1,1 +1,0 @@
-/home/alexander/OneDrive/dis/FigNums/compton/Ntot-Angle-SRG-grid.py

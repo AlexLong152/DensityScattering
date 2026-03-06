@@ -187,7 +187,8 @@ c       ampThresh is in MeV^{-1}, prefactor in MeV, so Mmat is dimensionless
       else
         if (epsVec(3).ne.0.d0) then
           write(*,*) "z component of polarization vector component detected above threshold. Check epsVec input."
-          write(*,*) "CGLN amplitudes must be extended to F1-F6 with L_+- for longitudinal component, and SAID multipoles only include E_0+, M_1-, etc. for transverse components. Stopping to avoid incorrect results."
+          write(*,*) "CGLN amplitudes must be extended to F1-F6 with L_+- for longitudinal component, and SAID multipoles only include E_0+, M_1-, etc. for transverse components."
+          write(*,*) "Remove this `stop` statement at your own risk, but the results will likely diverge from the correct answer"
           stop
         end if
 c       Above threshold: use SAID multipoles via isospin decomposition

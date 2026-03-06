@@ -486,19 +486,18 @@ c                 call getRawM(sqrtS-3.885d0,x , nuc, Mmat, Mnucl, sqrtSReal,Max
 
             K1N= (MNucl/Mnucleon)! factor (m_N + M_pi)/(mnucl+mpi ) taken care of by 8 pi sqrtS
             outputMat=outputMat*K1N*Anucl*(cmplx(0.d0,-1.d0,KIND=8))
-
             unitsFactor=(1d-3/mpi)
             prefactor=8*Pi*sqrtSReal
-            divMat=complexSign(SpinVec)
-            where (abs(divMat).gt.1e-15)
+c           divMat=complexSign(SpinVec)
+
+            where (abs(spinVec).gt.1e-15)
 c             FormFacts=outputMat/divMat
-              FormFacts=outputMat/(2*spinVec)
+              FormFacts=outputMat/(2*spinVec) !M=2i E_{0+} ε.S -> M/(2i ε.S)= E_{0+} or L_{0+} in the z-axis case
               FormFacts=FormFacts/prefactor
               FormFacts=FormFacts/unitsFactor
             elsewhere
               FormFacts=c0
             end where
-
 
 c           call outputroutinelabeled(outUnitno,twoSnucl,extQnumlimit,
 c    &           SpinVec,verbosity,"SpinVector")
@@ -507,7 +506,7 @@ c    &           SpinVec,verbosity,"SpinVector")
      &           outputMat,verbosity,"Matrix")
             write(*,*) 
             write(*,*) 
-            write(*,"(A)") "Form factors in 10^-3/mpi units" 
+            write(*,"(A)") "Form factors in 10^-3/m_{pi^+} units" 
             call outputroutinelabeled(outUnitno,twoSnucl,extQnumlimit,
      &           FormFacts,verbosity,"FormFacts")
 

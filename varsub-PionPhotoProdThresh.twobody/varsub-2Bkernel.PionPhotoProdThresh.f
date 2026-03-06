@@ -150,7 +150,6 @@ c!     LOCAL VARIABLES:
 c!     real*8 qVec(3)!, qpVec(3)
       real*8 ppVec(3)
 c!     real*8 qVec(3)
-      real*8 dl12by2
       complex*16 factorAsym!,factorBsym,factorB2,factorA2
       complex*16 factorAasy!,factorBasy
       real*8 kVec(3),kpVec(3)
@@ -168,7 +167,6 @@ c
       diagNumber=0
       Kernel2B=c0
       kernelA=c0
-      dl12by2=(l12-l12p)/2.d0   !to check if l12-l12p is  even or odd
 c     
 c     
       

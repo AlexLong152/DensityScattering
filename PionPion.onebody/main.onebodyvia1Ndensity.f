@@ -193,7 +193,7 @@ c     0: do not delete; 1: delete un-gz'd file; 2: delete downloaded and un-gz'd
       character isospin2Str(-1:1)
       integer lab, cm
       integer piCharge
-      logical coulomb
+      logical coulomb, atThresh
       real*8 sqrtTerm, A,B, expr, pSqr
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -320,6 +320,7 @@ c     hgrie May 2018: read 1N density
             call read1Ndensity(densityFileName,Anucl,twoSnucl,omega,thetacm,verbosity)
             
             coulomb = .False.
+            atThresh=.True.
 
             outputMat=c0
             x=cos(thetacm)
@@ -330,8 +331,6 @@ c           mpi1=mpiArr(extQnum)
             mpi1=mpi!setting mpi=mpi+/- for now
 
             piCharge=extQnum-2
-c           piCharge=-1
-            write(*,*) "piCharge=", piCharge
 c           DEBUG: print intermediate kinematic values
 c            if (extQnum.eq.1) then
 c              write(*,*) "DEBUG omega=", omega, " Mnucl=", Mnucl
@@ -339,33 +338,43 @@ c              write(*,*) "DEBUG mpi1=", mpi1, " mpi0=", mpi0
 c              write(*,*) "DEBUG mNucleon=", mNucleon
 c            end if
             ! Compute the sqrt term
-c           omega=131.8754348d0
-            sqrtTerm = sqrt(Mnucl**2 + omega**2)
 
+c           STUFFF BELOW HERE NEEDS TO BE ACTUALLY USED ABOVE THRESHOLD
+
+            sqrtTerm = sqrt(Mnucl**2 + omega**2)
+ 
             ! First big bracket: (M^2 + omega*(omega - sqrtTerm))
             A = Mnucl**2 + omega * (omega - sqrtTerm)
-
+ 
             ! Second bracket: (M^2 + 2*omega*(omega - sqrtTerm))
             B = Mnucl**2 + 2.d0 * omega * (omega - sqrtTerm)
-
+ 
             ! The full expression, Psquare
             Psqr =  omega**2                                      
      &          - (mpi1**2 * A) / (Mnucl**2)                     
      &          + (mpi1**4 * B) / (4.d0 * Mnucl**4)
-            if (Psqr.lt.-5) then
-              write(*,*) "Psqr=", Psqr ,"stopping"
-              stop
-            else if((Psqr.gt.-5).and.(Psqr.lt.0.d0))then
+
+            if (atThresh) then
               Psqr=0.d0
+            end if 
+
+            if((Psqr.gt.-50).and.(Psqr.lt.10.d0))then
+              Psqr=0.d0
+              atThresh=.True.
             end if
 
+
+            ! Threshold case, just set Psqr=0
             pAbs=sqrt(Psqr)
 
 c           write(*,*) "pAbs=", pAbs
 c           pAbs=sqrt(omega*omega-mpi1*mpi1)
 
-            sqrtSReal=sqrt(pSqr+mpi0*mpi0)+sqrt(Mnucl*Mnucl+pSqr)
-            sqrtS=sqrt(pSqr+mpi0*mpi0)+sqrt(mNucleon*mNucleon+pAbs*pAbs)
+c           sqrtSReal=sqrt(pSqr+mpi0*mpi0)+sqrt(Mnucl*Mnucl+pSqr)
+c           sqrtS=sqrt(pSqr+mpi0*mpi0)+sqrt(mNucleon*mNucleon+pAbs*pAbs)
+
+            sqrtSReal=sqrt(pSqr+mpiArr(extQnum)*mpiArr(extQnum))+sqrt(Mnucl*Mnucl+pSqr) !account for mass splitting
+            sqrtS=sqrt(pSqr+mpiArr(extQnum)*mpiArr(extQnum))+sqrt(mNucleon*mNucleon+pAbs*pAbs)
 c           sqrtS=omega+sqrt(mNucleon*mNucleon+pAbs*pAbs)
 c           DEBUG: print kinematics
 c            if (extQnum.eq.1) then
@@ -377,7 +386,7 @@ c            end if
                 if (L1N.eq.0) then !ML1N is automatically zero if L1N is
 c                 write(*,*) "About to call getMat with sqrtS=", sqrtS, ", x=", x, ", twomt1N=", twomt1N, ", piCharge=", piCharge
                   call getMat(sqrtS, x, twomt1N, piCharge, Mmat,
-     &                        sqrtSReal,mNucl,coulomb)
+     &                        sqrtSReal,mNucl,coulomb,atThresh)
                     outputMat(extQnum,twoMzp,twoMz)= outputMat(extQnum,twoMzp,twoMz)+
      &                            Anucl*rho1b(rindx)*Mmat(twom1Np,twom1N)
 
@@ -396,8 +405,12 @@ c           write(*,*) "prefactor=", (1.d0+mpi/Mnucleon)/(1.d0+mpi/Mnucl)
             PiMinus = real(outputMat(1, twoSnucl,twoSnucl))
             PiZero = real(outputMat(2, twoSnucl,twoSnucl))
             PiPlus = real(outputMat(3, twoSnucl,twoSnucl))
-            write(*,'(A)') "Consistency check P_I(π⁺) + P_I(π⁻) = 2·P_I(π⁰) for I=1/2 and I=3/2"
+            write(*,*) 
+            write(*,'(A,L1)') "Code ran at threshold? (True/False): ", atThresh
+            write(*,'(A)') "Consistency check a(π⁺) + a(π⁻) = 2·a(π⁰), slight deviation due to m_π⁺/m_π⁰ mass splitting"
             write(*,'(A,ES12.4)') "(pi+)+(pi-)-2(pi0) = ",PiMinus-2*PiZero+PiPlus
+            write(*,*) 
+            write(*,*) "Output scattering lengths (in 10^-3/mpi units)"
             call outputroutine(outUnitno,twoSnucl,extQnumlimit,
      &           outputMat,verbosity)
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc

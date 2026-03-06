@@ -32,7 +32,7 @@ c     Set nucleon mass based on isospin
 
 c     Call getMat (returns matrix with 8*pi*sqrtSReal factor included)
       call getMat(sqrtS, x, isospin, piCharge, resultmat, sqrtSReal,
-     &            mNucl, coulomb)
+     &            mNucl, coulomb, .false.)
 
 c     Output results in a format easy to parse from Python
 c     Format: real(mat[-1,-1]) imag(mat[-1,-1]) real(mat[-1,1]) ...

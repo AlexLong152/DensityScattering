@@ -66,7 +66,7 @@ c     ================================================================
       fudgeFactor = 2.0d0
 
       call getMat(sqrtS, x, isospin, piCharge, mat, sqrtS,mNucl,
-     &            coulomb)
+     &            coulomb,.false.)
 
 c     Divide out the 8*pi*sqrtSReal factor that getMat includes
       normFactor = 8.0d0 * MYPI * sqrtS
@@ -96,13 +96,13 @@ c     Calculate trace of mat * matDag
 
 c     ================================================================
       subroutine getMat(sqrtS, x, isospin, piCharge, resultmat,
-     &                  sqrtSReal,mNucl,coulomb)
+     &                  sqrtSReal,mNucl,coulomb,atThresh)
 c     Calculate scattering matrix
 c     ================================================================
       implicit none
       double precision sqrtS, x,sqrtSReal
       integer isospin, piCharge
-      logical coulomb
+      logical coulomb, atThresh
       double complex mat(2,2)
       double complex resultmat(-1:1,-1:1)
 
@@ -121,7 +121,7 @@ c     ================================================================
       sigVec(3,:,:)=sigz
 
       call getGH(sqrtS, x, isospin, piCharge, g, h,sqrtSReal,mNucl,
-     &           coulomb)
+     &           coulomb,atThresh)
 c     DEBUG: print g,h values
 c      write(*,*) "DEBUG getMat: g=",g," h=",h,
 c    &            " iso=",isospin," piQ=",piCharge
@@ -178,9 +178,9 @@ c     ================================================================
       double precision sintheta
 
       call getGH(sqrtS, x, isospin, piCharge, g, h, sqrtSReal, mNucl,
-     &           coulomb)
+     &           coulomb,.false.)
       sintheta = dsqrt(1.0d0 - x*x)
-      
+
       DSG = cdabs(g)**2 + cdabs(h * sintheta)**2
       DSG = DSG * 10.0d0*(8*pi*sqrtSReal)**2
       
@@ -189,7 +189,7 @@ c     ================================================================
 
 c     ================================================================
       subroutine getGH(sqrtS, x, isospin, piCharge, g, h,sqrtSReal,
-     &                 mNucl,coulomb)
+     &                 mNucl,coulomb,atThresh)
 c     Calculate g and h scattering amplitudes
 c     When coulomb=.true., each partial wave is multiplied by
 c     exp(2i*sigma_l) and the Rutherford amplitude f_C is added to g.
@@ -197,7 +197,7 @@ c     ================================================================
       implicit none
       double precision sqrtS, x, sqrtSReal, mNucl
       integer isospin, piCharge
-      logical coulomb
+      logical coulomb, atThresh
       double complex g, h
 
       integer twoIs(2), ells(5)
@@ -281,8 +281,8 @@ c        Loop over partial waves l = 0...4
          do j = 1, 5
             ell = ells(j)
 
-            call getF(qVec, twoI, ell, 1, sqrtS, fPlus)
-            call getF(qVec, twoI, ell, -1, sqrtS, fMinus)
+            call getF(qVec, twoI, ell, 1, sqrtS, atThresh, fPlus)
+            call getF(qVec, twoI, ell, -1, sqrtS, atThresh, fMinus)
 
 c           DEBUG: print partial wave values (first call only)
 c            if (twoI.eq.1 .and. ell.le.1) then
@@ -321,12 +321,13 @@ c     Add Rutherford amplitude to g (spin-nonflip only)
       end subroutine getGH
 
 c     ================================================================
-      subroutine getF(qVec, twoI, ell, sign, sqrtS, fOut)
+      subroutine getF(qVec, twoI, ell, sign, sqrtS, atThresh, fOut)
 c     Calculate partial wave amplitude with linear interpolation
 c     ================================================================
       implicit none
       double precision qVec(3), sqrtS
       integer twoI, ell, sign
+      logical atThresh
       double complex fOut
 
       character*1 letter
@@ -363,9 +364,9 @@ c     Calculate target2L = 2*ell + sign
 
 c     Get values at x1 and x2
       call getFAtValue(qVec, twoI, ell, sign, target2L, letter,
-     &                 dble(x1), y1)
+     &                 dble(x1), atThresh, y1)
       call getFAtValue(qVec, twoI, ell, sign, target2L, letter,
-     &                 dble(x2), y2)
+     &                 dble(x2), atThresh, y2)
 
 c     Linear interpolation: fOut = y1 + slope * diff
 c     where slope = (y2 - y1) / (x2 - x1) = (y2 - y1) / 2
@@ -441,26 +442,24 @@ c     Only S-waves have nonzero scattering length at threshold
 
 c     ================================================================
       subroutine getFAtValue(qVec, twoI, ell, sign, target2L, letter,
-     &                       sqrtS, fOut)
+     &                       sqrtS, atThresh, fOut)
 c     Calculate partial wave amplitude at a specific sqrtS value, returns fOut in units of MeV^-1
 c     ================================================================
       implicit none
       double precision qVec(3), sqrtS
       integer twoI, ell, sign, target2L
       character*1 letter
+      logical atThresh
       double complex fOut
 
       double precision del_result, sr_result, eta, qAbs
       double precision Epi_cm, wcm_actual
       double precision aScatMeV
-      double precision, parameter :: piNthreshold = 1077.84d0
       logical found, isThresh
 
-c     At or below the free piN threshold, use known scattering lengths
-c     instead of SAID phase shifts. The lowest SAID point (WCM=1078)
-c     gives delta/q values ~20% larger than the true scattering length
-c     due to effective range corrections at finite q ~ 5 MeV.
-      if (sqrtS .le. piNthreshold + 2.0d0) then
+c     At threshold, use known scattering lengths instead of SAID
+c     phase shifts. The boolean atThresh is set by the caller.
+      if (atThresh) then
          call getThresholdScatLength(twoI, ell, aScatMeV, isThresh)
          if (isThresh) then
             fOut = dcmplx(aScatMeV, 0.0d0)

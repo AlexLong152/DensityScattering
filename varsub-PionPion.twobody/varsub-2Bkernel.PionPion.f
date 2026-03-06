@@ -6,8 +6,8 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       module diagFlags
       implicit none
       logical :: diagA  = .true.
-      logical :: diagBC = .false.
-      logical :: diagD  = .false.
+      logical :: diagBC = .true.
+      logical :: diagD  = .true.
       end module diagFlags
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -96,14 +96,16 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     show what is outputted, and its units
 c     diagA, diagBC, diagD are the flags for the diagrams, set in diagFlags module at the top of this file
-      write(*,*) "Based on https://arxiv.org/abs/1003.3826v1, 10.1140/epja/i2011-11069-4, Towards a high-precision calculation for the pion-nucleus scattering lengths"
+      write(*,*) "Based on https://arxiv.org/abs/1003.3826v1, 10.1140/epja/i2011-11069-4,"
+      write(*,*) "Towards a high-precision calculation for the pion-nucleus scattering lengths Liebig et al. 2011"
       write(*,*) "Active diagrams:"
       write(*,*) "  Diagram A:  ", diagA
       write(*,*) "  Diagram BC: ", diagBC
       write(*,*) "  Diagram D:  ", diagD
 c     characterise symmetry/-ies, if any used.
       If (symmetry.eq.0) then
-         write(*,*) "        No symmetries used."
+         write(*,*) ""
+         write(*,*) "  No symmetries used."
 c     following is a STUMP/SKETCH what symmetry outoput could be
 c     else if (symmetry.eq.1) then
 c         write(*,*) "        Symmetry imposed: ME(extQnum=1) =  ME(extQnum=1) up to sign." ! better specify signs!!
@@ -261,6 +263,7 @@ c     prefactor = prefactor*8*pi*sqrtS!uncomment this line to change `Result` to
       subroutine getDiagABC(Kerneltmp,pVec,uVec,ppVecA,kVec,kpVec,t12,t12p,mt12,mt12p,l12p,ml12p,s12p,s12,extQnum,mNucl,mPion,verbosity)
       use diagFlags
       implicit none
+
 c     diagrams B and C combine to one diagram https://arxiv.org/abs/1003.3826v1
       include '../common-densities/constants.def'
 c     Parameters-------------------------------------

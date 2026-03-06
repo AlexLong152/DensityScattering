@@ -16,6 +16,8 @@
 *.log
 *.aux
 *.synctex.gz
+lit/*
+lit/
 *__pycache__/
 .pyinput-*
 .pCommand.sh
@@ -24,6 +26,7 @@ input-*.dat
 testGetCS
 tesetGetMat
 test-*.dat
+Braun-subset.pdf
 #Exclude the executables
 common-densities/2Ndensity-module/testcompdens
 onebodyvia1Ndensity/onebodyvia1Ndensity

@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+title: "DensityScattering"
+message: "If you use this software, please cite it using these metadata."
+type: software
+authors:
+  - given-names: Alexander
+    name-particle: Phillips
+    family-names: Long
+    orcid: "https://orcid.org/0009-0009-5890-2713"
+license: MIT
+url: "https://github.com/AlexLong152/DensityScattering"
+preferred-citation:
+  type: thesis
+  authors:
+    - given-names: Alexander
+      name-particle: Phillips
+      family-names: Long
+      orcid: "https://orcid.org/0009-0009-5890-2713"
+  title: "Scattering Observables from Few-Body Densities and Application in Light Nuclei"
+  institution:
+    name: "The George Washington University"
+  year: 2026
+# doi:
