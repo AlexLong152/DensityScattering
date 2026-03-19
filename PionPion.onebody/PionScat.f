@@ -562,8 +562,9 @@ c     Handle near-threshold case for final state
       if (absQp.le.1) then
         absQp=1.d0
       end if
-      qpVec(1) = 0.0d0
-      qpVec(2) = dsqrt(1.0d0 - x*x) * absQp
+      ! qpVec(1) = 0.0d0
+      qpVec(1) = dsqrt(1.0d0 - x*x) * absQp/(sqrt(2))
+      qpVec(2) = dsqrt(1.0d0 - x*x) * absQp/(sqrt(2))
       qpVec(3) = x * absQp
       
       return
