@@ -308,8 +308,6 @@ c     Calculate F1 term: vec · σ (epsVec dot product with Pauli matrices) * F1
       f1Term = matRes1 * f1 * ci
 
       if (qAbs.ne.0.d0) then!avoid divide by zero errors
-        write(*,*) "Above threshold"
-        stop
         call crossProduct(kVec, epsVec, crossTmp)
         
         qVecComplex=dcmplx(qVec,0.d0)
@@ -662,8 +660,9 @@ c     Calculate x and y components based on scattering angle (x = cos(theta))
       sqrtTerm = sqrt(1.0d0 - x**2)
       
 c     Set pion momentum vector components
-      qVec(1) = 0.0d0
-      qVec(2) = sqrtTerm * absQ
+c     Place q at 45deg in x-y plane so x and y polarizations contribute equally
+      qVec(1) = sqrtTerm * absQ / sqrt(2.0d0)
+      qVec(2) = sqrtTerm * absQ / sqrt(2.0d0)
       qVec(3) = x * absQ
 c     write(*,*) "In getKinematics kVec=",kVec      
 c     write(*,*) "In getKinematics qVec=",qVec      

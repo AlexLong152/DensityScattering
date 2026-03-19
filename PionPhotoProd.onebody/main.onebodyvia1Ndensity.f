@@ -181,6 +181,7 @@ c     0: do not delete; 1: delete un-gz'd file; 2: delete downloaded and un-gz'd
       complex*16 :: Mmat(-1:1,-1:1)
       complex*16, allocatable :: outputMat(:,:,:), SpinVec(:,:,:), FormFacts(:,:,:), divMat(:,:,:)
       real*8 sqrtS,x,sqrtSReal, sqrtSThresh
+      real*8 Sgamma, EpsPion, kpPion, cosPhiCompton, phiCompton, mpi1, cosThetaPion
       complex*16 tmpMat
       character*3 nuc
       character piCharges(3)
@@ -427,11 +428,12 @@ c           I should definitely not be doing this with strings... too bad!
             isospin2Mass(-1)=mNeutron
             isospin2Mass(1)=mProton
 
-            thetacm=0.d0
-            x=cos(thetacm)!WARNING: for above threshold, this must be converted to pionphotoprod kinematics
+c           thetacm=0.d0
+c           x=cos(thetacm)!WARNING: for above threshold, this must be converted to pionphotoprod kinematics
 
             maxEll=4 ! MaxEll from 0 to 4
             eps = RESHAPE((/1,0,0,0,1,0,0,0,1/),(/3,3/))
+c           eps = RESHAPE((/1,1,0,1,-1,0,0,0,1/),(/3,3/))
 
 c           sqrtS is not the "real" value of mandalstam sqrtS, this is the value
 c           of the equivalent sqrtS for the kinematics of the poles, this value
@@ -444,19 +446,37 @@ c           picks out which pole to load
             sqrtSReal=mpi0+mNucl
             sqrtS=mpi0+mNucleon
 
-c           write(*,*) "mpi0+mNucl=sqrtSReal=", sqrtSReal 
-c           stop
-c           threshold=.false.
-            if ( abs(sqrtSThresh-mpi0-mNucl).lt.5 )then
-              threshold=.true.
-              write(*,*) "Threshold energy detected, setting maxEll=0, and setting energy to exactly threshold"
-              write(*,*) "Zeroing out imaginary part of poles"
-              write(*,*) "sqrtSreal=mpi0+mNucl, sqrtS_lookup=mpi0+mNucleon"
-              sqrtSReal=mpi0+mNucl
-              sqrtS=mpi0+mNucleon
-              maxEll=0
-            end if
+c         DO NOT overwrite sqrtSReal or sqrtS with threshold value, for above threshold calculation
+            sqrtSReal = omega + sqrt(omega*omega + mNucl*mNucl)
+            sqrtS = omega + sqrt(omega*omega + Mnucleon*Mnucleon)
 
+            Sgamma   = sqrtSReal * sqrtSReal
+            EpsPion  = (Sgamma + mpi0**2 - mNucl**2)
+     &                  / (2.d0 * sqrtSReal)
+            kpPion   = sqrt(EpsPion**2 - mpi0**2)
+
+c         thetacm here is the Compton angle phi (in radians)
+c         Solve for cos(theta_pion):
+            cosThetaPion = (-mpi0**2
+     &        + 2.d0*omega*(EpsPion
+     &            + (cos(thetacm) - 1.d0)*omega))
+     &        / (2.d0 * kpPion * omega)
+
+            x = cosThetaPion
+            write(*,'(A,F10.5)') "outgoing pion at angle", acos(x)*180/Pi 
+            threshold=.false.
+            ! if ( abs(sqrtSThresh-mpi0-mNucl).lt.5 )then
+            !   threshold=.true.
+            !   write(*,*) "Threshold energy detected, setting maxEll=0, and setting energy to exactly threshold"
+            !   write(*,*) "Zeroing out imaginary part of poles"
+            !   write(*,*) "sqrtSreal=mpi0+mNucl, sqrtS_lookup=mpi0+mNucleon"
+            !   sqrtSReal=mpi0+mNucl
+            !   sqrtS=mpi0+mNucleon
+            !   maxEll=0
+            ! end if
+            if(.not.threshold) then
+              extQnumlimit=2!only use x and y polarization above threshold, since F_5, F_6 needs to be included for z polarization, and those are not included in this version of the code
+            end if
             do extQnum=1,extQnumlimit
             do rindx=1,maxrho1bindex
                 CALL get1Nqnnum(rindx,twom1N,twomt1N,twoMz,twom1Np,twomt1Np,twoMzp,L1N,ML1N)
