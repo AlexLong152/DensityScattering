@@ -87,7 +87,7 @@ c     2=c.m. frame
 c     outfile-name of output file
 
       integer inUnitno,outUnitno,extQnumlimit, extQnum
-      real*8 Egamma,thetaL,thetacm,Elow,Ehigh,Einterval
+      real*8 Egamma,thetaL,thetacm,Elow,Ehigh,Einterval, phicm
       real*8 pAbs, mpi1
       real*8 PiMinus,PiZero,PiPlus
       
@@ -187,7 +187,7 @@ c     0: do not delete; 1: delete un-gz'd file; 2: delete downloaded and un-gz'd
 
       complex*16 :: Mmat(-1:1,-1:1)
       complex*16, allocatable :: outputMat(:,:,:) 
-      real*8 sqrtS,x,sqrtSReal
+      real*8 sqrtS,x,sqrtSReal, y
       character*3 nuc
       character piCharges(3)
       character isospin2Str(-1:1)
@@ -319,16 +319,17 @@ c**********************************************************************
 c     hgrie May 2018: read 1N density
             call read1Ndensity(densityFileName,Anucl,twoSnucl,omega,thetacm,verbosity)
             
-            coulomb = .False.
-            atThresh=.True.
+            coulomb = .False. !here there be dragons
+            atThresh=.False.
 
             outputMat=c0
-            x=cos(thetacm)
+            y=cos(thetacm)
             mpiArr=(/mpi,mpi0,mpi/)
             do extQnum=1,extQnumlimit
 c           extQnum=2!Neutral pion only
-c           mpi1=mpiArr(extQnum)
-            mpi1=mpi!setting mpi=mpi+/- for now
+            mpi1=mpiArr(extQnum)
+            ! mpi1=mpi!setting mpi=mpi+/- for now
+            mpi1=mpi0
 
             piCharge=extQnum-2
 c           DEBUG: print intermediate kinematic values
@@ -353,19 +354,27 @@ c           STUFFF BELOW HERE NEEDS TO BE ACTUALLY USED ABOVE THRESHOLD
             Psqr =  omega**2                                      
      &          - (mpi1**2 * A) / (Mnucl**2)                     
      &          + (mpi1**4 * B) / (4.d0 * Mnucl**4)
-
+            x = ((Cos(thetacm)-1)*omega*omega/(Psqr))+1
             if (atThresh) then
               Psqr=0.d0
+              x=1.d0
             end if 
 
             if((Psqr.gt.-50).and.(Psqr.lt.10.d0))then
               Psqr=0.d0
               atThresh=.True.
+              x=1.d0
             end if
-
-
             ! Threshold case, just set Psqr=0
             pAbs=sqrt(Psqr)
+            if ((extQnum.eq.1.d0).and.(.not.atThresh)) then
+              write(*,'(A,F7.2,A)') "Pion scattering angle=",
+     &              acos(x)*180.d0/Pi," degrees"
+              write(*,'(A,F9.3,A, F9.3)') "Pion scattering energy=",
+     &              sqrt(pSqr+mpi1*mpi1)," MeV -> pion momentum=", pAbs
+            end if
+
+            mpi1=mpiArr(extQnum)
 
 c           write(*,*) "pAbs=", pAbs
 c           pAbs=sqrt(omega*omega-mpi1*mpi1)
@@ -407,10 +416,18 @@ c           write(*,*) "prefactor=", (1.d0+mpi/Mnucleon)/(1.d0+mpi/Mnucl)
             PiPlus = real(outputMat(3, twoSnucl,twoSnucl))
             write(*,*) 
             write(*,'(A,L1)') "Code ran at threshold? (True/False): ", atThresh
+            if (atThresh) then
+            write(*,'(A)') "Output scattering lengths (in 10^-3/mpi units), pion charge = extQnum-2"
             write(*,'(A)') "Consistency check a(π⁺) + a(π⁻) = 2·a(π⁰), slight deviation due to m_π⁺/m_π⁰ mass splitting"
             write(*,'(A,ES12.4)') "(pi+)+(pi-)-2(pi0) = ",PiMinus-2*PiZero+PiPlus
             write(*,*) 
-            write(*,*) "Output scattering lengths (in 10^-3/mpi units)"
+            else
+              write(*,"(A)") "Above threshold result approximates  m_π⁺=m_π⁰ when doing conversions to pion scattering theta and energy"
+              write(*,"(A)") "Result array includes 1/(8 pi sqrtS) -> dsigma/dOmega = |Result|^2|, gives answer in milibarns"
+              outputMat=outputMat*unitsFactor !MeV^-1 units Now
+              outputMat=outputMat*hc!fm units now
+              outputMat=outputMat*sqrt(10.d0)! Result when squared is now in milibarns, 1fm^2=10mb
+            end if
             call outputroutine(outUnitno,twoSnucl,extQnumlimit,
      &           outputMat,verbosity)
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
