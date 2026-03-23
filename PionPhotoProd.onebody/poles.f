@@ -659,11 +659,16 @@ c     write(*,*) "poles.f:627 Epi**2-mPion**2=", Epi**2-mPion**2
 c     Calculate x and y components based on scattering angle (x = cos(theta))
       sqrtTerm = sqrt(1.0d0 - x**2)
       
-c     Set pion momentum vector components
-c     Place q at 45deg in x-y plane so x and y polarizations contribute equally
-      qVec(1) = sqrtTerm * absQ / sqrt(2.0d0)
-      qVec(2) = sqrtTerm * absQ / sqrt(2.0d0)
+c     Place q in the xz-plane WLOG to show symmetries better
+c     With this convention: eps_x = perpendicular to reaction plane,
+c                           eps_y = in reaction plane.
+      qVec(1) = sqrtTerm * absQ/sqrt(2.d0)
+      qVec(2) = sqrtTerm * absQ/sqrt(2.d0)
       qVec(3) = x * absQ
+c     if (sqrt(dot_product(qVec,qVec))-absQ.gt.1e-7) then
+c       write(*,*) "oops, qVec magnitude doesn't match absQ"
+c       stop
+c     end if
 c     write(*,*) "In getKinematics kVec=",kVec      
 c     write(*,*) "In getKinematics qVec=",qVec      
 

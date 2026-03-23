@@ -404,6 +404,13 @@ c     hgrie May 2018: outsourced into subroutine common-densities/makedensityfil
             densityFileName = originaldensityFileName
 
 
+c           Above threshold: only x,y polarizations (F_5,F_6 needed for z).
+c           Must set extQnumlimit BEFORE allocating arrays so that
+c           the leading dimension matches what output routines expect.
+            threshold=.false.
+            if(.not.threshold) then
+              extQnumlimit=2
+            end if
             allocate(outputMat(1:extQnumlimit,-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
             allocate(FormFacts(1:extQnumlimit,-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
             allocate(divMat(1:extQnumlimit,-twoSnucl:twoSnucl,-twoSnucl:twoSnucl))
@@ -464,7 +471,7 @@ c         Solve for cos(theta_pion):
 
             x = cosThetaPion
             write(*,'(A,F10.5)') "outgoing pion at angle", acos(x)*180/Pi 
-            threshold=.false.
+c           threshold already set before allocations above
             ! if ( abs(sqrtSThresh-mpi0-mNucl).lt.5 )then
             !   threshold=.true.
             !   write(*,*) "Threshold energy detected, setting maxEll=0, and setting energy to exactly threshold"
@@ -474,9 +481,7 @@ c         Solve for cos(theta_pion):
             !   sqrtS=mpi0+mNucleon
             !   maxEll=0
             ! end if
-            if(.not.threshold) then
-              extQnumlimit=2!only use x and y polarization above threshold, since F_5, F_6 needs to be included for z polarization, and those are not included in this version of the code
-            end if
+c           extQnumlimit reduced to 2 before allocations above
             do extQnum=1,extQnumlimit
             do rindx=1,maxrho1bindex
                 CALL get1Nqnnum(rindx,twom1N,twomt1N,twoMz,twom1Np,twomt1Np,twoMzp,L1N,ML1N)
@@ -526,9 +531,11 @@ c    &           SpinVec,verbosity,"SpinVector")
      &           outputMat,verbosity,"Matrix")
             write(*,*) 
             write(*,*) 
+            if (threshold) then
             write(*,"(A)") "Form factors in 10^-3/m_{pi^+} units" 
             call outputroutinelabeled(outUnitno,twoSnucl,extQnumlimit,
      &           FormFacts,verbosity,"FormFacts")
+            end if
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     hgrie Aug/Sep 2020: delete the local .dat file if one was generated from .gz
