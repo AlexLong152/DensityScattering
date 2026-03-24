@@ -46,6 +46,7 @@ def getBlock(filetext, kind):
             block_lines.append(line)
 
     if not block_lines:
+        # print("filetext=\n", filetext)
         raise BadDataError(f"No block found for kind='{kind}'")
 
     return "\n".join(block_lines)
@@ -98,7 +99,9 @@ def parseBlock(block):
 
 def getQuantNums(filename, returnMat=True, kind="Result"):
     """
-    Reads in quantum numbers as real numbers from filename
+    Reads in quantum numbers as real numbers from filename.
+    Supports both the new format (with extQnum labels) and the old format
+    (raw complex number pairs).
     """
     out = {}
     nucName = getNucName(filename)
@@ -106,17 +109,21 @@ def getQuantNums(filename, returnMat=True, kind="Result"):
     if returnMat:
         with open(filename, "r") as f:
             contents = f.read()
+        try:
             if isinstance(kind, (list, np.ndarray)):
                 for tmp in kind:
                     try:
-                        block = getBlock(contents, kind)
+                        block = getBlock(contents, tmp)
                     except BadDataError:
                         pass
             else:
                 block = getBlock(contents, kind)
             parsed_data = parseBlock(block)
-
             out["MatVals"] = vals2matrix(nucName, parsed_data)
+        except BadDataError:
+            # Fall back to old format: raw (real,imag) pairs
+            vals = _parseOldFormat(contents)
+            out["MatVals"] = _vals2matrix_flat(nucName, vals)
     try:
         densityName = densityFileName(filename)
     except UnboundLocalError:
@@ -299,6 +306,64 @@ def vals2matrix(nucName, parsed_data):
     if allZeros:
         raise ValueError("All zero entries in parsed data")
 
+    return out
+
+
+def _parseOldFormat(contents):
+    """
+    Parse the old output format: raw (real,imag) complex number pairs.
+    """
+    lines = np.array(contents.splitlines())
+    indx = -1
+    for i in range(len(lines)):
+        if "(" in lines[i]:
+            indx = i
+            break
+    if indx == -1:
+        raise BadDataError(f"Bad file (old format): no '(' found")
+
+    lines = lines[indx:]
+    lines = "".join(lines)
+    lines = lines.split("=")
+    lines = lines[0]
+    lines = lines.split("%")
+    lines = lines[0]
+    lines = lines.replace("(", "")
+    lines = lines.split(")")
+    lines = np.array(
+        [x.strip() for x in lines if x.strip() != "" and "Repeated" not in x]
+    )
+    vals = np.zeros(len(lines), dtype=np.complex128)
+    for i in range(len(vals)):
+        if "," in lines[i]:
+            tmp = lines[i].split(",")
+            vals[i] = float(tmp[0]) + 1j * float(tmp[1])
+        else:
+            tmp = lines[i].strip().replace("i", "j")
+            vals[i] = complex(tmp)
+    return vals
+
+
+def _vals2matrix_flat(nucName, vals):
+    """
+    Reshape a flat array of complex values into (numextQnums, numStates, numStates).
+    Used for the old output format.
+    """
+    twoSpin = getTwoSpin(nucName)
+    numStates = twoSpin + 1
+    numextQnums = len(vals) // (numStates**2)
+    out = np.zeros((numextQnums, numStates, numStates), dtype=np.complex128)
+    allZeros = True
+    i = 0
+    for extNum in range(numextQnums):
+        for mzp in range(numStates):
+            for mz in range(numStates):
+                out[extNum, mzp, mz] = vals[i]
+                if vals[i] != 0:
+                    allZeros = False
+                i += 1
+    if allZeros:
+        raise ValueError("All zero entries in parsed data")
     return out
 
 
