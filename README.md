@@ -229,7 +229,12 @@ writeup PDFs are also tracked for convenience.
 ## Usage
 
 Each process folder contains an `input.dat` file showing the expected input
-format. A typical run:
+format. **Note**: the bundled `input.dat` examples have a `densityFileName`
+line pointing at the author's local density paths (e.g.
+`/home/alexander/OneDrive/densities-.../...h5`); replace it with the path
+to your own download from `tools/DownloadDens.py` before running.
+
+A typical run:
 
 ```bash
 cd PionPion.onebody
