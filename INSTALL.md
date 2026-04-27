@@ -69,6 +69,8 @@ install of h5z-zfp in section 2 fails to find a usable HDF5, build
 HDF5 from source as above.
 
 ## 2. h5z-zfp compression plugin
+This method is NOT optimal, and might not work on all systems. Follow these instructions at your own risk.
+I believe this was required for Aarch based systems, but Debian based systems might just work with the `hdf5-plugin-lzp` or similar package, which is much easier to install. What is below should function though at least as a fallback.
 
 The density files distributed by the Jülich store are compressed with
 [ZFP](https://github.com/LLNL/zfp) and require the `h5z-zfp` HDF5
@@ -90,11 +92,8 @@ git clone https://github.com/llnl/spack.git
 
 ### 2.2 Install h5z-zfp
 
-The release branch has occasionally been broken; the `develop` branch
-is the safe choice:
-
 ```bash
-spack install h5z-zfp@develop
+spack install h5z-zfp
 ```
 
 This compile takes several minutes.
