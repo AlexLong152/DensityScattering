@@ -9,31 +9,53 @@ from os import system
 
 system("make clean;make")
 ro.Odelta = 2
-# 6Li
-densfolder = r"/home/alexander/OneDrive/densities-6Li/1Ndensities/133MeV/60deg/"
-outputfolder = (
-    r"/home/alexander/Dropbox/PionPhotoProduction/results-6Li/133MeV/1bod/above/"
-)
-
-ro.main(densfolder, outputfolder)
+# # 6Li
+# densfolder = r"/home/alexander/OneDrive/densities-6Li/1Ndensities/133MeV/60deg/"
+# outputfolder = (
+#     r"/home/alexander/Dropbox/PionPhotoProduction/results-6Li/133MeV/1bod/above/"
+# )
+#
+# ro.main(densfolder, outputfolder)
 
 # 3He
 densfolder = r"/home/alexander/OneDrive/densities-3He/1Ndensities/132MeV/60deg/"
 outputfolder = r"/home/alexander/Dropbox/PionPhotoProduction/results-3He/1bod/above/"
 
 ro.main(densfolder, outputfolder)
-# 3H
-densfolder = r"/home/alexander/OneDrive/densities-3H/1Ndensities/132MeV/60deg/"
+# # 3H
+# densfolder = r"/home/alexander/OneDrive/densities-3H/1Ndensities/132MeV/60deg/"
+#
+# outputfolder = (
+#     r"/home/alexander/Dropbox/PionPhotoProduction/results-3H/132MeV/1bod/above/"
+# )
+# ro.main(densfolder, outputfolder)
 
-outputfolder = (
-    r"/home/alexander/Dropbox/PionPhotoProduction/results-3H/132MeV/1bod/above/"
-)
-ro.main(densfolder, outputfolder)
-
+"""
 # 4He
-densfolder = r"/home/alexander/OneDrive/densities-4He/1Ndensities/133MeV/60deg/"
-outputfolder = (
-    r"/home/alexander/Dropbox/PionPhotoProduction/results-4He/133MeV/1bod/above/"
-)
+# densfolder = r"/home/alexander/OneDrive/densities-4He/1Ndensities/133MeV/60deg/"
+densfolder = r"/home/alexander/OneDrive/densities-4He/1Ndensities/piphoto-170MeV/"
+outputfolder = r"/home/alexander/Dropbox/PionPhotoProduction/results-4He/170MeV/"
 
 ro.main(densfolder, outputfolder)
+
+# 3He
+# densfolder = r"/home/alexander/OneDrive/densities-4He/1Ndensities/133MeV/60deg/"
+densfolder = r"/home/alexander/OneDrive/densities-3He/1Ndensities/piphoto-170MeV/"
+outputfolder = r"/home/alexander/Dropbox/PionPhotoProduction/results-3He/1bod/170MeV"
+
+ro.main(densfolder, outputfolder)
+
+
+# 3H
+# densfolder = r"/home/alexander/OneDrive/densities-4He/1Ndensities/133MeV/60deg/"
+densfolder = r"/home/alexander/OneDrive/densities-3H/1Ndensities/piphoto-170MeV/"
+outputfolder = r"/home/alexander/Dropbox/PionPhotoProduction/results-3H/170MeV/"
+
+ro.main(densfolder, outputfolder)
+
+
+# 6Li
+densfolder = r"/home/alexander/OneDrive/densities-6Li/1Ndensities/piphoto-170MeV/"
+outputfolder = r"/home/alexander/Dropbox/PionPhotoProduction/results-6Li/170MeV/"
+ro.main(densfolder, outputfolder)
+"""

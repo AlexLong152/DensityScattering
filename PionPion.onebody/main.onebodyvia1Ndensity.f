@@ -87,7 +87,7 @@ c     2=c.m. frame
 c     outfile-name of output file
 
       integer inUnitno,outUnitno,extQnumlimit, extQnum
-      real*8 Egamma,thetaL,thetacm,Elow,Ehigh,Einterval, phicm
+      real*8 Egamma,thetaL,thetacm,Elow,Ehigh,Einterval, phicm, theta_calc
       real*8 pAbs, mpi1
       real*8 PiMinus,PiZero,PiPlus
       
@@ -321,6 +321,7 @@ c     hgrie May 2018: read 1N density
             
             coulomb = .False. !here there be dragons
             atThresh=.False.
+            ! atThresh=.True.
 
             outputMat=c0
             y=cos(thetacm)
@@ -365,11 +366,15 @@ c           STUFFF BELOW HERE NEEDS TO BE ACTUALLY USED ABOVE THRESHOLD
               atThresh=.True.
               x=1.d0
             end if
+            !TODO: Remove these hard coded values, just comment out these two lines below.
+            theta_calc=acos(x)*180.d0/Pi
+            theta_calc = nint(acos(x)*180.d0/Pi / 15.d0) * 15.d0!rounds to nearest 15 degrees
+            Psqr=(170.d0**2.d0)-mpi1**2.d0
             ! Threshold case, just set Psqr=0
             pAbs=sqrt(Psqr)
             if ((extQnum.eq.1.d0).and.(.not.atThresh)) then
               write(*,'(A,F7.2,A)') "Pion scattering angle=",
-     &              acos(x)*180.d0/Pi," degrees"
+     &              theta_calc," degrees"
               write(*,'(A,F9.3,A, F9.3)') "Pion scattering energy=",
      &              sqrt(pSqr+mpi1*mpi1)," MeV -> pion momentum=", pAbs
             end if

@@ -36,15 +36,15 @@ def main():
     df = densdf.pddf
     # df = df.reset_index()
 
-    thetas = np.array([0])
-    energies = np.array([136.7])
-
-    eps = 2
-    omega_masks = [(df["omega"] - e).abs() < eps for e in energies]
-    omega_mask = np.logical_or.reduce(omega_masks)
-    theta_masks = [(df["theta"] - t).abs() < eps for t in thetas]
-    theta_mask = np.logical_or.reduce(theta_masks)
-
+    # thetas = np.array([0])
+    # energies = np.array([168])
+    #
+    # eps = 1
+    # omega_masks = [(df["omega"] - e).abs() < eps for e in energies]
+    # omega_mask = np.logical_or.reduce(omega_masks)
+    # theta_masks = [(df["theta"] - t).abs() < eps for t in thetas]
+    # theta_mask = np.logical_or.reduce(theta_masks)
+    #
     # select = (
     #     (df["N"] == 3)
     #     & (df["Z"] == 3)
@@ -53,43 +53,41 @@ def main():
     #     #     # & (df["lambdaSRGNN"] == 1.880)
     #     #     # & (df["Nmax"] == 14)
     #     #     # & ((df["OmegaHO"] == 14) | (df["OmegaHO"] == 16))
-    #     & theta_mask
+    #     # & theta_mask
     #     & omega_mask
     # )
-    # df = df[select]
 
     select = (
-        (df["N"] == 2)
-        & (df["Z"] == 1)
-        # & (df["kind"] == "one")
+        (df["Z"] == 2)
+        & (df["N"] == 1)
+        & (df["omega"] < 121)
+        & (df["omega"] > 10)
+        & (df["MODENN"] == "chsms")
         & ((df["LambdaNN"] == 450) | (df["LambdaNN"] == 500))
-        #     # & (df["lambdaSRGNN"] == 1.880)
-        #     # & (df["Nmax"] == 14)
-        #     # & ((df["OmegaHO"] == 14) | (df["OmegaHO"] == 16))
-        & theta_mask
-        & omega_mask
     )
     df = df[select]
+
     colsel = [
-        "E[MeV]",
-        "addtime",
+        # "E[MeV]",
+        # "addtime",
         "kind",
         "N",
         "Z",
         # "Jtot",
-        "Nmax",
-        "OmegaHO",
-        "E[MeV]",
+        # "Nmax",
+        # "OmegaHO",
         "omega",
         "theta",
         # "orderNN",
         "LambdaNN",
         # "tnforder",
-        "lambdaSRGNN",
+        # "lambdaSRGNN",
+        "MODENN",
     ]
     print("Printing first three rows of selected columns for header check")
     tmp = df[colsel]
-    print(tmp[:10])
+    print(tmp)
+    return 0
     print("\n")
     # i = 1
     # for idx, row in df.iterrows():

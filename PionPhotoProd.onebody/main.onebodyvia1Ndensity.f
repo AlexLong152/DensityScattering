@@ -407,7 +407,7 @@ c     hgrie May 2018: outsourced into subroutine common-densities/makedensityfil
 c           Above threshold: only x,y polarizations (F_5,F_6 needed for z).
 c           Must set extQnumlimit BEFORE allocating arrays so that
 c           the leading dimension matches what output routines expect.
-            threshold=.false.
+            threshold=.true.
             if(.not.threshold) then
               extQnumlimit=2
             end if
@@ -439,6 +439,9 @@ c           thetacm=0.d0
 c           x=cos(thetacm)!WARNING: for above threshold, this must be converted to pionphotoprod kinematics
 
             maxEll=4 ! MaxEll from 0 to 4
+            if (threshold) then
+              maxEll=0
+            end if
             eps = RESHAPE((/1,0,0,0,1,0,0,0,1/),(/3,3/))
 c           eps = RESHAPE((/1,1,0,1,-1,0,0,0,1/),(/3,3/))
 

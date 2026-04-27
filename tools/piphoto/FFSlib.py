@@ -2,15 +2,34 @@
 
 """
 @author: alexl
+
+v2: Standardized uncertainty slots.
+  For all quantities: unc1 = nuclear structure / form factor, unc2 = elementary amplitude.
+  Form factors: [mean, theory_spread, numeric_unc] (no elementary amplitude dependence).
+  E1N/L1N: [mean, sqrt(theory^2 + numeric^2), multipole_unc].
+  E2N/L2N: [mean, sqrt(theory^2 + numeric^2), 0] (no elementary amplitude dependence).
 """
 
-# import os
-# import sys
 import readDensity as rd
 import numpy as np
 from os import listdir
 from os.path import isfile, join
 from math import isinf, isnan
+
+# 3% numeric uncertainty for all TDA results
+err = 3 / 100
+
+# Elementary amplitudes in 10^{-3}/m_{pi+}
+E0p_pi0p = -1.16
+E0p_pi0n = +2.13
+L0p_pi0p = -1.35
+L0p_pi0n = -2.41
+amp_frac = 0.05  # 5% uncertainty on elementary amplitudes
+
+# Masses in MeV for K1N calculation
+m_N = 938.918
+m_pi = 139.571
+M_nuc = {"3H": 2808.921, "3He": 2808.391, "6Li": 5601.518}
 
 
 class NoResult:
@@ -58,6 +77,12 @@ twobody_folders = {
 }
 
 
+def K1N(nuc):
+    """Kinematical factor for 1N to 3N phase space (Eq. 6, Lenkewitz 2013)."""
+    Mnuc = M_nuc[nuc]
+    return (m_N + m_pi) / (Mnuc + m_pi) * Mnuc / m_N
+
+
 def getFormFactorsFromFile(path, kind="FormFactors", divide=True):
     """Extract form factors [F_T, F_L] from output file."""
     mat = extractMatrixFromFile(path, kind=kind)
@@ -76,9 +101,6 @@ def calculateFormFactors(mat, oper, divide=True):
             fullMat = mat / oper
             fullMat = np.nan_to_num(fullMat, nan=0.0, posinf=0.0, neginf=0.0)
             tmpMat = fullMat.real
-            # assert np.allclose(fullMat, tmpMat, atol=1e-5, rtol=1e-3), (
-            #     f"fullMat\n={fullMat},\ntmpMat=\ntmpMat"
-            # )
     else:
         tmpMat = mat.real
 
@@ -88,7 +110,6 @@ def calculateFormFactors(mat, oper, divide=True):
         valid = [f for f in flattened if not (isinf(f) or isnan(f)) and abs(f) > 0.0001]
         formfacts[i] = np.mean(valid) if valid else 0.0
 
-    # print("formfacts\n=", formfacts)
     # Combine x,y into transverse and return [F_T, F_L]
     return np.array([(formfacts[0] + formfacts[1]) / 2, formfacts[2]]) * -1
 
@@ -100,13 +121,10 @@ def extractMatrixFromFile(path, kind="ScatMat"):
 
 
 def _analyze_onebody_files(files):
-    """Extract F_T and F_L form factors from output files, return mean and spread.
+    """Extract F_T and F_L form factors from output files.
 
-    For each file, getFormFactorsFromFile (with divide=False) returns [F_T, F_L]
-    using the average of non-zero values from extQnum=1,2 for F_T
-    and extQnum=3 for F_L.  The *-1 cancels the sign convention inside FFSLib.
-
-    Returns dict: {quantity_name: np.array([mean, spread])}
+    Returns dict: {quantity_name: np.array([mean, theory_unc, numeric_unc])}
+    where theory_unc is half the spread and numeric_unc is 1.5% of |mean|.
     """
     ff_keys = ["F_T^S+V", "F_T^S-V", "F_L^S+V", "F_L^S-V"]
     all_vals = {k: [] for k in ff_keys}
@@ -121,20 +139,19 @@ def _analyze_onebody_files(files):
     for k in ff_keys:
         arr = np.array(all_vals[k])
         mean = np.mean(arr)
-        spread = (np.max(arr) - np.min(arr)) / 2
-        result[k] = np.array([mean, spread])
+        theory_unc = (np.max(arr) - np.min(arr)) / 2
+        numeric_unc = err * abs(mean)
+        result[k] = np.array([mean, theory_unc, numeric_unc])
 
     return result
 
 
 def _analyze_above_files(files):
-    """Extract E1N and L1N from above-threshold output files, return mean and spread.
+    """Extract E1N and L1N from above-threshold output files.
 
-    For each file, extracts the FormFacts matrix and uses calculateFormFactors
-    with divide=False. The *-1 cancels the sign convention inside calculateFormFactors.
-    Returns [E1N, L1N] where E1N is from extQnum=1,2 and L1N is from extQnum=3.
-
-    Returns dict: {"E1N": np.array([mean, spread]), "L1N": np.array([mean, spread])}
+    Returns dict: {"E1N": np.array([mean, theory_unc, numeric_unc]),
+                    "L1N": np.array([mean, theory_unc, numeric_unc])}
+    where theory_unc is half the spread and numeric_unc is 1.5% of |mean|.
     """
     all_E1N = []
     all_L1N = []
@@ -149,10 +166,50 @@ def _analyze_above_files(files):
     for k, vals in [("E1N", all_E1N), ("L1N", all_L1N)]:
         arr = np.array(vals)
         mean = np.mean(arr)
-        spread = (np.max(arr) - np.min(arr)) / 2
-        result[k] = np.array([mean, spread])
+        theory_unc = (np.max(arr) - np.min(arr)) / 2
+        numeric_unc = err * abs(mean)
+        result[k] = np.array([mean, theory_unc, numeric_unc])
 
     return result
+
+
+def _calc_multipole_unc(nuc, onebody_data):
+    """Compute theory uncertainty on E1N/L1N from 5% elementary amplitude uncertainty.
+
+    Uses E1N = K/2 * (Ep * F_T^{S+V} + En * F_T^{S-V}) (Eq. 5, Lenkewitz 2013)
+    and varies only the elementary amplitudes, holding form factors fixed.
+
+    Returns dict: {"E1N": unc_value, "L1N": unc_value}
+    """
+    k = K1N(nuc)
+
+    ft_spv = onebody_data["F_T^S+V"][0]
+    ft_smv = onebody_data["F_T^S-V"][0]
+    fl_spv = onebody_data["F_L^S+V"][0]
+    fl_smv = onebody_data["F_L^S-V"][0]
+
+    ep, en = E0p_pi0p, E0p_pi0n
+    dep, den = abs(ep) * amp_frac, abs(en) * amp_frac
+    lp, ln = L0p_pi0p, L0p_pi0n
+    dlp, dln = abs(lp) * amp_frac, abs(ln) * amp_frac
+
+    # E1N: vary elementary E amplitudes over all sign combinations
+    e_corners = []
+    for s1 in [-1, 1]:
+        for s2 in [-1, 1]:
+            val = k / 2 * ((ep + s1 * dep) * ft_spv + (en + s2 * den) * ft_smv)
+            e_corners.append(val)
+    e_unc = (max(e_corners) - min(e_corners)) / 2
+
+    # L1N: vary elementary L amplitudes over all sign combinations
+    l_corners = []
+    for s1 in [-1, 1]:
+        for s2 in [-1, 1]:
+            val = k / 2 * ((lp + s1 * dlp) * fl_spv + (ln + s2 * dln) * fl_smv)
+            l_corners.append(val)
+    l_unc = (max(l_corners) - min(l_corners)) / 2
+
+    return {"E1N": e_unc, "L1N": l_unc}
 
 
 def _get_combined_twobody(path):
@@ -183,7 +240,9 @@ def _analyze_twobody_files(files):
     Filters for Odelta2 files with j12max=1, pairs each with its Odelta4 match.
     Uses divide=True (divides by spin operator) matching twobodyFFs.py.
 
-    Returns dict with display-name keys, each np.array([mean, spread]).
+    Returns dict with display-name keys:
+      Form factors: np.array([mean, theory_unc, numeric_unc])
+      E2N/L2N: np.array([mean, combined_nuclear_unc, 0])
     """
     o2_files = [f for f in files if "Odelta2" in f and "j12max=1" in f]
 
@@ -211,24 +270,38 @@ def _analyze_twobody_files(files):
         for tag, arr in [(" O(q^3)", o2_arr), (" O(q^4)", o4_arr)]:
             col = arr[:, i]
             mean = np.mean(col)
-            spread = (np.max(col) - np.min(col)) / 2
-            result[f"{name[k]}{tag}"] = np.array([mean, spread])
+            theory_unc = (np.max(col) - np.min(col)) / 2
+            numeric_unc = err * abs(mean)
+            if k in ("E2N", "L2N"):
+                # Combined nuclear structure uncertainty; no elementary amplitude dependence
+                result[f"{name[k]}{tag}"] = np.array(
+                    [mean, np.sqrt(theory_unc**2 + numeric_unc**2), 0]
+                )
+            else:
+                result[f"{name[k]}{tag}"] = np.array([mean, theory_unc, numeric_unc])
 
-    # Static = Total - base (uncertainty 0)
+    # Static = Total - base
     for k in keys:
         mean = result[f"{name[k]} O(q^4)"][0] - result[f"{name[k]} O(q^3)"][0]
-        result[f"Static {name[k]}"] = np.array([mean, 0])
+        numeric_unc = err * abs(mean)
+        if k in ("E2N", "L2N"):
+            result[f"Static {name[k]}"] = np.array([mean, numeric_unc, 0])
+        else:
+            result[f"Static {name[k]}"] = np.array([mean, 0, numeric_unc])
 
     return result
 
 
 def get_literature_results():
-    """Return nested dictionary of results from Braun (Table 5.2), Lenkewitz (2013), and TDA.
+    """Return nested dictionary of results.
 
-    Structure: d[author][nucleus][quantity] = np.array([mean, combined_uncertainty])
+    Structure: d[author][nucleus][quantity] = np.array([mean, unc1, unc2])
+    For TDA results:
+      Form factors: unc1 = potential variation, unc2 = numerical precision (1.5%)
+      E1N/L1N: unc1 = total nuclear structure, unc2 = elementary amplitude uncertainty
+      E2N/L2N: unc1 = combined nuclear structure, unc2 = 0
+    Literature entries are kept as originally published.
     Entries without results are NoResult instances.
-
-    Combined uncertainty: sqrt(uncertainty_1^2 + uncertainty_2^2) when two are given.
     """
     d = {}
     for author in ["braun", "lenke", "TDA"]:
@@ -240,40 +313,40 @@ def get_literature_results():
 
     # === Braun Table 5.2 "our result" ===
     # 3H
-    d["braun"]["3H"]["F_T^S+V"] = np.array([1.551, 0.078])
-    d["braun"]["3H"]["F_T^S-V"] = np.array([0.039, 0.002])
-    d["braun"]["3H"]["E1N"] = np.array([-0.94, np.sqrt(0.05**2 + 0.05**2)])
+    d["braun"]["3H"]["F_T^S+V"] = np.array([1.551, 0.078, 0])
+    d["braun"]["3H"]["F_T^S-V"] = np.array([0.039, 0.002, 0])
+    d["braun"]["3H"]["E1N"] = np.array([-0.94, 0.05, 0.05])
 
     # 3He
-    d["braun"]["3He"]["F_T^S+V"] = np.array([0.041, 0.002])
-    d["braun"]["3He"]["F_T^S-V"] = np.array([1.544, 0.077])
-    d["braun"]["3He"]["E1N"] = np.array([1.77, np.sqrt(0.09**2 + 0.09**2)])
+    d["braun"]["3He"]["F_T^S+V"] = np.array([0.041, 0.002, 0])
+    d["braun"]["3He"]["F_T^S-V"] = np.array([1.544, 0.077, 0])
+    d["braun"]["3He"]["E1N"] = np.array([1.77, 0.09, 0.09])
 
     # 6Li
-    d["braun"]["6Li"]["F_T^S+V"] = np.array([0.476, 0.024])
-    d["braun"]["6Li"]["F_T^S-V"] = np.array([0.479, 0.024])
-    d["braun"]["6Li"]["E1N"] = np.array([0.26, np.sqrt(0.03**2 + 0.03**2)])
+    d["braun"]["6Li"]["F_T^S+V"] = np.array([0.476, 0.024, 0])
+    d["braun"]["6Li"]["F_T^S-V"] = np.array([0.479, 0.024, 0])
+    d["braun"]["6Li"]["E1N"] = np.array([0.26, 0.03, 0.03])
 
     # === Lenkewitz results ===
     # F_T from Braun Table 5.2 "literature" column [Ref 26]
-    d["lenke"]["3He"]["F_T^S+V"] = np.array([0.017, 0.013])
-    d["lenke"]["3He"]["F_T^S-V"] = np.array([1.480, 0.026])
-    d["lenke"]["3H"]["F_T^S+V"] = np.array([1.493, 0.025])
-    d["lenke"]["3H"]["F_T^S-V"] = np.array([0.012, 0.013])
+    d["lenke"]["3He"]["F_T^S+V"] = np.array([0.017, 0.013, 0])
+    d["lenke"]["3He"]["F_T^S-V"] = np.array([1.480, 0.026, 0])
+    d["lenke"]["3H"]["F_T^S+V"] = np.array([1.493, 0.025, 0])
+    d["lenke"]["3H"]["F_T^S-V"] = np.array([0.012, 0.013, 0])
 
     # F_L from Lenkewitz 2013 Table 1
-    d["lenke"]["3He"]["F_L^S+V"] = np.array([-0.079, np.sqrt(0.014**2 + 0.008**2)])
-    d["lenke"]["3He"]["F_L^S-V"] = np.array([1.479, np.sqrt(0.026**2 + 0.008**2)])
-    d["lenke"]["3H"]["F_L^S+V"] = np.array([1.487, np.sqrt(0.027**2 + 0.008**2)])
-    d["lenke"]["3H"]["F_L^S-V"] = np.array([-0.083, np.sqrt(0.014**2 + 0.008**2)])
+    d["lenke"]["3He"]["F_L^S+V"] = np.array([-0.079, 0.014, 0.008])
+    d["lenke"]["3He"]["F_L^S-V"] = np.array([1.479, 0.026, 0.008])
+    d["lenke"]["3H"]["F_L^S+V"] = np.array([1.487, 0.027, 0.008])
+    d["lenke"]["3H"]["F_L^S-V"] = np.array([-0.083, 0.014, 0.008])
 
     # E1N from Braun Table 5.2 "literature" (= Lenkewitz Table 4 first column)
-    d["lenke"]["3He"]["E1N"] = np.array([1.71, np.sqrt(0.04**2 + 0.09**2)])
-    d["lenke"]["3H"]["E1N"] = np.array([-0.93, np.sqrt(0.03**2 + 0.05**2)])
+    d["lenke"]["3He"]["E1N"] = np.array([1.71, 0.04, 0.09])
+    d["lenke"]["3H"]["E1N"] = np.array([-0.93, 0.03, 0.05])
 
     # L1N from Lenkewitz 2013 Table 4 first column (1N at O(q^4))
-    d["lenke"]["3He"]["L1N"] = np.array([-1.89, np.sqrt(0.04**2 + 0.09**2)])
-    d["lenke"]["3H"]["L1N"] = np.array([-0.99, np.sqrt(0.04**2 + 0.05**2)])
+    d["lenke"]["3He"]["L1N"] = np.array([-1.89, 0.04, 0.09])
+    d["lenke"]["3H"]["L1N"] = np.array([-0.99, 0.04, 0.05])
 
     # 6Li: no Lenkewitz results (all remain NoResult)
     # Braun: no F_L or L1N results (all remain NoResult)
@@ -284,51 +357,39 @@ def get_literature_results():
 
     # === Braun Table 5.4 "our result" ===
     # 3H
-    d["braun"]["3H"]["F^{(a)}_T-F^{(b)}_T O(q^3)"] = np.array([-27.2, 3.3])
-    d["braun"]["3H"]["E2N O(q^3)"] = np.array([-3.55, 0.43])
+    d["braun"]["3H"]["F^{(a)}_T-F^{(b)}_T O(q^3)"] = np.array([-27.2, 3.3, 0])
+    d["braun"]["3H"]["E2N O(q^3)"] = np.array([-3.55, 0.43, 0])
 
     # 3He
-    d["braun"]["3He"]["F^{(a)}_T-F^{(b)}_T O(q^3)"] = np.array([-27.1, 3.3])
-    d["braun"]["3He"]["E2N O(q^3)"] = np.array([-3.53, 0.42])
+    d["braun"]["3He"]["F^{(a)}_T-F^{(b)}_T O(q^3)"] = np.array([-27.1, 3.3, 0])
+    d["braun"]["3He"]["E2N O(q^3)"] = np.array([-3.53, 0.42, 0])
 
     # 6Li
-    d["braun"]["6Li"]["F^{(a)}_T-F^{(b)}_T O(q^3)"] = np.array([-11.4, 1.4])
-    d["braun"]["6Li"]["E2N O(q^3)"] = np.array([-1.52, 0.18])
+    d["braun"]["6Li"]["F^{(a)}_T-F^{(b)}_T O(q^3)"] = np.array([-11.4, 1.4, 0])
+    d["braun"]["6Li"]["E2N O(q^3)"] = np.array([-1.52, 0.18, 0])
 
     # === Lenkewitz two-body results ===
     # F_T from Braun Table 5.4 "literature" column [Ref 26]
-    d["lenke"]["3H"]["F^{(a)}_T-F^{(b)}_T O(q^3)"] = np.array([-29.7, 0.3])
-    d["lenke"]["3He"]["F^{(a)}_T-F^{(b)}_T O(q^3)"] = np.array([-29.3, 0.3])
+    d["lenke"]["3H"]["F^{(a)}_T-F^{(b)}_T O(q^3)"] = np.array([-29.7, 0.3, 0])
+    d["lenke"]["3He"]["F^{(a)}_T-F^{(b)}_T O(q^3)"] = np.array([-29.3, 0.3, 0])
 
     # F_L from Lenkewitz 2013 Table 2
-    d["lenke"]["3He"]["F^{(a)}_L-F^{(b)}_L O(q^3)"] = np.array(
-        [-22.9, np.sqrt(0.2**2 + 0.1**2)]
-    )
-    d["lenke"]["3H"]["F^{(a)}_L-F^{(b)}_L O(q^3)"] = np.array(
-        [-23.2, np.sqrt(0.1**2 + 0.1**2)]
-    )
+    d["lenke"]["3He"]["F^{(a)}_L-F^{(b)}_L O(q^3)"] = np.array([-22.9, 0.2, 0.1])
+    d["lenke"]["3H"]["F^{(a)}_L-F^{(b)}_L O(q^3)"] = np.array([-23.2, 0.1, 0.1])
 
     # E2N from Braun Table 5.4 "literature" column [Ref 26]
-    d["lenke"]["3H"]["E2N O(q^3)"] = np.array([-4.01, 0.03])
-    d["lenke"]["3He"]["E2N O(q^3)"] = np.array([-3.95, 0.03])
+    d["lenke"]["3H"]["E2N O(q^3)"] = np.array([-4.01, 0.03, 0])
+    d["lenke"]["3He"]["E2N O(q^3)"] = np.array([-3.95, 0.03, 0])
 
     # L2N from Lenkewitz 2013 Table 4 second column (2N at O(q^3))
-    d["lenke"]["3He"]["L2N O(q^3)"] = np.array([-3.09, 0.02])
-    d["lenke"]["3H"]["L2N O(q^3)"] = np.array([-3.13, 0.01])
+    d["lenke"]["3He"]["L2N O(q^3)"] = np.array([-3.09, 0.02, 0])
+    d["lenke"]["3H"]["L2N O(q^3)"] = np.array([-3.13, 0.01, 0])
 
     # === Lenkewitz 2N-static form factors from Thesis Table 5.8 ===
-    d["lenke"]["3He"]["Static F^{(a)}_T-F^{(b)}_T"] = np.array(
-        [-0.134, np.sqrt(0.006**2 + 0.072**2)]
-    )
-    d["lenke"]["3H"]["Static F^{(a)}_T-F^{(b)}_T"] = np.array(
-        [-0.150, np.sqrt(0.050**2 + 0.084**2)]
-    )
-    d["lenke"]["3He"]["Static F^{(a)}_L-F^{(b)}_L"] = np.array(
-        [-0.542, np.sqrt(0.056**2 + 0.110**2)]
-    )
-    d["lenke"]["3H"]["Static F^{(a)}_L-F^{(b)}_L"] = np.array(
-        [-0.490, np.sqrt(0.038**2 + 0.099**2)]
-    )
+    d["lenke"]["3He"]["Static F^{(a)}_T-F^{(b)}_T"] = np.array([-0.134, 0.006, 0.072])
+    d["lenke"]["3H"]["Static F^{(a)}_T-F^{(b)}_T"] = np.array([-0.150, 0.050, 0.084])
+    d["lenke"]["3He"]["Static F^{(a)}_L-F^{(b)}_L"] = np.array([-0.542, 0.056, 0.110])
+    d["lenke"]["3H"]["Static F^{(a)}_L-F^{(b)}_L"] = np.array([-0.490, 0.038, 0.099])
 
     # O(q^4) total = O(q^3) + Static, for form factors
     for nuc in ["3H", "3He"]:
@@ -336,15 +397,15 @@ def get_literature_results():
             base = d["lenke"][nuc][f"{ff} O(q^3)"]
             static = d["lenke"][nuc][f"Static {ff}"]
             mean = base[0] + static[0]
-            sigma = np.array([base[1], static[1]])
-            sigma = np.sqrt(np.dot(sigma, sigma))
-            d["lenke"][nuc][f"{ff} O(q^4)"] = np.array([mean, sigma])
+            theory = np.sqrt(base[1] ** 2 + static[1] ** 2)
+            numeric = np.sqrt(base[2] ** 2 + static[2] ** 2)
+            d["lenke"][nuc][f"{ff} O(q^4)"] = np.array([mean, theory, numeric])
 
     # === Lenkewitz 2N-static (q^4) from Table 4 column 5 ===
-    d["lenke"]["3He"]["Static E2N"] = np.array([-0.02, np.sqrt(0.00**2 + 0.01**2)])
-    d["lenke"]["3He"]["Static L2N"] = np.array([-0.07, np.sqrt(0.01**2 + 0.01**2)])
-    d["lenke"]["3H"]["Static E2N"] = np.array([-0.02, np.sqrt(0.01**2 + 0.01**2)])
-    d["lenke"]["3H"]["Static L2N"] = np.array([-0.07, np.sqrt(0.00**2 + 0.01**2)])
+    d["lenke"]["3He"]["Static E2N"] = np.array([-0.02, 0.00, 0.01])
+    d["lenke"]["3He"]["Static L2N"] = np.array([-0.07, 0.01, 0.01])
+    d["lenke"]["3H"]["Static E2N"] = np.array([-0.02, 0.01, 0.01])
+    d["lenke"]["3H"]["Static L2N"] = np.array([-0.07, 0.00, 0.01])
 
     # O(q^4) total = O(q^3) + Static, for E2N/L2N
     for nuc in ["3H", "3He"]:
@@ -352,9 +413,9 @@ def get_literature_results():
             base = d["lenke"][nuc][f"{prefix} O(q^3)"]
             static = d["lenke"][nuc][f"Static {prefix}"]
             mean = base[0] + static[0]
-            sigma = np.array([base[1], static[1]])
-            sigma = np.sqrt(np.dot(sigma, sigma))
-            d["lenke"][nuc][f"{prefix} O(q^4)"] = np.array([mean, sigma])
+            theory = np.sqrt(base[1] ** 2 + static[1] ** 2)
+            numeric = np.sqrt(base[2] ** 2 + static[2] ** 2)
+            d["lenke"][nuc][f"{prefix} O(q^4)"] = np.array([mean, theory, numeric])
 
     # 6Li: no Lenkewitz two-body results (all remain NoResult)
     # Braun: no 2bodF_L or L2N results (all remain NoResult)
@@ -373,24 +434,20 @@ def get_literature_results():
         # E1N, L1N from above/ folders
         above_files = _get_files_from_folder(above_folders[nuc])
         above_data = _analyze_above_files(above_files)
-        d["TDA"][nuc]["E1N"] = above_data["E1N"]
-        d["TDA"][nuc]["L1N"] = above_data["L1N"]
+
+        # Combine nuclear structure uncertainties; keep elementary amplitude separate
+        multipole_unc = _calc_multipole_unc(nuc, onebody_data)
+        for amp in ["E1N", "L1N"]:
+            nuclear_total = np.sqrt(above_data[amp][1] ** 2 + above_data[amp][2] ** 2)
+            d["TDA"][nuc][amp] = np.array(
+                [above_data[amp][0], nuclear_total, multipole_unc[amp]]
+            )
 
         # Two-body from 2bod/ folders
         twobody_files = _get_files_from_folder(twobody_folders[nuc])
         twobody_data = _analyze_twobody_files(twobody_files)
         for q in twobody_data:
             d["TDA"][nuc][q] = twobody_data[q]
-
-
-    # Add 3% uncertainty to all TDA results
-    for nuc in nuclei:
-        for q in d["TDA"][nuc]:
-            val = d["TDA"][nuc][q]
-            if not isinstance(val, NoResult):
-                old_unc = val[1]
-                mean = val[0]
-                val[1] = np.sqrt(old_unc**2 + (0.04 * mean) ** 2)
 
     return d
 
@@ -419,8 +476,6 @@ def getSpinOperFromFile(path):
                     passed = np.allclose(result, expected)
                     if not passed:
                         print(f"SpinVec from file doesn't match spin4Nuc for {nucName}")
-                        # print("result=\n", result)
-                        # print("expected=\n", expected, "\n")
                         for i in range(3):
                             res = result[i]
                             exp = expected[i]
@@ -431,7 +486,6 @@ def getSpinOperFromFile(path):
                                 print(res - exp)
 
                         print("\n\n")
-                        # print("result/expected=", result / expected)
 
                     return result
         except AssertionError:

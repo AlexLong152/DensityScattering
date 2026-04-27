@@ -235,7 +235,7 @@ c     stop
 c     assign prefactor=8*Pi*sqrtS to convert from scattering length to matrix element
 c     setting prefactor=1.d0=HC returns scattering length in fm
       prefactor=(1/(1+mPion/mNucl))*(1/(4*Pi))!matrix elements are unitless
-      prefactor=prefactor*1000*mpi0
+      prefactor=prefactor*1000*mPi
 
       diagNumber=1
       massesArr=(/mPi,mPi0,mPi/)

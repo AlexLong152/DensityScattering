@@ -20,8 +20,8 @@ Odeltatwobod = "Odelta4"
 saveFolder = r"/home/alexander/Dropbox/COMPTON-RESULTS-FROM-DENSITIES/results-6Li/results/FinalCrossSections-And-Uncertainties/"
 fileName = f"Compton-6Li-{energy}MeV-1bod={Odeltaonebod}-2bod={Odeltatwobod}-output.txt"
 outfile = saveFolder + fileName
-if os.path.exists(outfile):
-    os.remove(outfile)
+
+saveStuff = False  # saves results is set to true
 
 
 def main():
@@ -162,7 +162,8 @@ def main():
     figureSave = saveFolder + "plot" + fileName.replace(".txt", ".pdf")
     print("figureSave=\n", figureSave)
     plt.tight_layout()
-    plt.savefig(figureSave)
+    if saveStuff:
+        plt.savefig(figureSave)
     plt.show()
 
 
@@ -180,10 +181,13 @@ def wprint(*args, sep=" ", end="\n", file=None, flush=False):
     print(*args, sep=sep, end=end, file=file, flush=flush)
 
     # Then, append the same text to the outfile
-    with open(outfile, "a", encoding="utf-8") as f:
-        print(*args, sep=sep, end=end, file=f)
+    if saveStuff:
+        with open(outfile, "a", encoding="utf-8") as f:
+            print(*args, sep=sep, end=end, file=f)
 
 
 if __name__ == "__main__":
+    if os.path.exists(outfile):
+        os.remove(outfile)
     main()
     print("outfile=\n", outfile)

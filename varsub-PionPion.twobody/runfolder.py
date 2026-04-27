@@ -16,14 +16,17 @@ outputfolder = r"/home/alexander/Dropbox/PionPion/results-4He/2bod/thresh/"
 densfolder = r"/home/alexander/OneDrive/densities-4He/2Ndensities/136MeV/"
 
 # 3H settings
-densfolder = r"/home/alexander/OneDrive/densities-3H/2Ndensities/138MeV/"
-outputfolder = r"/home/alexander/Dropbox/PionPion/results-3H/2bod/thresh/"
+# densfolder = r"/home/alexander/OneDrive/densities-3H/2Ndensities/136MeV/"
+# outputfolder = r"/home/alexander/Dropbox/PionPion/results-3H/2bod/thresh/"
+
+densfolder = r"/home/alexander/OneDrive/densities-3H/2Ndensities/132MeV/0deg/"
+outputfolder = r"/home/alexander/Dropbox/PionPion/results-3H/2bod/threshpi0/"
 
 # 6Li settings
-densfolder = r"/home/alexander/OneDrive/densities-6Li/2Ndensities/138MeV/"
-outputfolder = r"/home/alexander/Dropbox/PionPion/results-6Li/2bod/thresh/"
+# densfolder = r"/home/alexander/OneDrive/densities-6Li/2Ndensities/138MeV/"
+# outputfolder = r"/home/alexander/Dropbox/PionPion/results-6Li/2bod/thresh/"
 
-rt.batch = 3
+rt.batch = 1
 rt.Odelta = 4
 rt.j12max = 1
 

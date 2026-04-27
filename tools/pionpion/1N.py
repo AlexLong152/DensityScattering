@@ -1,6 +1,7 @@
 import numpy as np
 import glob
 import readDensity as rd
+from TwoN import error
 
 RESULTS_DIR = "/home/alexander/Dropbox/PionPion"
 
@@ -70,7 +71,6 @@ def getMeanUncer(arr):
     float
         Standard deviation of the input array.
     """
-    error = 3 / 100
     out = np.zeros((3, 2))
     for i, xs in enumerate(arr):
         stdDev = np.std(xs)
@@ -82,7 +82,7 @@ def getMeanUncer(arr):
 
 
 if __name__ == "__main__":
-    for nuc in ["3He", "4He", "6Li"]:
+    for nuc in ["3He", "3H", "4He", "6Li"]:
         arr = get_scattering_length_array(nuc)
         arr = getMeanUncer(arr)
         print(f"{nuc}:")

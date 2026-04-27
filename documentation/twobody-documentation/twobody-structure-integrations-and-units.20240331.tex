@@ -65,6 +65,43 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Following produces hyper-linked .pdf file
 %%%% should be the very package to load, except natbib after that:
+
+\newcommand{\vk}{\vec{k}}
+\newcommand{\vq}{\vec{q}}
+
+\newcommand{\vkp}{\vec{k}^\prime}
+\newcommand{\vqp}{\vec{q}^{\,\prime}}
+
+\newcommand{\kv}{\vec{k}}
+\newcommand{\qv}{\vec{q}\,}
+\newcommand{\kpv}{\vec{k}^\prime}
+\newcommand{\kvp}{\vec{k}^\prime}
+\newcommand{\kvps}{\vec{k}^{\prime 2}}
+\newcommand{\qpv}{\vec{q}^{\,\prime}\,}
+\newcommand{\qpvs}{\vec{q}^{\,\prime 2}\,}
+\newcommand{\qvps}{\vec{q}^{\,\prime 2}}
+\newcommand{\qvs}{\vec{q}^{\, 2}}
+\newcommand{\qvp}{\vec{q}^{\,\prime}}
+\newcommand{\pv}{\vec{p}}
+\newcommand{\ppv}{\vec{p}^{\,\prime}}
+\newcommand{\vp}{\vec{p}}
+\newcommand{\sq}{^{\,2}}
+\newcommand{\vv}{\vec{v}}
+\newcommand{\vpp}{\vec{p}^{\,\prime}}
+\newcommand{\pvp}{\vec{p}^{\,\prime}}
+\newcommand{\uot}{_{12}}
+\newcommand{\ez}{\hat{\mathrm{e}}_z}
+\newcommand{\ey}{\hat{\mathrm{e}}_y}
+\newcommand{\ex}{\hat{\mathrm{e}}_x}
+\newcommand{\er}{\hat{\mathrm{e}}_r}
+\newcommand{\Pthreehalf}{\hat{P}_{\frac{3}{2}}}
+\newcommand{\Phalf}{\hat{P}_{\frac{1}{2}}}
+\newcommand{\Pthree}{\hat{P}_{\frac{3}{2}}}
+\newcommand{\meqref}[1]{eq.~\eqref{#1}}
+\newcommand{\thickline}[1]{\noalign{\hrule height #1}}
+\newcommand{\Mnucl}{M_{\mathrm{nucl}}}
+
+
 \ifx\pdflatex\AnswerYes
     \usepackage[ 
         final,
@@ -304,7 +341,7 @@
 
 \newcommand{\grad}{\vectorwithspace{\nabla}}
 \newcommand{\dev}{\vectorwithspace{\de}}
-
+\newcommand\ddfrac[2]{\frac{\displaystyle #1}{\displaystyle #2}}
 \newcommand{\av}{\vectorwithspace{a}}
 \newcommand{\bv}{\vectorwithspace{b}}
 \newcommand{\cv}{\vectorwithspace{c}}
@@ -315,18 +352,14 @@
 \newcommand{\hv}{\vectorwithspace{h}}
 \newcommand{\iv}{\vectorwithspace{i}}
 \newcommand{\jv}{\vectorwithspace{j}}
-\newcommand{\kv}{\vectorwithspace{k}}
 \newcommand{\lv}{\vectorwithspace{l}}
 \newcommand{\mv}{\vectorwithspace{m}}
 \newcommand{\nv}{\vectorwithspace{n}}
 \newcommand{\ov}{\vectorwithspace{o}}
-\newcommand{\pv}{\vectorwithspace{p}}
-\newcommand{\qv}{\vectorwithspace{q}}
 \newcommand{\rv}{\vectorwithspace{r}}
 \newcommand{\sv}{\vectorwithspace{s}}
 \newcommand{\tv}{\vectorwithspace{t}}
 \newcommand{\uv}{\vectorwithspace{u}}
-\newcommand{\vv}{\vectorwithspace{v}}
 \newcommand{\wv}{\vectorwithspace{w}}
 \newcommand{\xv}{\vectorwithspace{x}}
 \newcommand{\yv}{\vectorwithspace{y}}
@@ -986,26 +1019,6 @@ For the primed variables:
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{}
-\label{sec:}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{}
-\label{sec:}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Concluding Questions}
-\label{sec:conculsions}
-
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% \subsection{}
-% \label{sec:}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 \section*{Acknowledgements}
 
 As usual, we acknowledge no responsibility whatsoever.
@@ -1027,6 +1040,58 @@ As usual, we acknowledge no responsibility whatsoever.
 %
 % TAKE SPIRES LaTeX(US) STYLE
 %
+
+\subsubsection{Treatment of the Removable Singularity}
+\label{NumMethod}
+Diagrams sometimes contain a removable singularity of the form
+$1/\qvs$ from the propagators, where
+$\vec{q}=\vec{p}-\pvp+\vec{k}/2$. It is integrable but must be handled with care to ensure
+numerical stability in the convolution with the transition
+densities. Its key feature is that it is
+a \emph{moving} singularity: its position in the
+integration domain depends on the relative Jacobi momenta
+$\vec{p}_{12}$ and $\vec{p}_{12}^{\,\prime}$ as well as
+the photon momentum $\vec{k}$. As one integrates over the
+remaining momenta, the singular surface shifts
+continuously, so that no fixed set of quadrature points
+can avoid the singular region throughout the entire
+integration domain. This renders the singularity
+difficult to treat with standard quadrature methods. An advantage of the
+TDA formalism is that the convolution with the transition
+densities reduces the problem to two three-dimensional
+integrations over $\vec{p}_{12}$ and
+$\vec{p}_{12}^{\,\prime}$, with all remaining momentum
+integrations already performed in the construction of the
+densities. The moving singularity is therefore more
+constrained than in a direct evaluation of the full
+$A$-body matrix element, as the singular surface depends
+only on $\vec{p}_{12}$,
+$\vec{p}_{12}^{\,\prime}$, and $\vec{k}$.
+
+Summation over quantum numbers may be factored out of the
+integration; this detail is therefore suppressed in the
+following discussion.
+Let the momentum dependence in the numerator be given by
+$f(\pv,\pvp)$ and note that
+$\vec{q}=\vec{p}-\pvp+\vec{k}/2$.
+The singularity can be removed by the following
+variable substitution
+\begin{equation}
+  \begin{split}
+  \int \dd^3 p\, \dd^3 p^\prime 
+  \frac{ f(\pv,\pvp)}{
+  \left(\vec{p}-\pvp+\vec{k}/2\right)^2
+  }
+  &=\int \dd^3 p \,\dd^3 q \ddfrac{ f(\pv,\pv-\qv+\kv/2) }{\qv\sq}\\
+  &=\int \dd^3 p \int \dd q \,\dd\theta_q \,\dd\varphi_q \sin{\theta_q}\;
+  f(\pv,\pv-\qv+\kv/2)\;,
+  \end{split}
+\end{equation}
+where the transformation to spherical coordinates has been
+employed, with the corresponding Jacobian
+$\dd^3 x = r_x^2 \sin\theta_x \,\dd r_x \dd\theta_x \dd\varphi_x$
+yielding a cancellation with the denominator.
+
 \begin{thebibliography}{99}
 
 %\cite{Edmonds}

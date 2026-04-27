@@ -58,7 +58,9 @@ def main():
     pass
 
 
-def crossSection(onebody_file, twobody_file, deltaAlpha=0, deltaBeta=0):
+def crossSection(
+    onebody_file, twobody_file, deltaAlpha=0, deltaBeta=0, zeroTwobod=False
+):
     """
     Calculates the differential cross section given two output files
     onebody_file is expected to be the Odelta version. The varyA file names are then automatically
@@ -69,6 +71,13 @@ def crossSection(onebody_file, twobody_file, deltaAlpha=0, deltaBeta=0):
         Full path to onebody output file
     twobody_file: str
         Full path to twobody output file
+    deltaAlpha: float, optional
+        Shift applied to the electric scalar polarizabilities
+    deltaBeta: float, optional
+        Shift applied to the magnetic scalar polarizabilities
+    zeroTwobod: bool, optional
+        When True, ignore the explicit two-body contribution and replace it
+        with zeros before constructing the matrix
 
     Returns
     ------------
@@ -94,9 +103,16 @@ def crossSection(onebody_file, twobody_file, deltaAlpha=0, deltaBeta=0):
     assert energy == energy_twobod
 
     matrixValues = computeMatrix(
-        onebody_data, twobody_data, varyA_data, deltaAlpha, deltaBeta
+        onebody_data,
+        twobody_data,
+        varyA_data,
+        deltaAlpha,
+        deltaBeta,
+        zeroTwobod=zeroTwobod,
     )
-
+    assert (Z == N) and (N == 3), (
+        f"Currently only set up for 6Li, but Z={Z}, N={N}, change mass in computeCrossSection if you want to use a different nucleus"
+    )
     dSigmadOmega = computeCrossSection(matrixValues, energy, spin, M6Li)
 
     returnObject = {}
@@ -106,7 +122,11 @@ def crossSection(onebody_file, twobody_file, deltaAlpha=0, deltaBeta=0):
     returnObject["twobody_file"] = twobody_file
     returnObject["varyA_files"] = varyA_files
     returnObject["onebody"] = onebody_data["MatVals"]
-    returnObject["twobody"] = twobody_data["MatVals"]
+    if zeroTwobod:
+        twobody_matrix = np.zeros_like(twobody_data["MatVals"])
+    else:
+        twobody_matrix = twobody_data["MatVals"]
+    returnObject["twobody"] = twobody_matrix
     returnObject["varyA_data"] = varyA_data
     returnObject["nuc"] = name
     returnObject["hash_onebody"] = getStringBetween(onebody_file, "denshash=", ".v2")
@@ -190,7 +210,9 @@ def loadAmplitudes(onebody_file, twobody_file, varyA_files):
     return onebody_data, twobody_data, varyA_data
 
 
-def computeMatrix(onebody_data, twobody_data, varyA_data, deltaAlpha, deltaBeta):
+def computeMatrix(
+    onebody_data, twobody_data, varyA_data, deltaAlpha, deltaBeta, zeroTwobod=False
+):
     """
     Compute total as per the given formula (for scalar polarisabilities only):
 
@@ -206,10 +228,19 @@ def computeMatrix(onebody_data, twobody_data, varyA_data, deltaAlpha, deltaBeta)
     - We assume θ and ω come from onebody_data.
 
     We do not use A=3,... since spin polarisabilities = 0 now.
+
+    Parameters
+    ----------
+    zeroTwobod: bool, optional
+        If True, ignore the twobody amplitudes by replacing them with zeros
     """
     # print("BKMProtonalphaE1=", BKMProtonalphaE1)
     onebody = onebody_data["MatVals"]
-    twobody = twobody_data["MatVals"]
+    zeroTwoBod = zeroTwobod
+    if zeroTwoBod:
+        twobody = np.zeros(np.shape(twobody_data["MatVals"]))
+    else:
+        twobody = twobody_data["MatVals"]
 
     omega = onebody_data["omega"]  # in MeV
     theta_deg = onebody_data["theta"]  # in degrees
@@ -319,6 +350,7 @@ def ccForDict(
     deltaBeta=0,
     returnFull=False,
     verbose=False,
+    zeroTwobod=False,
     **kwargs,
 ):
     """
@@ -350,6 +382,9 @@ def ccForDict(
     returnFull: boolean
         Returns the entire dictionary from the crossSection function, instead
         of just the crossSection
+    zeroTwobod: bool, optional
+        When True, zero-out the two-body contribution when computing the
+        cross section
     Returns
     -------
     ccVal: float
@@ -412,11 +447,21 @@ def ccForDict(
     else:
         twobod = rd.getQuantNums(twobody_dir + two, returnMat=True)["file"]
     if returnFull:
-        return crossSection(onebod, twobod, deltaAlpha=deltaAlpha, deltaBeta=deltaBeta)
+        return crossSection(
+            onebod,
+            twobod,
+            deltaAlpha=deltaAlpha,
+            deltaBeta=deltaBeta,
+            zeroTwobod=zeroTwobod,
+        )
     else:
-        return crossSection(onebod, twobod, deltaAlpha=deltaAlpha, deltaBeta=deltaBeta)[
-            "cc"
-        ]
+        return crossSection(
+            onebod,
+            twobod,
+            deltaAlpha=deltaAlpha,
+            deltaBeta=deltaBeta,
+            zeroTwobod=zeroTwobod,
+        )["cc"]
 
 
 def params_match_free(dictA, dictB):

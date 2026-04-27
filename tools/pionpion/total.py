@@ -1,15 +1,8 @@
 import math
 import numpy as np
-from DirectCalc import (
-    aPlusVals,
-    aMinusVals,
-    aPlus,
-    aMinus,
-    mpiArr,
-    MAve,
-)
-import importlib
-TwoN = importlib.import_module("2N")
+from DirectCalc import aPlusVals, aMinusVals, aPlus, aMinus, mpiArr, MAve
+import TwoN
+from TwoN import error
 
 
 charge = np.array([-1, 0, 1])
@@ -18,12 +11,14 @@ chargeLabelsLatex = [r"$\pi^-$", r"$\pi^0$", r"$\pi^+$"]
 
 nuclei = {
     "3He": {"Z": 2, "N": 1},
+    "3H": {"Z": 1, "N": 2},
     "4He": {"Z": 2, "N": 2},
     "6Li": {"Z": 3, "N": 3},
 }
 
 _nuc_labels = {
     "3He": r"${}^3\mathrm{He}$",
+    "3H": r"${}^3\mathrm{H}$",
     "4He": r"${}^4\mathrm{He}$",
     "6Li": r"${}^6\mathrm{Li}$",
 }
@@ -53,9 +48,12 @@ def get_1N(nucleus):
             for am in aMinusVals:
                 vals.append(kinFactor * (A * ap - Qpi * (Z - N) * am))
         central = kinFactor * (A * aPlus - Qpi * (Z - N) * aMinus)
-        unc = (max(vals) - min(vals)) / 2.0
+        unc = (
+            (max(vals) - min(vals)) / 2.0
+        )  # this is fine, its the exact same values when calculated with densities
         out[ic][0] = central
-        out[ic][1] = unc
+        totalStd = np.sqrt((error * central) ** 2 + unc**2)
+        out[ic][1] = totalStd
     return out
 
 
@@ -220,13 +218,14 @@ def latex_table():
     lines.append(
         r"\caption{Pion-nucleus scattering lengths in units of $[10^{-3}/m_{\pi}]$.}"
     )
+    lines.append(r"\label{tab:pipi_results}")
     lines.append(r"\end{table}")
 
     return "\n".join(lines)
 
 
 if __name__ == "__main__":
-    for nuc in ["3He", "4He", "6Li"]:
+    for nuc in ["3He", "4He", "6Li", "3H"]:
         a1N = get_1N(nuc)
         a2N = get_2N(nuc)
         total_central = a1N[:, 0] + a2N[:, 0]
