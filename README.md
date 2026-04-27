@@ -19,9 +19,13 @@ Processes implemented:
 ## Prerequisites
 
 - Fortran compiler with MPI support (`mpif90`, e.g. via OpenMPI or MPICH)
-- [HDF5](https://www.hdfgroup.org/solutions/hdf5/) with Fortran bindings
+- [HDF5](https://www.hdfgroup.org/solutions/hdf5/) with parallel and Fortran support
+- [h5z-zfp](https://github.com/LLNL/H5Z-ZFP) HDF5 filter plugin (the density files distributed for this project are ZFP-compressed and will not load without it)
 - Python 3 (for analysis scripts and run automation)
 - GNU Make
+
+See [INSTALL.md](INSTALL.md) for source-build instructions for HDF5
+and h5z-zfp.
 
 The kernel Makefiles read `HDF5_DIR` from a single `config.mk` at the
 repo root (default: `/usr/local/hdf5/openmpi`). Edit that file once, or
