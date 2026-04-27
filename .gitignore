@@ -1,79 +1,127 @@
-/common-densities/density-modules/read-rho-example.out
-/common-densities/density-modules/test-compton-rho.out
-/common-densities/density-modules/output.dat
-
 #This is a centralised file to ignore certain type of files
 #This means each clone of the repo will follow these instructions
 #If you wish to exclude something from your specific repo, use
 #.git/info/exclude
 
-#Exclude files .o, .a, ~, .mod, .tmp etc
+# Build artifacts
 *.[oa]
 *~
 *.mod
 *.tmp
+*.pdf
 *.gz
 *.log
+
+# LaTeX artifacts
 *.aux
+*.fls
+*.fdb_latexmk
+*.out
+*.toc
 *.synctex.gz
-lit/*
-lit/
-*__pycache__/
+
+# Fortran scratch files
+fort.*
+
+# Profiling output
+gmon.out
+
+# Local config
+.gitconfig
+
+# Python
+__pycache__/
+tmp.py
+
+# Generated input/output files
 .pyinput-*
-.pCommand.sh
 .pyinput.dat
+.pCommand.sh
 input-*.dat
-testGetCS
-tesetGetMat
 test-*.dat
-Braun-subset.pdf
-#Exclude the executables
+output*.dat
+out*.dat
+save-out*.dat
+.output-*.dat
+*.dat-benchmark
+
+# Compiled executables (match only files, not directories)
+# The onebodyvia1Ndensity and twobodyvia2Ndensity directories contain source code,
+# but each *.onebody/ and *.twobody/ folder may have a compiled binary of the same name.
+PionPhotoProd.onebody/onebodyvia1Ndensity
+PionPhotoProdThresh.onebody/onebodyvia1Ndensity
+PionPion.onebody/onebodyvia1Ndensity
+varsub-PionPion.twobody/twobodyvia2Ndensity.PionPion
+varsub-PionPhotoProdThresh.twobody/twobodyvia2Ndensity.PionPhotoProdThresh
+common-densities/density-modules/testcompdens
+common-densities/varsub-density-modules/testcompdens
 common-densities/2Ndensity-module/testcompdens
 onebodyvia1Ndensity/onebodyvia1Ndensity
 twobodyvia2Ndensity/twobodyvia2Ndensity
-#Exclude .dat files in 1Ndensities: small, but too temporary to keep in repo
+tests/sigmaYcheck/sigmaYCheck
+testGetCS
+tesetGetMat
+
+# Literature/reference PDFs (local only)
+lit/
+lit/*
+Braun-subset.pdf
+documentation/poles-pionphotoprod/Transfer_PiPh_Rijneveen.zip
+
+# Documentation: re-include figure dependencies and compiled writeup PDFs
+# (overrides the global *.pdf rule above)
+!documentation/PionScattering/writeup/*.pdf
+!documentation/PionPhotoProduction/Kernel/figs/*.pdf
+!documentation/PionPhotoProduction/Kernel/pionphoto-kernel.pdf
+!documentation/twobody-documentation/twobody-structure-integrations-and-units.20240331.pdf
+
+# Density data files
 densities-*/*/1Ndensities/*.dat
 densities-*/*/1Ndensities/*/*.dat
 densities-*/*/1Ndensities/*/*/*.dat
 densities-*/*/1Ndensities/*/*/*/*.dat
 densities-*/*/1Ndensities/*/*/*/*/*.dat
-
-#Exclude .dat files in onebodyvia1Ndensity/, twobodyvia2Ndensity/:
-#too temporary to keep in repo
 onebodyvia1Ndensity/*.dat
 twobodyvia2Ndensity/*.dat
-lit/*
 
-#Exclude contents of input/ & output/ folders in
-#onebodyvia1Ndensity/, twobodyvia2Ndensity/: too temporary to keep in repo
-# but INCLUDE the input templates
-
+# Input/output folders in onebodyvia1Ndensity/, twobodyvia2Ndensity/
 onebodyvia1Ndensity/input*/*
 !onebodyvia1Ndensity/input*/template*
 onebodyvia1Ndensity/output*/*
-
 twobodyvia2Ndensity/input*/*
 !twobodyvia2Ndensity/input*/template*
 twobodyvia2Ndensity/output*/*
 
-#Exclude contents of results*/ folders -- these should not be part of code!
+# Output/results/test directories
 results*/
-.claude/
-#Exclude all "working directories" which end on "-play"
-*-play/
+**/outputs/
+**/outs/
+**/FinalResults/
+**/testDiags/
+**/old/
+**/backup-*/
 
-#Exclude "working directory"
+# Working directories
+.claude/
+*-play/
 workinprogress/
+
+# Local credentials/scripts
 /git-token
 /github-commands
+
+# Specific legacy ignores
 /PionPhotoProdThresh.twobody/PHYSICAL-output.dat
 /PionPhotoProdThresh.twobody/TESTING-output.dat
 /PionPhotoProdThresh.twobody/physicalInput.dat
-/PionPhotoProdThresh.twobody/test-twobody-3He.132MeV-060deg.dens-nlo-lambda=2.0-tnf=n2lo-srgnn=0.0-0.0-srg3n=0.0-0.0-np12a=40-np12b=16-p12a=1.0-p12b=3.0-p12c=8.0-nx=20-row=0106.Odelta2-extQnumlimit=04-symmetry=0-j12max=2-.PionPhotoProdThresh.v2.0.date=20231204-110727.014.dat
-/PionPhotoProdThresh.twobody/test-twobody-3He.132MeV-060deg.dens-nlo-lambda=2.0-tnf=n2lo-srgnn=0.0-0.0-srg3n=0.0-0.0-np12a=40-np12b=16-p12a=1.0-p12b=3.0-p12c=8.0-nx=20-row=0106.Odelta2-extQnumlimit=04-symmetry=0-j12max=2-.PionPhotoProdThresh.v2.0.date=20231204-130822.692.dat
 /PionPhotoProdThresh.twobody/testInput.dat
 /PionPhotoProdThresh.twobody/twobodyvia2Ndensity.PionPhotoProdThresh
-/PionPhotoProdThresh.twobody/test-twobody-3He.132MeV-060deg.dens-nlo-lambda=2.0-tnf=n2lo-srgnn=0.0-0.0-srg3n=0.0-0.0-np12a=40-np12b=16-p12a=1.0-p12b=3.0-p12c=8.0-nx=20-row=0106.Odelta2-extQnumlimit=04-symmetry=0-j12max=2-.PionPhotoProdThresh.v2.0.date=20231207-134935.231.dat
+/PionPhotoProdThresh.twobody/test-twobody-*.dat
 /documentation/twobody-documentation/twobody-structure-integrations-and-units.20240331.out
 /documentation/twobody-documentation/twobody-structure-integrations-and-units.20240331.toc
 /documentation/twobody-documentation/figuresfeyn.mp
+
+# Report/summary files (historical debugging notes)
+**/summary/
+**/normReport.md
+**/details/

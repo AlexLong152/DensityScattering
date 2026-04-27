@@ -44,15 +44,18 @@ OBJS = $(OBJS_ONEBODY) $(OBJS_COMMON) $(OBJS_THIS)
 
 # Compiler and flags
 FC = mpif90
+
+# Pull in HDF5_DIR (default in ../config.mk; override via env var).
+include ../config.mk
 FFLAGS = -O -g -c -Wall -Wno-tabs -ffixed-line-length-132 \
   -ffpe-summary=none -mcmodel=large -fPIC -cpp -fcheck=all \
   -finit-integer=-1000 -finit-real=inf -fallow-argument-mismatch \
   -ffixed-form \
-  -I$(MOD_DIR) -I$(COMMON_DIR) -I/usr/local/hdf5/openmpi/include
+  -I$(MOD_DIR) -I$(COMMON_DIR) -I$(HDF5_DIR)/include
 
 LDFLAGS = \
   -L$(MOD_DIR) -ldensity \
-  -L/usr/local/hdf5/openmpi/lib \
+  -L$(HDF5_DIR)/lib \
   -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 \
   -llapack -lgomp -ldl -lz -lsz
 

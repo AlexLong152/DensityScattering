@@ -1,3 +1,14 @@
+c     poles.f -- multipole / pole-based amplitudes for above-threshold
+c     neutral pion photoproduction (γ N → π⁰ N).
+c
+c     Implements the Rijneveen-style construction in which the
+c     transition amplitude is reconstructed from the E_{ℓ±}, M_{ℓ±}
+c     multipoles (see SAID lookup in said_subs.f::getPoles). The math
+c     and conventions are derived in:
+c        documentation/poles-pionphotoprod/InvertT.nb
+c        documentation/poles-pionphotoprod/LegendrePCheck.nb
+c     and the broader writeup at documentation/PionPhotoProduction/.
+
       subroutine TraceFromMats(Mats,trace)
 
       implicit none

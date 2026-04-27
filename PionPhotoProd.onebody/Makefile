@@ -4,7 +4,8 @@ SHELL   := /bin/sh
 FC      := mpif90
 
 # ─── where is your HDF5? ──────────────────────────────────────────────────────
-HDF5_DIR := /usr/local/hdf5/openmpi
+# Default HDF5_DIR comes from ../config.mk; edit there or set the env var.
+include ../config.mk
 
 # ─── compiler flags ───────────────────────────────────────────────────────────
 FFLAGS  := -O -g -c -Wall -Wno-tabs -ffixed-form -ffixed-line-length-none \

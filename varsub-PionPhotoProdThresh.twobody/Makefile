@@ -53,25 +53,28 @@ OBJS := $(OBJS_THIS) $(OBJS_TWOBODY) $(OBJS_COMMON)
 # Compiler and flags
 FC = mpif90
 
+# Pull in HDF5_DIR (default in ../config.mk; override via env var).
+include ../config.mk
+
 debug_FFLAGS = -O0 -fopenmp -g -Wall -Wno-tabs -ffixed-line-length-0 \
   -ffpe-summary=all -fPIC -cpp -fcheck=all -fbacktrace \
   -finit-integer=-1000 -finit-real=inf -fallow-argument-mismatch \
-  -I$(VAR_MODS) -I$(COMMON_DIR) -I/usr/local/hdf5/openmpi/include
+  -I$(VAR_MODS) -I$(COMMON_DIR) -I$(HDF5_DIR)/include
 
 profile_FFLAGS = -O3 -pg -fopenmp -Wall -Wno-tabs -ffixed-line-length-0 \
   -ffpe-summary=none -fPIC -cpp -fbacktrace \
   -finit-integer=-1000 -finit-real=inf -fallow-argument-mismatch \
-  -I$(VAR_MODS) -I$(COMMON_DIR) -I/usr/local/hdf5/openmpi/include
+  -I$(VAR_MODS) -I$(COMMON_DIR) -I$(HDF5_DIR)/include
 
 
 FFLAGS  = -O3 -fopenmp -Wall -Wno-tabs -ffixed-line-length-0 \
   -ffpe-summary=none -fPIC -cpp -fbacktrace \
   -finit-integer=-1000 -finit-real=inf -fallow-argument-mismatch \
-  -I$(VAR_MODS) -I$(COMMON_DIR) -I/usr/local/hdf5/openmpi/include
+  -I$(VAR_MODS) -I$(COMMON_DIR) -I$(HDF5_DIR)/include
 
 LDFLAGS = \
   -L$(VAR_MODS) -ldensity \
-  -L/usr/local/hdf5/openmpi/lib \
+  -L$(HDF5_DIR)/lib \
   -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 \
   -llapack -lgomp -ldl -lz -lsz
 

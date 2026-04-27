@@ -1,5 +1,24 @@
 c     parseFile.f - Fortran translation of pyVersion/parseFile.py
 c     Author: Translated from Python version by alexl
+c
+c     Reads the SAID partial-wave amplitude file `said-pi.txt` for elastic
+c     pion-nucleon scattering and exposes the data through the
+c     parseFileData module. Used by PionScat.f to look up the on-shell
+c     scattering amplitudes that drive the one-body kernel in
+c     PionPion.onebody/.
+c
+c     File format (one block per partial wave):
+c       header line  : "... PI-N L 2I 2J ..."
+c                      L is the spectroscopic letter (S=0, P=1, D=2, F=3, G=4)
+c                      2I, 2J are isospin and total ang. mom. times two
+c       data lines   : WCM   Del   (col-3)   Sr
+c                      WCM is the CM energy [MeV]
+c                      Del is the phase shift [degrees, converted to radians on read]
+c                      Sr  is the inelasticity (η)
+c
+c     Caching: initializeFileData reads the file once on first call and
+c     stores up to MAXDATA points in module-level arrays; subsequent
+c     calls are no-ops (guarded by dataInitialized).
 
       module parseFileData
       implicit none

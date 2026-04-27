@@ -51,7 +51,24 @@ c     ================================================================
 c     ================================================================
       subroutine getCS(sqrtS, x, isospin, piCharge, CrossSec,
      &                        mNucl, coulomb)
-c     Calculate cross section from scattering matrix
+c     Calculate the unpolarised differential cross section dσ/dΩ for
+c     elastic pion-nucleon scattering, by summing |M|² over the helicity
+c     matrix returned by getMat.
+c
+c     Arguments:
+c       sqrtS    [MeV]  Centre-of-mass energy.
+c       x        [-]    cos(θ_cm) of the outgoing pion.
+c       isospin  [int]  Isospin channel of the partial-wave input (1 or 3).
+c       piCharge [int]  Pion charge: -1 for π⁻, 0 for π⁰, +1 for π⁺.
+c       CrossSec [mb]   (out) dσ/dΩ. The factor 10 in the body converts
+c                       fm² → mb; (MeVtofm)² converts MeV⁻² → fm².
+c       mNucl    [MeV]  Target nucleon (or nuclear) mass.
+c       coulomb  [bool] If .true., include the Coulomb correction to the
+c                       charged-pion amplitudes inside getMat.
+c
+c     The fudgeFactor=2 below absorbs an overall normalisation that has
+c     been cross-checked against the SAID partial-wave output; revisit
+c     before changing.
 c     ================================================================
       implicit none
       double precision sqrtS, x, CrossSec,mNucl
@@ -563,8 +580,9 @@ c     Handle near-threshold case for final state
         absQp=1.d0
       end if
       ! qpVec(1) = 0.0d0
-      qpVec(1) = dsqrt(1.0d0 - x*x) * absQp/(sqrt(2))
-      qpVec(2) = dsqrt(1.0d0 - x*x) * absQp/(sqrt(2))
+      ! qpVec(2) = dsqrt(1.0d0 - x*x) * absQp
+      qpVec(1) = dsqrt(1.0d0 - x*x) * absQp/(sqrt(2.d0))
+      qpVec(2) = dsqrt(1.0d0 - x*x) * absQp/(sqrt(2.d0))
       qpVec(3) = x * absQp
       
       return

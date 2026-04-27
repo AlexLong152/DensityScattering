@@ -4,7 +4,8 @@ SHELL   := /bin/sh
 FC      := mpif90
 
 # ─── where is your HDF5? ──────────────────────────────────────────────────────
-HDF5_DIR := /usr/local/hdf5/openmpi
+# Default HDF5_DIR comes from ../config.mk; edit there or set the env var.
+include ../config.mk
 
 # ─── compiler flags ───────────────────────────────────────────────────────────
 FFLAGS  := -O -g -fbacktrace -Wall -fcheck=all -c -Wno-tabs -ffixed-form -ffixed-line-length-none \
@@ -16,7 +17,7 @@ FFLAGS  := -O -g -fbacktrace -Wall -fcheck=all -c -Wno-tabs -ffixed-form -ffixed
 # FFLAGS = -O1 -fopenmp -g -Wall -Wno-tabs -ffixed-line-length-0 \
 #   -ffpe-summary=none -fPIC -cpp -fcheck=all -fbacktrace \
 #   -finit-integer=-1000 -finit-real=nan -fallow-argument-mismatch \
-#   -I/usr/local/hdf5/openmpi/include\
+#   -I$(HDF5_DIR)/include\
 #   -I$(HDF5_DIR)/include \
 #   -I../common-densities/density-modules \
 #   -I../common-densities

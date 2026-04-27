@@ -1,3 +1,14 @@
+c     said_subs.f -- read and cache the SAID SM22 partial-wave database
+c     (said-SM22.txt) and provide multipole lookups for the photoproduction
+c     pole expansion implemented in poles.f.
+c
+c     The multipoles E_{ℓ±}, M_{ℓ±} returned by getPoles feed the
+c     amplitude inversion derived in
+c        documentation/poles-pionphotoprod/InvertT.nb
+c        documentation/poles-pionphotoprod/LegendrePCheck.nb
+c     See the Python reference implementation in
+c     pyVersion/saidData.py for the original parsing logic.
+
 c     Global variables to cache the SAID data
       module said_data_cache
         implicit none
