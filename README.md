@@ -16,6 +16,21 @@ Processes implemented:
 - **Threshold neutral pion photoproduction** — S-wave multipole amplitudes E₀₊ and L₀₊ (one-body and two-body)
 - **Elastic pion–nucleus scattering** — scattering lengths from SAID partial-wave amplitudes and leading two-body diagrams
 
+## Quickstart
+
+For someone who already has HDF5 + h5z-zfp + MPI installed (see
+[INSTALL.md](INSTALL.md) otherwise):
+
+```bash
+pip install -r requirements.txt && pip install -e tools/package
+make -C common-densities/density-modules && make -C PionPion.onebody
+python tools/DownloadDens.py        # edit the `select` filter inside first
+# Then point input.dat's `densityFileName` line at the downloaded file:
+cd PionPion.onebody && ./run.sh
+```
+
+The rest of this README explains each step in detail.
+
 ## Prerequisites
 
 - Fortran compiler with MPI support (`mpif90`, e.g. via OpenMPI or MPICH)
