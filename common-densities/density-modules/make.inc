@@ -1,14 +1,17 @@
-# define positions of submodules required 
+# define positions of submodules required
 
 UNAME := $(shell uname -s)
 
 
 #include $(BASE)/compile-options/dir.inc
 
-# define the compilers and standard libraries for the current computer 
+# Pull in HDF5_DIR (default in ../../config.mk; override via env var).
+include ../../config.mk
+
+# define the compilers and standard libraries for the current computer
 
 LIBSTD1 = -llapack
-LIBSTD2 = -L/usr/local/hdf5/openmpi/lib -Wl,-rpath,/usr/local/hdf5/openmpi/lib
+LIBSTD2 = -L$(HDF5_DIR)/lib -Wl,-rpath,$(HDF5_DIR)/lib
 LIBSTD3 = -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5
 LIBSTD4 = -llapack -lgomp -ldl -lz -lsz
 LIBSTD5 = 
@@ -29,7 +32,7 @@ COMPILE_OPT2= -ffixed-line-length-0
 COMPILE_OPT1= -fPIC  -cpp  -g -O3 -ffpe-summary=none  -finit-integer=-1000 -finit-real=inf -fcheck=all    
 COMPILE_OPT2= -ffixed-line-length-0 -fopenmp
 
-COMPILE_OPT3 = -I/usr/local/hdf5/openmpi/include -fallow-argument-mismatch
+COMPILE_OPT3 = -I$(HDF5_DIR)/include -fallow-argument-mismatch
 COMPILE_OPT4= 
 COMPILE_OPT4= 
 COMPILE_OPT5= 
