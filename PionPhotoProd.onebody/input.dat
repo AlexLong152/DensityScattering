@@ -1,10 +1,8 @@
-170 170 10                           omegaLow, omegaHigh, omegaStep
-105 105 15                             thetaLow, thetaHigh, thetaStep
-/home/alexander/Dropbox/PionPhotoProduction/results-3H/170MeV/onebody-3H.170MeV-105deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG0.000setNtotmax00omegaH00.Odelta2-.denshash=2e7d298270823553201653c000ca72aba97fec8a23550d96b87a5bd67be6b657.v2.0.dat
-'/home/alexander/OneDrive/densities-3H/1Ndensities/piphoto-170MeV/onebody-3H.170MeV-105deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG0.000setNtotmax00omegaH00.denshash=2e7d298270823553201653c000ca72aba97fec8a23550d96b87a5bd67be6b657.v2.0.h5'
+131.85 131.85 10                           omegaLow, omegaHigh, omegaStep
+60 60 15                             thetaLow, thetaHigh, thetaStep
+../example/out.dat
+'../example/3He-onebody-piphoto-example.h5'
 cm_symmetry_verbos_extQnumlimit=3                    frame, symmetry, verbosity of STDOUT
 Odelta2                                  Calctype -- VaryAXN varies NucelonN's amplitude AX (N=p,n; X=1-6)
 32			             number of points Nx in Feynman parameter integration
 COMMENTS:_v2.0
-# in output & density filenames, code replaces ORDER, 170 and 105 automatically by order, energy and angle.
-

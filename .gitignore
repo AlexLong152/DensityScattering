@@ -44,7 +44,7 @@ out*.dat
 save-out*.dat
 .output-*.dat
 *.dat-benchmark
-
+densities_table.h5
 # Compiled executables (match only files, not directories)
 # The onebodyvia1Ndensity and twobodyvia2Ndensity directories contain source code,
 # but each *.onebody/ and *.twobody/ folder may have a compiled binary of the same name.
