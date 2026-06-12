@@ -5,16 +5,16 @@ calculating scattering observables off light nuclei (³H, ³He, ⁴He, ⁶Li).
 It comprises the work of Alexander P. Long's PhD thesis at The George Washington University.
 
 The TDA approach factorises the scattering amplitude into an irreducible
-few-body kernel (encoding probe–nucleon interactions) and a transition
+few-body kernel (encoding probe-nucleon interactions) and a transition
 density amplitude (encapsulating nuclear structure). The densities are
 computed once per nucleus and then combined with the appropriate kernel for
 any elastic reaction, providing a modular framework within chiral effective
 field theory (χEFT).
 
 Processes implemented:
-- **Compton scattering** — differential cross sections at various photon energies
-- **Threshold neutral pion photoproduction** — S-wave multipole amplitudes E₀₊ and L₀₊ (one-body and two-body)
-- **Elastic pion–nucleus scattering** — scattering lengths from SAID partial-wave amplitudes and leading two-body diagrams
+- **Compton scattering**: differential cross sections at various photon energies
+- **Threshold neutral pion photoproduction**: S-wave multipole amplitudes E₀₊ and L₀₊ (one-body and two-body)
+- **Elastic pion-nucleus scattering**: scattering lengths from SAID partial-wave amplitudes and leading two-body diagrams
 
 ## Quickstart
 
@@ -36,8 +36,10 @@ The rest of this README explains each step in detail.
 - Fortran compiler with MPI support (`mpif90`, e.g. via OpenMPI or MPICH)
 - [HDF5](https://www.hdfgroup.org/solutions/hdf5/) with parallel and Fortran support
 - [h5z-zfp](https://github.com/LLNL/H5Z-ZFP) HDF5 filter plugin (the density files distributed for this project are ZFP-compressed and will not load without it)
-- Python 3 (for analysis scripts and run automation)
 - GNU Make
+- Python 3: not required to run the Fortran code itself, but required
+  for the scripting and bulk processing (density download, run
+  automation, and analysis)
 
 See [INSTALL.md](INSTALL.md) for source-build instructions for HDF5
 and h5z-zfp.
@@ -326,7 +328,7 @@ Threshold and above-threshold neutral pion photoproduction (γ N → π⁰ N).
 
 ### `PionScattering/`
 
-Elastic π N scattering, including the pion–pion kernel and isospin algebra.
+Elastic π N scattering, including the pion-pion kernel and isospin algebra.
 
 | File | Purpose | Related code |
 |---|---|---|
