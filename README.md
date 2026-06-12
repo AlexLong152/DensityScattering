@@ -31,7 +31,7 @@ cd PionPion.onebody && ./run.sh
 
 The rest of this README explains each step in detail.
 
-## Prerequisites
+## Dependencies
 
 - Fortran compiler with MPI support (`mpif90`, e.g. via OpenMPI or MPICH)
 - [HDF5](https://www.hdfgroup.org/solutions/hdf5/) with parallel and Fortran support
@@ -153,6 +153,154 @@ named in `input.dat`.
 | `tools/` | Python analysis and plotting scripts |
 | `tests/` | Verification tests |
 
+## Usage
+
+Each process folder contains an `input.dat` file showing the expected input
+format. **Note**: the bundled `input.dat` examples have a `densityFileName`
+line pointing at the author's local density paths (e.g.
+`/home/alexander/OneDrive/densities-.../...h5`); replace it with the path
+to your own download from `tools/DownloadDens.py` before running.
+
+A typical run:
+
+```bash
+cd PionPion.onebody
+make
+./run.onebodyvia1Ndensity input.dat
+```
+
+Some `run` scripts have a process name
+```bash
+cd varsub-PionPhotoProdThresh.twobody
+make
+run.twobodyvia2Ndensity.PionPhotoProdThresh input.dat
+```
+These `run` scripts are wrappers which write all output sent to `stdout` to an output file specified in the input file.
+
+The python package in `tools` is useful for running many calculations in parallel. 
+The file `runfolder.py` present in many kernel folders can be 
+used to automatically run all densities in a given folder with a specified format for easy processing.
+
+
+Density files (not included in this repository) can be downloaded with `tools/DownloadDens.py`
+
+## Input file format
+
+Each kernel folder contains an `input.dat` consumed by the corresponding
+`run.*` executable. The file is plain ASCII; values are read positionally,
+one record per line. Trailing text on each line is treated as a comment
+and is intended for human readers.
+
+### Common lines (all kernels)
+
+| Line | Fields | Meaning |
+|---|---|---|
+| 1 | `omegaLow omegaHigh omegaStep` | Beam energy scan in MeV (low, high, step) |
+| 2 | `thetaLow thetaHigh thetaStep` | Scattering angle scan in degrees (low, high, step) |
+| 3 | `outfile` | Output filename. Placeholders `ORDER`, `XXX`, `YYY` are replaced at runtime by calculation order, energy, and angle |
+| 4 | `densityFileName` | Absolute path to the HDF5 density file. The target nucleus (`2H`, `3H`, `3He`, `4He`, `6Li`) is detected from this filename |
+| 5 | calcstring 1 | Frame, symmetry, verbosity, and `extQnumlimit` (see below) |
+| 6 | calcstring 2 | `Calctype` and (for two-body) `j12max`, `numDiagrams` (see below) |
+
+After the calcstrings the format diverges between the one-body and
+two-body kernels.
+
+### One-body kernels (`*.onebody/`)
+
+| Line | Fields | Meaning |
+|---|---|---|
+| 7 | `Nx` | Number of quadrature points for the Feynman-parameter integral in the single-nucleon amplitude |
+| 8 | `COMMENTS:_<tag>` | Free-form descriptor appended to the output filename |
+| 9+ | `# ...` | Optional comment lines, ignored by the reader |
+
+Example (from `PionPion.onebody/input.dat`):
+
+```
+167.664 167.664 10                           omegaLow, omegaHigh, omegaStep
+73.091 73.091 15                             thetaLow, thetaHigh, thetaStep
+output.dat
+'/path/to/densities/onebody-4He.168MeV-073deg.dens-chiralsmsN4LO+3nfN2LO-lambda500-lambdaSRG0.000setNtotmax00omegaH00.denshash=acebce17ba36d4b668d8d80cc9f68807c36ed20b34c853260972107017f0d082.v2.0.h5'
+cm_symmetry_verbos_extQnumlimit=3            frame, symmetry, verbosity of STDOUT
+Odelta3                                      Calctype
+32                                           number of points Nx in Feynman parameter integration
+COMMENTS:_v2.0
+# in output & density filenames, code replaces ORDER, XXX and YYY automatically by order, energy and angle.
+```
+
+### Two-body kernels (`varsub-*.twobody/`)
+
+| Line | Fields | Meaning |
+|---|---|---|
+| 7 | `NP12A NP12B` | Radial-grid points in the two bins of the (12)-subsystem momentum integral |
+| 8 | `P12A P12B P12C` | Bin boundaries in `fm⁻¹`: `[0,P12A/2,P12A]` (hyperbolic map, `NP12A` pts) and `[P12B,P12C]` (linear map, `NP12B` pts) |
+| 9 | `AngularType12 Nordth12 Nthbins12 Nordphi12 Nphibins12` | Angular quadrature in (12) subsystem. `AngularType12=1`: Gauss–Legendre on theta and phi separately. `AngularType12=2`: Lebedev–Laikov combined grid; `Nordth12` then sets `Nanggrid12` and the remaining fields are ignored |
+| 10 | `COMMENTS:_<tag>` | Descriptor appended to output filename |
+
+Example (from `varsub-PionPion.twobody/input.dat`):
+
+```
+131.857 131.857 15                           omegaLow, omegaHigh, omegaStep
+000 000 30                                   thetaLow, thetaHigh, thetaStep
+out-test.dat
+'/path/to/densities/twobody-3He.132MeV-000deg.dens-chiralsmsN4LO+3nfN2LO-lambda400-lambdaSRG0.000setNtotmax00omegaH00.denshash=d306fae448811a1161f693eea1ff4b5cf7d9f9aa523e81e3fef26d4446fcc761.v2.0.h5'
+nosymmetry_verbos_extQnumlimit=3             frame, symmetry, verbosity of STDOUT
+Odelta4_j12max=1_numDiagrams=1               Calctype, maximal total ang mom in (12) subsystem, and number of diagrams
+2 2                                          NP12A, NP12B
+1.0 5.0 15                                   P12A, P12B, P12C
+2 2                                          AngularType12,(Nordth12 OR Nanggrid12),Nthbins12,Nordphi12,Nphibins12
+COMMENTS:_v2.0
+# in density filename, code replaces XXX and YYY automatically by energy and angle.
+```
+
+### calcstring 1: frame, symmetry, verbosity, `extQnumlimit`
+
+This line is parsed by substring match, so flags may appear in any order
+and the leading label (e.g. `cm_symmetry_verbos_extQnumlimit=3`) is only
+a mnemonic. Recognised tokens:
+
+- **Frame**: only the centre-of-mass frame is currently implemented; the
+  `cm` token is a label for the reader.
+- **Symmetry**: `usesymmetry1` … `usesymmetry6` request a symmetry
+  reduction (not yet implemented). Omit, or use `nosymmetry`, to compute
+  all amplitudes independently.
+- **Verbosity**: `verbose2`, `verbose3`, `verbose4` raise the STDOUT
+  verbosity. Default is level 1.
+- **`extQnumlimit=N`** (`N=1…16`): number of independent external
+  quantum-number combinations to compute. Defaults to `4` (Compton: two
+  in × two out circular polarisations). Threshold pion photoproduction
+  and pion scattering use `extQnumlimit=3`.
+
+### calcstring 2: `Calctype` and two-body flags
+
+`Calctype` selects the chiral order of the kernel. Synonyms in
+parentheses are accepted:
+
+| Token | Meaning |
+|---|---|
+| `Odelta0` (`OQ2`) | `O(q²)` chiral perturbation theory |
+| `Odelta2` (`OQ3`) | Full `O(q³)` chiral perturbation theory |
+| `Odelta3` (`Oepsilon3`) | Adds explicit Δ(1232) diagrams |
+| `Odelta4` (`OQ4`) | `O(q⁴)`; meson-exchange currents are identical for Δ-less and Δ-ful |
+| `VaryAXN` (one-body, experimental) | Varies amplitude `AX` of nucleon `N` (`N=p,n`; `X=1…6`) for sensitivity studies |
+
+The `VaryAXN` tokens are really just left over from the Compton
+scattering code, so we don't use them for the processes in this
+repository.
+
+For two-body kernels the same line may carry additional underscore
+separated flags parsed by substring:
+
+- **`j12max=J`** (`J=0…5`): maximum total angular momentum in the (12)
+  subsystem. Default `2` for one-body, `1` for two-body (twobody
+  converges below 1% by `j12max=1`).
+- **`numDiagrams=N`** (`N=1…7`): number of diagrams to include. Default `1`.
+
+### Filename placeholders
+
+Inside `outfile` and `densityFileName`, the strings `ORDER`, `XXX`, and
+`YYY` are replaced at runtime by the calculation order, beam energy, and
+scattering angle, allowing a single `input.dat` to drive an entire scan.
+
 ## Documentation
 
 The `documentation/` folder collects the theoretical notes, derivations,
@@ -225,120 +373,6 @@ The figure dependencies (`[12][a-i].pdf` in `PionScattering/writeup/` and
 `figs/*.pdf` in `PionPhotoProduction/Kernel/`) are tracked alongside the
 `.tex` so a fresh clone compiles without extra setup. The compiled
 writeup PDFs are also tracked for convenience.
-
-## Usage
-
-Each process folder contains an `input.dat` file showing the expected input
-format. **Note**: the bundled `input.dat` examples have a `densityFileName`
-line pointing at the author's local density paths (e.g.
-`/home/alexander/OneDrive/densities-.../...h5`); replace it with the path
-to your own download from `tools/DownloadDens.py` before running.
-
-A typical run:
-
-```bash
-cd PionPion.onebody
-make
-./run.onebodyvia1Ndensity input.dat
-```
-
-Some `run` scripts have a process name
-```bash
-cd varsub-PionPhotoProdThresh.twobody
-make
-run.twobodyvia2Ndensity.PionPhotoProdThresh input.dat
-```
-These `run` scripts are wrappers which write all output sent to `stdout` to an output file specified in the input file.
-
-The python package in `tools` is useful for running many calculations in parallel. 
-The file `runfolder.py` present in many kernel folders can be 
-used to automatically run all densities in a given folder with a specified format for easy processing.
-
-
-Density files (not included in this repository) can be downloaded with `tools/DownloadDens.py`
-
-## Input file format
-
-Each kernel folder contains an `input.dat` consumed by the corresponding
-`run.*` executable. The file is plain ASCII; values are read positionally,
-one record per line. Trailing text on each line is treated as a comment
-and is intended for human readers.
-
-### Common lines (all kernels)
-
-| Line | Fields | Meaning |
-|---|---|---|
-| 1 | `omegaLow omegaHigh omegaStep` | Beam energy scan in MeV (low, high, step) |
-| 2 | `thetaLow thetaHigh thetaStep` | Scattering angle scan in degrees (low, high, step) |
-| 3 | `outfile` | Output filename. Placeholders `ORDER`, `XXX`, `YYY` are replaced at runtime by calculation order, energy, and angle |
-| 4 | `densityFileName` | Absolute path to the HDF5 density file. The target nucleus (`2H`, `3H`, `3He`, `4He`, `6Li`) is detected from this filename |
-| 5 | calcstring 1 | Frame, symmetry, verbosity, and `extQnumlimit` (see below) |
-| 6 | calcstring 2 | `Calctype` and (for two-body) `j12max`, `numDiagrams` (see below) |
-
-After the calcstrings the format diverges between the one-body and
-two-body kernels.
-
-### One-body kernels (`*.onebody/`)
-
-| Line | Fields | Meaning |
-|---|---|---|
-| 7 | `Nx` | Number of quadrature points for the Feynman-parameter integral in the single-nucleon amplitude |
-| 8 | `COMMENTS:_<tag>` | Free-form descriptor appended to the output filename |
-| 9+ | `# ...` | Optional comment lines, ignored by the reader |
-
-### Two-body kernels (`varsub-*.twobody/`)
-
-| Line | Fields | Meaning |
-|---|---|---|
-| 7 | `NP12A NP12B` | Radial-grid points in the two bins of the (12)-subsystem momentum integral |
-| 8 | `P12A P12B P12C` | Bin boundaries in `fm⁻¹`: `[0,P12A/2,P12A]` (hyperbolic map, `NP12A` pts) and `[P12B,P12C]` (linear map, `NP12B` pts) |
-| 9 | `AngularType12 Nordth12 Nthbins12 Nordphi12 Nphibins12` | Angular quadrature in (12) subsystem. `AngularType12=1`: Gauss–Legendre on theta and phi separately. `AngularType12=2`: Lebedev–Laikov combined grid; `Nordth12` then sets `Nanggrid12` and the remaining fields are ignored |
-| 10 | `COMMENTS:_<tag>` | Descriptor appended to output filename |
-
-### calcstring 1: frame, symmetry, verbosity, `extQnumlimit`
-
-This line is parsed by substring match, so flags may appear in any order
-and the leading label (e.g. `cm_symmetry_verbos_extQnumlimit=3`) is only
-a mnemonic. Recognised tokens:
-
-- **Frame**: only the centre-of-mass frame is currently implemented; the
-  `cm` token is a label for the reader.
-- **Symmetry**: `usesymmetry1` … `usesymmetry6` request a symmetry
-  reduction (not yet implemented). Omit, or use `nosymmetry`, to compute
-  all amplitudes independently.
-- **Verbosity**: `verbose2`, `verbose3`, `verbose4` raise the STDOUT
-  verbosity. Default is level 1.
-- **`extQnumlimit=N`** (`N=1…16`): number of independent external
-  quantum-number combinations to compute. Defaults to `4` (Compton: two
-  in × two out circular polarisations). Threshold pion photoproduction
-  and pion scattering use `extQnumlimit=3`.
-
-### calcstring 2: `Calctype` and two-body flags
-
-`Calctype` selects the chiral order of the kernel. Synonyms in
-parentheses are accepted:
-
-| Token | Meaning |
-|---|---|
-| `Odelta0` (`OQ2`) | `O(q²)` chiral perturbation theory |
-| `Odelta2` (`OQ3`) | Full `O(q³)` chiral perturbation theory |
-| `Odelta3` (`Oepsilon3`) | Adds explicit Δ(1232) diagrams |
-| `Odelta4` (`OQ4`) | `O(q⁴)`; meson-exchange currents are identical for Δ-less and Δ-ful |
-| `VaryAXN` (one-body, experimental) | Varies amplitude `AX` of nucleon `N` (`N=p,n`; `X=1…6`) for sensitivity studies |
-
-For two-body kernels the same line may carry additional underscore
-separated flags parsed by substring:
-
-- **`j12max=J`** (`J=0…5`): maximum total angular momentum in the (12)
-  subsystem. Default `2` for one-body, `1` for two-body (twobody
-  converges below 1% by `j12max=1`).
-- **`numDiagrams=N`** (`N=1…7`): number of diagrams to include. Default `1`.
-
-### Filename placeholders
-
-Inside `outfile` and `densityFileName`, the strings `ORDER`, `XXX`, and
-`YYY` are replaced at runtime by the calculation order, beam energy, and
-scattering angle, allowing a single `input.dat` to drive an entire scan.
 
 ## Citation
 

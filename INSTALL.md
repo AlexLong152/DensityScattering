@@ -25,7 +25,9 @@ sudo apt install build-essential openmpi-bin libopenmpi-dev
 ### 1.2 Build and install HDF5 with OpenMPI
 
 Pick a release from the [HDF5 download
-page](https://support.hdfgroup.org/downloads/hdf5/), e.g. 1.14.6:
+page](https://support.hdfgroup.org/downloads/index.html), e.g. 1.14.6.
+HDF5 version 2.0 has not been tested with this project yet; use one of
+the 1.14.x versions for now:
 
 ```bash
 wget https://support.hdfgroup.org/ftp/HDF5/current/src/hdf5-<version>.tar.gz
@@ -54,6 +56,10 @@ Add to `~/.bashrc` (or your shell's equivalent):
 export LD_LIBRARY_PATH=/usr/local/hdf5/openmpi/lib:$LD_LIBRARY_PATH
 export PATH=/usr/local/hdf5/openmpi/bin:$PATH
 ```
+
+Also make sure `HDF5_DIR` in the repo's `config.mk` matches this
+HDF5/OpenMPI install. If your HDF5 is in a different location, change
+the path in the export statements above as well.
 
 The kernel Makefiles also embed an `RPATH` at link time (via
 `-Wl,-rpath,$(HDF5_DIR)/lib`), so the executables find the HDF5
