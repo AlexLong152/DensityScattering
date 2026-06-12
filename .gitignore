@@ -45,6 +45,10 @@ save-out*.dat
 .output-*.dat
 *.dat-benchmark
 densities_table.h5
+# meshpoints.dat is regenerated from input.dat values on every run
+# (writemeshpara in CompDens.F90); rmeshpoints.dat is NOT generated and
+# must stay tracked
+meshpoints.dat
 # Compiled executables (match only files, not directories)
 # The onebodyvia1Ndensity and twobodyvia2Ndensity directories contain source code,
 # but each *.onebody/ and *.twobody/ folder may have a compiled binary of the same name.
