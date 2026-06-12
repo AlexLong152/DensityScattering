@@ -73,6 +73,7 @@ documentation/poles-pionphotoprod/Transfer_PiPh_Rijneveen.zip
 !documentation/PionScattering/writeup/*.pdf
 !documentation/PionPhotoProduction/Kernel/figs/*.pdf
 !documentation/PionPhotoProduction/Kernel/pionphoto-kernel.pdf
+!documentation/PionPhotoProduction/pionphotoproduction-kinematics.pdf
 !documentation/twobody-documentation/twobody-structure-integrations-and-units.20240331.pdf
 
 # Density data files
