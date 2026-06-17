@@ -12,12 +12,12 @@
   ],
   "identifier": "https://doi.org/10.5281/zenodo.18893804",
   "codeRepository": "https://github.com/AlexLong152/DensityScattering",
-  "datePublished": "2026-04-27",
-  "dateModified": "2026-04-27",
+  "datePublished": "2026-06-17",
+  "dateModified": "2026-06-17",
   "dateCreated": "2023-11-21",
   "description": "Modular Fortran framework that computes elastic scattering observables off light nuclei (3H, 3He, 4He, 6Li) using the Transition Density Amplitude formalism. Convolves precomputed nuclear transition densities with user-supplied process kernels for Compton scattering, neutral pion photoproduction (at and above threshold), and elastic pion-nucleus scattering within chiral effective field theory.",
   "keywords": "nuclear physics, chiral effective field theory, few-body systems, light nuclei, Compton scattering, pion photoproduction, pion-nucleus scattering, transition density amplitude, Fortran",
   "license": "MIT",
   "title": "DensityScattering",
-  "version": "v1.1.0"
+  "version": "v2.0.0"
 }
