@@ -1,63 +1,17 @@
 # Support
 
-## Maintenance status
 
-`DensityScattering` is actively maintained through completion of the
-corresponding PhD thesis at The George Washington University (2026).
-After that, the repository is expected to receive only occasional
-fixes or to be archived in a frozen state, with the Zenodo archive
-serving as the canonical citation.
+`DensityScattering` was originally published by Alexander Long, who graduated with his PhD in June 2026, but 
+is no longer actively maintained.
+The project has been taken over by the next generation of lucky grad students who have probably forked this project.
+For contact, please reach out to:
 
-Substantial new development — new reactions, new targets, new
-formalism extensions — is expected to live in **forks**, not upstream.
-See [`GOVERNANCE.md`](GOVERNANCE.md) and
-[`CONTRIBUTING.md`](CONTRIBUTING.md) for the rationale.
+Harald W. Griesshammer hgrie@gwu.edu (the original author's PhD advisor)
+Nathan Carter nathan.carter@email.gwu.edu (The advisor's new PhD student as of August 2026)
 
-## Reporting bugs and build issues
+As a last resort, you can also try contacting the original author:
+Alexander Long alexlong152@gmail.com
 
-Please open a GitHub issue including:
-
-- a minimal `input.dat` or run script that reproduces the problem,
-- the density file (or a pointer to which file from
-  [`nucdens`](https://datapub.fz-juelich.de/anogga/files/densities/)
-  was used),
-- the full compiler/runtime error message or, for numerical issues,
-  the observed and expected output.
-
-Response time is best-effort and may lengthen significantly after
-thesis completion.
-
-## Known issues
-
-A list of catalogued imperfections shipped with the current release
-is maintained in [`TODO.md`](TODO.md). These items (a Jacobian sign
-convention compensated in the parsing layer, duplicated `varsub-*`
-modules, unexploited matrix-element symmetries) do not affect the
-correctness of the shipped results but are documented openly so a
-future maintainer or forker can address them.
-
-## In scope for support
-
-- Build and install failures
-- Suspected numerical bugs in the shipped kernels
-- Documentation gaps and unclear instructions
-
-## Out of scope
-
-- Porting to platforms or compilers other than those documented in
-  `INSTALL.md`
-- New-physics or new-target extensions — please fork (see
-  [`CONTRIBUTING.md`](CONTRIBUTING.md))
-- Debugging user-written kernels in downstream forks
-
-## Citation
-
-See [`CITATION.cff`](CITATION.cff) and the Zenodo archive referenced
-in the project metadata. Please cite both the software and the
-underlying TDA references listed in the README.
-
-## Scientific collaboration
-
-For collaboration proposals or scientific questions that go beyond
-issue-tracker scope, contact the corresponding author. Contact
-information appears in `CITATION.cff` and the accompanying JOSS paper.
+And if all else fails, you can try contacting the authors collaborators
+Andreas Nogga a.nogga@fz-juelich.de 
+Xiang-Xiang Sun x.sun@fz-juelich.de 

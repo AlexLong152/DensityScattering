@@ -387,4 +387,6 @@ See [CITATION.cff](CITATION.cff) for machine-readable citation metadata.
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE.md).
+This project is licensed under the [2-Clause BSD License](LICENSE.md).
+
+This code builds on earlier work; see [ACKNOWLEDGMENTS.md](ACKNOWLEDGMENTS.md).

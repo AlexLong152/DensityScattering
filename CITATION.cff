@@ -7,7 +7,7 @@ authors:
     name-particle: Phillips
     family-names: Long
     orcid: "https://orcid.org/0009-0009-5890-2713"
-license: MIT
+license: BSD-2-Clause
 url: "https://github.com/AlexLong152/DensityScattering"
 preferred-citation:
   type: thesis
