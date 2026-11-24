@@ -362,6 +362,85 @@ Notes and checks on the pole approach to photoproduction multipoles (Rijneveen e
 |---|---|---|
 | `check-trafo1Namps-to-helicity.nb` | Mathematica verification of the single-nucleon amplitude → helicity-basis transformation | `onebodyvia1Ndensity/trafo1Namps-to-helicity.f` |
 
+### Two-body convolution speedup (November 2026)
+
+The two-body mantle in `varsub-twobodyvia2Ndensity/` was reorganised in
+November 2026 because production runs had become too slow to be practical.
+A single energy and angle for ³He on the usual grid (16 radial points, 50
+Lebedev-Laikov angles, `j12max=1`, `Odelta2`) took about 49 minutes. The
+same run now takes about one minute, on one core, with the same result up
+to round-off. Nothing was parallelised.
+
+**Why it was slow.** The old loop order was channels on the outside and
+integration points on the inside. `main` looped over the incoming (12)
+quantum numbers and `p12`, `finalstatesums` over the outgoing ones, `p12p`,
+`Mzp` and `Mz`, and `Calculate2BIntegralI2` over `msp`, `ms` and finally
+the angles. The kernel sat at the very bottom of all of that, so at every
+integration point it was evaluated again for every channel pair, every
+`(Mzp,Mz)` and every `(msp,ms)`, about 3700 times per point for
+`j12max=1`. Most of those calls had exactly the same arguments. On top of
+that, each density interpolation first converted a whole slice of
+`rhoDensity` (56×56 numbers for the ³He densities) to double precision,
+and a NaN check ran over the full integral array in the innermost loop.
+
+**What changed.**
+
+- The loop order is inverted: integration points outside, channels inside.
+- At each integration point the kernel is called once for each distinct
+  set of its quantum-number arguments (`ml12, ml12p, t12, mt12, t12p,
+  mt12p, l12, s12, l12p, s12p`). For `j12max=1` that is 201 calls. `Mz`,
+  `Mzp`, `j12` and `m12` are never passed to the kernel, so sharing one
+  call between them is exact and not an approximation.
+- The spherical harmonic of `p12p` and the position of `|p12p|` on the
+  density grid are worked out once per distinct `ppVecs` the kernel
+  returns, not once per channel.
+- The bilinear interpolation of the density is split in two. The `p12`
+  half is done once per radial point, the `p12p` half once per integration
+  point. The arithmetic is the same as before, so the interpolated values
+  are bit-identical, and the array copy is gone.
+- Channel pairs that have no entry in the density are dropped at setup,
+  and kernel blocks that come back exactly zero at a point are skipped.
+- The NaN check now runs once per `(p12,p12p)`.
+
+**What this assumes about a kernel.** Only that `Calc2Bspinisospintrans`
+gives the same output for the same arguments, i.e. it keeps no memory
+between calls. Every argument is treated as something the kernel might
+depend on, including `l12, ml12, l12p, ml12p`, which no kernel uses at
+the moment. Kernels for other processes or higher orders need no changes
+in the mantle. The interface is untouched and no kernel file was edited.
+One side effect: debug `write` statements inside a kernel now fire far
+less often than they used to.
+
+**Where things live now.**
+
+| File | Before | Now |
+|---|---|---|
+| `varsub-main.twobodyvia2Ndensity.f` | Looped over `mt12, j12, s12, l12, m12, ip12` and called `twobodyfinalstatesumsvia2Ndensity` inside | One call to `twobodyfinalstatesumsvia2Ndensity` per energy and angle |
+| `varsub-finalstatesums.twobodyvia2Ndensity.f` | Sum over outgoing channels, `p12p`, `Mzp`, `Mz` | Builds the tables of (12) states, channel pairs and kernel argument sets once, then does both radial integrations. `Calculate2BIntegralI2` is now an internal subroutine here (after `contains`) and does the angular integrals and spin sums for all channel pairs at fixed `(p12,p12p)` |
+| `varsub-calculate2BI2.f` | `Calculate2BIntegralI2`, `interpolate`, `getHarmonicCart` | Helpers only: `densitybracket` (replaces `interpolate`) and `getHarmonicCart` |
+
+The header comments of `varsub-finalstatesums.twobodyvia2Ndensity.f`
+explain the bookkeeping (states, pairs, kernel argument sets) in more
+detail. The older `twobodyvia2Ndensity/` folder was not touched.
+
+**Timings and checks.** Wall time on one core of an i9-14900KS; roughly
+3.5 s of every run is spent reading the density file.
+
+| Run | Before | Now |
+|---|---|---|
+| `varsub-PionPhotoProdThresh.twobody`, 16 radial × 50 angles, `Odelta2` | 2925 s | 58 s |
+| same, `Odelta4` | not measured | 130 s |
+| `varsub-PionPhotoProdThresh.twobody`, 8 radial × 14 angles, `Odelta2` | 61 s | 4.9 s |
+| same, `Odelta4` | 84 s | 6.3 s |
+| `varsub-PionPion.twobody`, 8 radial × 14 angles | 279 s | 16 s |
+
+The new code was compared with the old one on six grids for pion
+photoproduction (up to 16 radial points or up to 50 angles, both orders)
+and one for pion scattering. Differences are below 2×10⁻¹⁴ of the largest
+amplitude. The results are not bit-identical because the order of
+summation changed. The full 16 × 50 grid was not re-run with the old
+code; the 2925 s is the time recorded in an earlier production output.
+
 ### Building the writeups
 
 `.tex` writeups are built with `latexmk`:

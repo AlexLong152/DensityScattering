@@ -6,7 +6,7 @@ c     NEW Nov 2023: v1.0 Alexander Long/hgrie
 c               Based on Compton density code v2.0: D. Phillips/A. Nogga/hgrie starting August 2020/hgrie Oct 2022
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     CONTAINS:
-c     main programme of twobody mantle code : sets up, performs Σ_(mt12,j12,s12,l12,m12) 
+c     main programme of twobody mantle code : sets up, calls twobodyfinalstatesumsvia2Ndensity for Σ_(mt12,j12,s12,l12,m12)... 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     TO DO:
 c     Does output of multiple angles & energies to same output file work? May need adjusting output file name.
@@ -48,10 +48,11 @@ c     (A choose 2) * Σ ∫ dp12 p12² ∫ dp12p p12p²/(2π)³ (HC)³ * rho(p12
 c     # NN pairs       ========================       ======   =============   ================   =====================================================
 c                                fm^-6                MeVfm³        fm³           no units                  base unit MeV ==> MeV^-n
 c     ......................................................................   ................
-c            Σ_(mt12,j12,s12,l12,m12)                  in main.twobody.f       ms: spin proj in (12)
-c            Σ_(mt12p=mt12,j12p,s12p,l12p,m12p,Mzp,Mz) in finalstatesums.f     Σ_(msp,ms) and
-c            integrations done in                                              ang int done in
-c            finalstatesums.twobodyvia2Ndensity.f                              calculate2BI2.f
+c            Σ_(mt12,j12,s12,l12,m12)                                          ms: spin proj in (12)
+c            Σ_(mt12p=mt12,j12p,s12p,l12p,m12p,Mzp,Mz) and                     Σ_(msp,ms) and ang int done in
+c            radial integrations done in                                       its internal subroutine
+c            finalstatesums.twobodyvia2Ndensity.f                              Calculate2BIntegralI2
+c            (Nov 2026: all channel sums moved there from main, inside the integration loops, for speed)
 c     -----------------------------------------------------------------------------------------   -----------------------------------------------------   
 c                                   "mantle" code                                                                   "kernel" code
 c
@@ -196,10 +197,7 @@ c     real*8 t,omega
 c     
 c**********************************************************************
 c     
-      integer m12,mt12          ! projections of total ang mom & isospin of (12) subsystem: automatically integers
-      
-      integer i,ip12
-      integer l12,s12,j12,t12   ! orb ang mom, spin, total ang mom, isospin of (12): automatically integers
+      integer i
       
       integer j12max,numDiagrams            ! max total ang mom in (12) subsystem -- =1 suffices for 1% accuracy.
       
@@ -394,27 +392,16 @@ c     hgrie Aug/Sep 2020: delete the local .h5 file if one was generated from .g
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c**********************************************************************
             write(*,*) "*********Now convoluting 2N helicity amplitudes with 2N density matrix.*********"  
-            do mt12=-1,1                ! only charged pion exchange at OQ4 => (12) subsystem is (pn) 
-               do j12=0,j12max                      ! total ang mom (12); usually Jmax=1 for 1% convergence
-                  do s12=0,1                        ! spin (12)
-                     do l12=abs(j12-s12),j12+s12    ! angular mom. (12)
-                        t12=(1-(-1)**(l12+s12+1))/2 ! isospin (12)
-                        do m12=-j12,j12             ! spin projection (12)
-                           do ip12=1,NP12           ! integration over momentum magnitude (12)
-                              call twobodyfinalstatesumsvia2Ndensity(
-     &                             Result,Mnucl,
-     &                             Anucl,twoSnucl,extQnumlimit,j12,m12,l12,s12,t12,mt12,
-     &                             Eprobe,thetacm,
-     &                             ip12,P12MAG(ip12),AP12MAG(ip12),     
-     &                             p12MAG,AP12MAG,NP12,                                 
-     &                             th12,phi12,Nth12,Nphi12,j12max,
-     &                             AngularType12,angweight12,calctype,symmetry,numDiagrams,verbosity)   
-                           end do !ip12
-                        end do    !m12
-                     end do       !l12
-                  end do          !s12
-               end do             !j12
-            end do                !mt12
+c     Σ_(mt12,j12,s12,l12,m12) Σ_(mt12p=mt12,j12p,s12p,l12p,m12p,Mzp,Mz) and all integrations now done
+c     inside twobodyfinalstatesumsvia2Ndensity (loops over channels inside loops over integration points, for speed).
+c     mt12: only charged pion exchange at OQ4 => (12) subsystem is (pn); all mt12 included, kernel decides.
+            call twobodyfinalstatesumsvia2Ndensity(
+     &           Result,Mnucl,
+     &           Anucl,twoSnucl,extQnumlimit,
+     &           Eprobe,thetacm,
+     &           P12MAG,AP12MAG,NP12,
+     &           th12,phi12,Nth12,Nphi12,j12max,
+     &           AngularType12,angweight12,calctype,symmetry,numDiagrams,verbosity)
 c**********************************************************************
 c     hgrie Dec 2023: print  to stdout description of computed quantity, used symmetry/-ies and mapping of extQnum
 c            KernelFarewell() set in <process-dir>/2BKernel*.f

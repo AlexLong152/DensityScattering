@@ -320,7 +320,7 @@ c     hgrie May 2018: read 1N density
             call read1Ndensity(densityFileName,Anucl,twoSnucl,omega,thetacm,verbosity)
             
             coulomb = .False. !here there be dragons
-            atThresh=.False.
+            atThresh=.True.
             ! atThresh=.True.
 
             outputMat=c0
@@ -367,9 +367,9 @@ c           STUFFF BELOW HERE NEEDS TO BE ACTUALLY USED ABOVE THRESHOLD
               x=1.d0
             end if
             !TODO: Remove these hard coded values, just comment out these two lines below.
-            theta_calc=acos(x)*180.d0/Pi
-            theta_calc = nint(acos(x)*180.d0/Pi / 15.d0) * 15.d0!rounds to nearest 15 degrees
-            Psqr=(170.d0**2.d0)-mpi1**2.d0
+            ! theta_calc=acos(x)*180.d0/Pi
+            ! theta_calc = nint(acos(x)*180.d0/Pi / 15.d0) * 15.d0!rounds to nearest 15 degrees
+            ! Psqr=(170.d0**2.d0)-mpi1**2.d0
             ! Threshold case, just set Psqr=0
             pAbs=sqrt(Psqr)
             if ((extQnum.eq.1.d0).and.(.not.atThresh)) then
